@@ -338,7 +338,8 @@ class _Convert:
                  rgb=True,
                  graph=False,
                  color_scale=None,
-                 verbose=False):
+                 verbose=False,
+                 tileset_max_len=100000):
         """
         :param files: Filenames to process. The file must use the .las, .laz or .xyz format.
         :type files: list of str, or str
@@ -383,6 +384,7 @@ class _Convert:
             self.print_summary()
         if self.graph:
             self.progression_log = open('progression.csv', 'w')
+        self.tileset_max_len = tileset_max_len
 
         self.infos = self.get_infos(color_scale, srs_in, srs_out)
 
@@ -744,7 +746,7 @@ class _Convert:
 
         executor = concurrent.futures.ProcessPoolExecutor()
         root_tileset = Node.to_tileset(executor, ''.encode('ascii'), self.root_aabb, self.root_spacing,
-                                       self.out_folder, self.root_scale)
+                                       self.out_folder, self.root_scale, self.tileset_max_len)
         executor.shutdown()
 
         root_tileset['transform'] = transform.T.reshape(16).tolist()

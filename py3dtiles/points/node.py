@@ -186,7 +186,7 @@ class Node:
             return data.grid.get_points(include_rgb)
 
     @staticmethod
-    def to_tileset(executor, name, parent_aabb, parent_spacing, folder, scale):
+    def to_tileset(executor, name, parent_aabb, parent_spacing, folder, scale, tileset_max_len=0):
         node = node_from_name(name, parent_aabb, parent_spacing)
         aabb = node.aabb
         ondisk_tile = name_to_filename(folder, name, '.pnts')
@@ -281,20 +281,21 @@ class Node:
         else:
             tileset['geometricError'] = 0.0
 
-        if len(name) > 0 and children:
-            if len(json.dumps(tileset)) > 100000:
-                tile_root = {
-                    'asset': {
-                        'version': '1.0',
-                    },
-                    'refine': 'ADD',
-                    'geometricError': tileset['geometricError'],
-                    'root': tileset
-                }
-                tileset_name = 'tileset.{}.json'.format(name.decode('ascii'))
-                with open('{}/{}'.format(folder, tileset_name), 'w') as f:
-                    f.write(json.dumps(tile_root))
-                tileset['content'] = {'uri': tileset_name}
-                tileset['children'] = []
+        if tileset_max_len :
+            if len(name) > 0 and children:
+                if len(json.dumps(tileset)) > tileset_max_len:
+                    tile_root = {
+                        'asset': {
+                            'version': '1.0',
+                        },
+                        'refine': 'ADD',
+                        'geometricError': tileset['geometricError'],
+                        'root': tileset
+                    }
+                    tileset_name = 'tileset.{}.json'.format(name.decode('ascii'))
+                    with open('{}/{}'.format(folder, tileset_name), 'w') as f:
+                        f.write(json.dumps(tile_root))
+                    tileset['content'] = {'uri': tileset_name}
+                    tileset['children'] = []
 
         return tileset
