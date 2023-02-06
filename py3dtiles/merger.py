@@ -7,6 +7,7 @@ import numpy as np
 import numpy.typing as npt
 
 from py3dtiles.tilers.pnts.pnts_writer import points_to_pnts
+from py3dtiles.tileset import TileSet
 from py3dtiles.tileset.content import read_binary_tile_content, TileContent
 from py3dtiles.tileset.content.feature_table import SemanticPoint
 from py3dtiles.typing import TileDictType
@@ -258,43 +259,14 @@ def build_tileset_quadtree(
         }
 
 
-def extract_content_uris(tileset):
-    contents = []
-    for key in tileset:
-        if key == "content":
-            contents.append(Path(tileset[key]["uri"]))
-        elif key == "children":
-            for child in tileset["children"]:
-                contents += extract_content_uris(child)
-        elif key == "root":
-            contents += extract_content_uris(tileset["root"])
-
-    return contents
-
-
-def remove_tileset(tilset_path: Path) -> None:
-    with tilset_path.open() as f:
-        tileset = json.load(f)
-
-    contents = [
-        tilset_path.parent / content for content in extract_content_uris(tileset)
-    ]
-
-    for content in contents:
-        if content.suffix == ".pnts":
-            content.unlink()
-        elif content.suffix != ".json":
-            raise ValueError(f"unknown extension {content.suffix}")
-
-    tilset_path.unlink()
-
-
 def merge(folder: Union[str, Path], overwrite: bool = False, verbose: int = 0) -> None:
     folder = Path(folder)
     merger_tileset_path = folder / "tileset.json"
     if merger_tileset_path.exists():
         if overwrite:
-            remove_tileset(merger_tileset_path)
+            TileSet.from_file(merger_tileset_path).delete_on_disk(
+                merger_tileset_path, delete_sub_tileset=False
+            )
         else:
             raise FileExistsError(
                 f"Destination tileset {merger_tileset_path} already exists."

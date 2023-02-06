@@ -63,7 +63,7 @@ class TestTileContentManagement:
         tile.tile_content = pnts
 
         with pytest.raises(
-            TilerException, match="tile.content_uri is null, cannot write tile content"
+            TilerException, match="tile.content_uri is None, cannot write tile content"
         ):
             tile.write_content(tmp_dir)
 

@@ -104,6 +104,32 @@ class Tile(RootProperty[TileDictType]):
         """
         return self.tile_content is not None
 
+    def delete_on_disk(self, root_uri: Path, delete_sub_tileset: bool = False) -> None:
+        """
+        Deletes all files linked to the tile and its children. The uri of the folder where tileset is, should be defined.
+
+        :param root_uri: The folder where tileset is
+        :param delete_sub_tileset: If True, all tilesets present as tile content will be removed as well as their content.
+        If False, the linked tilesets in tiles won't be removed.
+        """
+        for child in self.children:
+            child.delete_on_disk(root_uri, delete_sub_tileset)
+
+        # if there is no content_uri, there is no file to remove
+        if self.content_uri is None:
+            return
+
+        if self.content_uri.is_absolute():
+            tile_content_path = self.content_uri
+        else:
+            tile_content_path = root_uri / self.content_uri
+
+        if tile_content_path.suffix == ".json":
+            if delete_sub_tileset:
+                self.get_or_fetch_content(root_uri).delete_on_disk(tile_content_path)  # type: ignore
+        else:
+            tile_content_path.unlink()
+
     def set_refine_mode(self, mode: RefineType) -> None:
         if mode != "ADD" and mode != "REPLACE":
             raise InvalidTilesetError(
@@ -171,7 +197,7 @@ class Tile(RootProperty[TileDictType]):
             )
 
         if self.content_uri is None:
-            raise TilerException("tile.content_uri is null, cannot write tile content")
+            raise TilerException("tile.content_uri is None, cannot write tile content")
 
         if self.content_uri.is_absolute():
             content_path = self.content_uri

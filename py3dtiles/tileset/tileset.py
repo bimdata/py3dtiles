@@ -72,12 +72,13 @@ class TileSet(RootProperty[TilesetDictType]):
         return tileset
 
     @staticmethod
-    def from_file(filepath: Path) -> TileSet:
-        with open(filepath) as f:
+    def from_file(tileset_path: Path) -> TileSet:
+        with tileset_path.open() as f:
             tileset_dict = json.load(f)
 
         tileset = TileSet.from_dict(tileset_dict)
-        tileset.root_uri = filepath.parent
+        tileset.root_uri = tileset_path.parent
+
         return tileset
 
     def get_all_tile_contents(
@@ -86,6 +87,19 @@ class TileSet(RootProperty[TilesetDictType]):
         tiles = [self.root_tile] + self.root_tile.get_all_children()
         for tile in tiles:
             yield tile.get_or_fetch_content(self.root_uri)
+
+    def delete_on_disk(
+        self, tileset_path: Path, delete_sub_tileset: bool = False
+    ) -> None:
+        """
+        Deletes all files linked to the tileset. The uri of the tileset should be defined.
+
+        :param tileset_path: The path of the tileset
+        :param delete_sub_tileset: If True, all tilesets present as tile content will be removed as well as their content.
+        If False, the linked tilesets in tiles won't be removed.
+        """
+        tileset_path.unlink()
+        self.root_tile.delete_on_disk(tileset_path.parent, delete_sub_tileset)
 
     def write_to_directory(self, directory: Path) -> None:
         """
