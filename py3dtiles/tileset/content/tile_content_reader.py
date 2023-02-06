@@ -20,11 +20,13 @@ def read_binary_tile_content(tile_path: Path) -> TileContent:
     with tile_path.open("rb") as f:
         data = f.read()
         arr = np.frombuffer(data, dtype=np.uint8)
+
         tile_content = read_array(arr)
         if tile_content is None or tile_content.header is None:
             raise Invalid3dtilesError(
                 f"The file {tile_path} doesn't contain a valid TileContent data."
             )
+
         return tile_content
 
 

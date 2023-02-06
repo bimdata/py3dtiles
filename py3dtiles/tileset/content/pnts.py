@@ -10,6 +10,7 @@ from .batch_table import BatchTable
 from .feature_table import (
     FeatureTable,
     FeatureTableHeader,
+    SemanticPoint,
 )
 from .tile_content import (
     TileContent,
@@ -194,6 +195,31 @@ class PntsBody(TileContentBody):
         feature_table_array = self.feature_table.to_array()
         batch_table_array = self.batch_table.to_array()
         return np.concatenate((feature_table_array, batch_table_array))
+
+    def get_points(
+        self, transform: npt.NDArray[np.float64] | None
+    ) -> tuple[npt.NDArray[np.float32], npt.NDArray[np.uint8 | np.uint16] | None]:
+        fth = self.feature_table.header
+
+        xyz = self.feature_table.body.position.view(np.float32).reshape(
+            (fth.points_length, 3)
+        )
+        if fth.colors == SemanticPoint.RGB:
+            rgb = self.feature_table.body.color
+            if rgb is None:
+                raise InvalidPntsError(
+                    "If fth.colors is SemanticPoint.RGB, rgb cannot be None."
+                )
+            rgb = rgb.reshape((fth.points_length, 3))
+        else:
+            rgb = None
+
+        if transform is not None:
+            transform = transform.reshape((4, 4))
+            xyzw = np.vstack((xyz, np.ones(xyz.shape[0], dtype=xyz.dtype))).transpose()
+            xyz = np.dot(xyzw, transform.T)[:, :3]
+
+        return xyz, rgb
 
     @staticmethod
     def from_array(header: PntsHeader, array: npt.NDArray[np.uint8]) -> PntsBody:

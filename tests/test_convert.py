@@ -26,7 +26,7 @@ DATA_DIRECTORY = Path(__file__).parent / "fixtures"
 @fixture()
 def tmp_dir() -> Generator[Path, None, None]:
     yield Path("tmp/")
-    shutil.rmtree("./tmp", ignore_errors=True)
+    shutil.rmtree("tmp/", ignore_errors=True)
 
 
 def test_convert(tmp_dir: Path) -> None:

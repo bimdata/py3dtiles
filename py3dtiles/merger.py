@@ -6,10 +6,10 @@ from typing import Any, Dict, List, Optional, TypeVar, Union
 import numpy as np
 import numpy.typing as npt
 
+from py3dtiles.exceptions import TilerException
 from py3dtiles.tilers.pnts.pnts_writer import points_to_pnts
 from py3dtiles.tileset import TileSet
-from py3dtiles.tileset.content import read_binary_tile_content, TileContent
-from py3dtiles.tileset.content.feature_table import SemanticPoint
+from py3dtiles.tileset.content import B3dm, Pnts, read_binary_tile_content, TileContent
 from py3dtiles.typing import TileDictType
 from py3dtiles.utils import split_aabb
 
@@ -32,29 +32,6 @@ def _get_root_transform(tileset: Dict[str, Any]) -> npt.NDArray[np.float32]:
         )
 
     return transform
-
-
-def _get_tile_points(tile, tile_transform, out_transform):
-    fth = tile.body.feature_table.header
-
-    xyz = tile.body.feature_table.body.position.view(np.float32).reshape(
-        (fth.points_length, 3)
-    )
-    if fth.colors == SemanticPoint.RGB:
-        rgb = tile.body.feature_table.body.color.reshape((fth.points_length, 3))
-    else:
-        rgb = None
-
-    x = xyz[:, 0]
-    y = xyz[:, 1]
-    z = xyz[:, 2]
-    w = np.ones(x.shape[0])
-
-    transform = np.dot(out_transform, tile_transform)
-
-    xyzw = np.dot(np.vstack((x, y, z, w)).transpose(), transform.T)
-
-    return xyzw[:, 0:3].astype(np.float32), rgb
 
 
 def init(tileset_paths: List[Path]) -> Dict[str, Any]:
@@ -223,10 +200,16 @@ def build_tileset_quadtree(
         ratio = min(0.5, max_point_count / point_count)
 
         for tileset in insides:
-            root_tile = _get_root_tile(tileset, Path(tileset["filename"]))
-            _xyz, _rgb = _get_tile_points(
-                root_tile, _get_root_transform(tileset), inv_base_transform
-            )
+            root_tile_content = _get_root_tile(tileset, Path(tileset["filename"]))
+            if isinstance(root_tile_content, B3dm):
+                raise ValueError("This tool can only merge pnts files.")
+
+            transform = np.dot(inv_base_transform, _get_root_transform(tileset))
+
+            if not isinstance(root_tile_content, Pnts):
+                raise TilerException("root_tile_content must be a Pnts")
+
+            _xyz, _rgb = root_tile_content.body.get_points(transform)
             select = np.random.choice(_xyz.shape[0], int(_xyz.shape[0] * ratio))
             xyz = np.concatenate((xyz, _xyz[select]))
             if _rgb is not None:
