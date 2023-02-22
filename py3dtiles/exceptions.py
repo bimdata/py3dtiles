@@ -52,3 +52,9 @@ class InvalidTilesetError(Invalid3dtilesError):
     """
     This exception will be thrown if the tileset format isn't respected.
     """
+
+
+class BoundingVolumeMissingException(InvalidTilesetError):
+    """
+    This exception will be thrown when a bounding volume is needed but not present.
+    """
