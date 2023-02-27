@@ -80,6 +80,8 @@ class BoundingVolumeBox(BoundingVolume[BoundingVolumeBoxDictType]):
         if self._box is None:
             raise AttributeError("Bounding Volume Box is not defined.")
 
+        transform = transform.flatten()
+
         # FIXME: the following code only uses the first three coordinates
         # of the transformation matrix (and basically ignores the fourth
         # column of transform). This looks like some kind of mistake...
@@ -176,7 +178,7 @@ class BoundingVolumeBox(BoundingVolume[BoundingVolumeBoxDictType]):
 
         if self._box is None:
             # Then it is safe to overwrite
-            self._box = other._box
+            self._box = copy.deepcopy(other._box)
             return
 
         corners = self.get_corners() + other.get_corners()

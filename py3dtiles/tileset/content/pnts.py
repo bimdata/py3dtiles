@@ -271,8 +271,8 @@ class PntsBody(TileContentBody):
 
         if transform is not None:
             transform = transform.reshape((4, 4))
-            xyzw = np.vstack((xyz, np.ones(xyz.shape[0], dtype=xyz.dtype))).transpose()
-            xyz = np.dot(xyzw, transform.T)[:, :3]
+            xyzw = np.hstack((xyz, np.ones((xyz.shape[0], 1), dtype=xyz.dtype)))
+            xyz = np.dot(xyzw, transform.astype(xyz.dtype))[:, :3]
 
         return xyz, rgb
 

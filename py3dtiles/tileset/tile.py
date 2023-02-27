@@ -17,7 +17,7 @@ from .root_property import RootProperty
 if TYPE_CHECKING:
     from py3dtiles.tileset import TileSet
 
-DEFAULT_TRANSFORMATION = np.identity(4, dtype=np.float64).reshape(-1)
+DEFAULT_TRANSFORMATION = np.identity(4, dtype=np.float64)
 DEFAULT_TRANSFORMATION.setflags(write=False)
 
 
@@ -66,7 +66,7 @@ class Tile(RootProperty[TileDictType]):
             tile.set_refine_mode(tile_dict["refine"])
 
         if "transform" in tile_dict:
-            tile.transform = np.array(tile_dict["transform"])
+            tile.transform = np.array(tile_dict["transform"]).reshape((4, 4))
 
         if "children" in tile_dict:
             for child in tile_dict["children"]:
@@ -142,13 +142,18 @@ class Tile(RootProperty[TileDictType]):
         return self._refine
 
     def add_child(self, tile: Tile) -> None:
+        self.children.append(tile)
+
         if tile.bounding_volume is not None:
             if self.bounding_volume is None:
                 self.bounding_volume = copy.deepcopy(tile.bounding_volume)
+                self.bounding_volume.transform(tile.transform)
             else:
-                self.bounding_volume.add(tile.bounding_volume)
-
-        self.children.append(tile)
+                transformed_bounding_volume = copy.deepcopy(tile.bounding_volume)
+                transformed_bounding_volume.transform(tile.transform)
+                parent_inv_transform = np.linalg.inv(self.transform)
+                transformed_bounding_volume.transform(parent_inv_transform)
+                self.bounding_volume.add(transformed_bounding_volume)
 
     def get_all_children(self) -> list[Tile]:
         """
@@ -244,7 +249,7 @@ class Tile(RootProperty[TileDictType]):
         if (
             self.transform is not None and self.transform is not DEFAULT_TRANSFORMATION
         ):  # if transform has not the same id
-            dict_data["transform"] = list(self.transform)
+            dict_data["transform"] = list(self.transform.flatten())
 
         if self.children:
             # The children list exists indeed (for technical reasons) yet it
