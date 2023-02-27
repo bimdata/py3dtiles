@@ -7,7 +7,7 @@ import numpy as np
 import numpy.typing as npt
 
 from py3dtiles.exceptions import TilerException
-from py3dtiles.tilers.pnts.pnts_writer import points_to_pnts
+from py3dtiles.tilers.pnts.pnts_writer import points_to_pnts_file
 from py3dtiles.tileset import TileSet
 from py3dtiles.tileset.content import B3dm, Pnts, read_binary_tile_content, TileContent
 from py3dtiles.typing import TileDictType
@@ -221,7 +221,7 @@ def build_tileset_quadtree(
             union_aabb[0] = np.minimum(union_aabb[0], ab[0])
             union_aabb[1] = np.maximum(union_aabb[1], ab[1])
 
-        _, pnts_path = points_to_pnts(
+        _, pnts_path = points_to_pnts_file(
             name.encode("ascii"),
             np.concatenate((xyz.view(np.uint8).ravel(), rgb.ravel())),
             out_folder,
