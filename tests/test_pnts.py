@@ -5,7 +5,10 @@ import numpy as np
 from numpy.testing import assert_array_equal
 
 from py3dtiles.tileset.content import Pnts, PntsHeader, read_binary_tile_content
-from py3dtiles.tileset.content.feature_table import FeatureTableHeader, SemanticPoint
+from py3dtiles.tileset.content.pnts_feature_table import (
+    PntsFeatureTableHeader,
+    SemanticPoint,
+)
 
 
 class TestTileContentReader(unittest.TestCase):
@@ -42,7 +45,7 @@ class TestTileBuilder(unittest.TestCase):
         position_array = np.array(positions).flatten()
 
         # create a tile
-        feature_table_header = FeatureTableHeader.from_semantic(
+        feature_table_header = PntsFeatureTableHeader.from_semantic(
             SemanticPoint.POSITION,
             None,
             None,
@@ -98,7 +101,7 @@ class TestTileBuilder(unittest.TestCase):
         color_array = np.array(colors).flatten()
 
         # create a tile
-        feature_table_header = FeatureTableHeader.from_semantic(
+        feature_table_header = PntsFeatureTableHeader.from_semantic(
             SemanticPoint.POSITION, SemanticPoint.RGB, None, len(positions)
         )
         t = Pnts.from_features(feature_table_header, position_array, color_array)

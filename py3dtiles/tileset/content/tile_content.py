@@ -8,7 +8,7 @@ import numpy as np
 import numpy.typing as npt
 
 from .batch_table import BatchTable
-from .feature_table import FeatureTable
+from .pnts_feature_table import PntsFeatureTable
 
 
 class TileContent(ABC):
@@ -70,7 +70,7 @@ class TileContentHeader(ABC):
 
 class TileContentBody(ABC):
     batch_table: BatchTable
-    feature_table: FeatureTable
+    feature_table: PntsFeatureTable
 
     @abstractmethod
     def to_array(self) -> npt.NDArray[np.uint8]:

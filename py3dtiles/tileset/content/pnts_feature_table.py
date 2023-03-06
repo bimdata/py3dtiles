@@ -100,7 +100,7 @@ def check_array_size(
         )
 
 
-class FeatureTableHeader:
+class PntsFeatureTableHeader:
     def __init__(self) -> None:
         # point semantics
         self.positions = SemanticPoint.POSITION
@@ -191,8 +191,8 @@ class FeatureTableHeader:
         quantized_volume_offset: npt.NDArray[np.float32] | None = None,
         quantized_volume_scale: npt.NDArray[np.float32] | None = None,
         constant_rgba: npt.NDArray[np.uint8] | None = None,
-    ) -> FeatureTableHeader:
-        fth = FeatureTableHeader()
+    ) -> PntsFeatureTableHeader:
+        fth = PntsFeatureTableHeader()
         fth.points_length = nb_points
 
         fth.positions = position_semantic
@@ -226,9 +226,9 @@ class FeatureTableHeader:
         return fth
 
     @staticmethod
-    def from_array(array: npt.NDArray[np.uint8]) -> FeatureTableHeader:
+    def from_array(array: npt.NDArray[np.uint8]) -> PntsFeatureTableHeader:
         jsond = json.loads(array.tobytes().decode("utf-8"))
-        fth = FeatureTableHeader()
+        fth = PntsFeatureTableHeader()
 
         # points length
         if "POINTS_LENGTH" in jsond:
@@ -291,7 +291,7 @@ class FeatureTableHeader:
         return fth
 
 
-class FeatureTableBody:
+class PntsFeatureTableBody:
     def __init__(self) -> None:
         self.position: npt.NDArray[np.float32 | np.uint8] = np.array(
             [], dtype=np.float32
@@ -302,8 +302,8 @@ class FeatureTableBody:
 
     @classmethod
     def from_array(
-        cls, feature_table_header: FeatureTableHeader, array: npt.NDArray[np.uint8]
-    ) -> FeatureTableBody:
+        cls, feature_table_header: PntsFeatureTableHeader, array: npt.NDArray[np.uint8]
+    ) -> PntsFeatureTableBody:
         feature_table_body = cls()
 
         nb_points = feature_table_header.points_length
@@ -379,10 +379,10 @@ class FeatureTableBody:
         return semantic_array
 
 
-class FeatureTable:
+class PntsFeatureTable:
     def __init__(self) -> None:
-        self.header = FeatureTableHeader()
-        self.body = FeatureTableBody()
+        self.header = PntsFeatureTableHeader()
+        self.body = PntsFeatureTableBody()
 
     def nb_points(self) -> int:
         return self.header.points_length
@@ -393,13 +393,13 @@ class FeatureTable:
         return np.concatenate((fth_arr, *ftb_arr))
 
     @staticmethod
-    def from_array(th: PntsHeader, array: npt.NDArray[np.uint8]) -> FeatureTable:
+    def from_array(th: PntsHeader, array: npt.NDArray[np.uint8]) -> PntsFeatureTable:
         # build feature table header
-        feature_table_header = FeatureTableHeader.from_array(
+        feature_table_header = PntsFeatureTableHeader.from_array(
             array[: th.ft_json_byte_length]
         )
 
-        feature_table_body = FeatureTableBody.from_array(
+        feature_table_body = PntsFeatureTableBody.from_array(
             feature_table_header,
             array[
                 th.ft_json_byte_length : th.ft_json_byte_length + th.ft_bin_byte_length
@@ -407,7 +407,7 @@ class FeatureTable:
         )
 
         # build feature table
-        feature_table = FeatureTable()
+        feature_table = PntsFeatureTable()
         feature_table.header = feature_table_header
         feature_table.body = feature_table_body
 
@@ -415,12 +415,12 @@ class FeatureTable:
 
     @staticmethod
     def from_features(
-        feature_table_header: FeatureTableHeader,
+        feature_table_header: PntsFeatureTableHeader,
         position_array: npt.NDArray[np.float32 | np.uint8],
         color_array: npt.NDArray[np.uint8 | np.uint16] | None = None,
         normal_position: npt.NDArray[np.float32 | np.uint8] | None = None,
-    ) -> FeatureTable:
-        feature_table = FeatureTable()
+    ) -> PntsFeatureTable:
+        feature_table = PntsFeatureTable()
         feature_table.header = feature_table_header
         nb_points = feature_table.header.points_length
 
