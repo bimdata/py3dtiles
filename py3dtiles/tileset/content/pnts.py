@@ -240,7 +240,7 @@ class PntsHeader(TileContentHeader):
 
 class PntsBody(TileContentBody):
     def __init__(self) -> None:
-        self.feature_table = PntsFeatureTable()
+        self.feature_table: PntsFeatureTable = PntsFeatureTable()
         self.batch_table = BatchTable()
 
     def to_array(self) -> npt.NDArray[np.uint8]:

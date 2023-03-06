@@ -8,10 +8,15 @@ import numpy as np
 import numpy.typing as npt
 
 from py3dtiles.exceptions import InvalidPntsError
+from py3dtiles.tileset.content.feature_table import (
+    FeatureTable,
+    FeatureTableBody,
+    FeatureTableHeader,
+)
 from py3dtiles.typing import FeatureTableHeaderDataType
 
 if TYPE_CHECKING:
-    from py3dtiles.tileset.content import PntsHeader
+    from .tile_content import TileContentHeader
 
 
 class SemanticPoint(Enum):
@@ -100,7 +105,7 @@ def check_array_size(
         )
 
 
-class PntsFeatureTableHeader:
+class PntsFeatureTableHeader(FeatureTableHeader):
     def __init__(self) -> None:
         # point semantics
         self.positions = SemanticPoint.POSITION
@@ -291,7 +296,7 @@ class PntsFeatureTableHeader:
         return fth
 
 
-class PntsFeatureTableBody:
+class PntsFeatureTableBody(FeatureTableBody):
     def __init__(self) -> None:
         self.position: npt.NDArray[np.float32 | np.uint8] = np.array(
             [], dtype=np.float32
@@ -379,7 +384,7 @@ class PntsFeatureTableBody:
         return semantic_array
 
 
-class PntsFeatureTable:
+class PntsFeatureTable(FeatureTable[PntsFeatureTableHeader, PntsFeatureTableBody]):
     def __init__(self) -> None:
         self.header = PntsFeatureTableHeader()
         self.body = PntsFeatureTableBody()
@@ -393,16 +398,19 @@ class PntsFeatureTable:
         return np.concatenate((fth_arr, *ftb_arr))
 
     @staticmethod
-    def from_array(th: PntsHeader, array: npt.NDArray[np.uint8]) -> PntsFeatureTable:
+    def from_array(
+        tile_header: TileContentHeader, array: npt.NDArray[np.uint8]
+    ) -> PntsFeatureTable:
         # build feature table header
         feature_table_header = PntsFeatureTableHeader.from_array(
-            array[: th.ft_json_byte_length]
+            array[: tile_header.ft_json_byte_length]
         )
 
         feature_table_body = PntsFeatureTableBody.from_array(
             feature_table_header,
             array[
-                th.ft_json_byte_length : th.ft_json_byte_length + th.ft_bin_byte_length
+                tile_header.ft_json_byte_length : tile_header.ft_json_byte_length
+                + tile_header.ft_bin_byte_length
             ],
         )
 
