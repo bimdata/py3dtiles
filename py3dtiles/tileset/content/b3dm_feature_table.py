@@ -178,7 +178,7 @@ class B3dmFeatureTable(FeatureTable[B3dmFeatureTableHeader, B3dmFeatureTableBody
 
         previous_byte_offset = 0
         for property_definition in feature_table.header.data.values():
-            if isinstance(property_definition, list):
+            if not isinstance(property_definition, dict):
                 continue
 
             if previous_byte_offset != property_definition["byteOffset"]:
