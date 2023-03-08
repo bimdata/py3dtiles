@@ -1,7 +1,7 @@
 import argparse
 import copy
 from pathlib import Path
-from typing import Any, List, Optional, TypeVar
+from typing import Any, Dict, List, Optional, TypeVar
 
 import numpy as np
 import numpy.typing as npt
@@ -21,7 +21,7 @@ _T = TypeVar("_T", bound=npt.NBitBase)
 
 
 def merge(
-    tilesets: List[TileSet], tileset_path: Optional[List[Path]] = None
+    tilesets: List[TileSet], tileset_paths: Optional[Dict[TileSet, Path]] = None
 ) -> TileSet:
     """
     Create a tileset that include all input tilesets. The tilesets don't need to be written.
@@ -31,7 +31,7 @@ def merge(
         raise ValueError("The tileset list cannot be empty")
 
     global_tileset = TileSet()
-    for i, tileset in enumerate(tilesets):
+    for tileset in tilesets:
         bounding_volume = copy.deepcopy(tileset.root_tile.bounding_volume)
         if bounding_volume is None:
             raise BoundingVolumeMissingException(
@@ -45,8 +45,8 @@ def merge(
             bounding_volume=bounding_volume,
             refine_mode="REPLACE",
         )
-        if tileset_path is not None:
-            tile.content_uri = tileset_path[i]
+        if tileset_paths is not None:
+            tile.content_uri = tileset_paths[tileset]
 
         global_tileset.root_tile.add_child(tile)
 
@@ -83,7 +83,7 @@ def build_tileset_quadtree(
     tilesets: List[TileSet],
     bounding_box_centers: List[npt.NDArray[np.float64]],
     inv_base_transform: npt.NDArray[np.float64],
-    tileset_paths: Optional[List[Path]] = None,
+    tileset_paths: Optional[Dict[TileSet, Path]] = None,
 ) -> Optional[Tile]:
     insides = [
         (tileset, center)
@@ -115,7 +115,9 @@ def build_tileset_quadtree(
             transform=inv_base_transform,
             bounding_volume=bvb,
         )
-        tile.content_uri = tileset.root_uri
+        if tileset_paths is not None:
+            tile.content_uri = tileset_paths[tileset]
+
         return tile
     else:
         children = []
@@ -126,6 +128,7 @@ def build_tileset_quadtree(
                 tileset_insides,
                 center_insides,
                 inv_base_transform,
+                tileset_paths,
             )
             if r is not None:
                 children.append(r)
@@ -146,12 +149,12 @@ def build_tileset_quadtree(
 
         max_point_count = 50000
         point_count = 0
-        for i, tileset in enumerate(tileset_insides):
+        for tileset in tileset_insides:
             if tileset.root_tile.tile_content is not None:
                 root_tile_content = tileset.root_tile.tile_content
             elif tileset_paths is not None:
                 root_tile_content = tileset.root_tile.get_or_fetch_content(
-                    tileset_paths[i]
+                    tileset_paths[tileset]
                 )
             else:
                 root_tile_content = None
@@ -208,6 +211,7 @@ def build_tileset_quadtree(
         )
         if pnts is not None:
             tile.tile_content = pnts
+            tile.content_uri = Path("r.pnts")
 
         for child in children:
             tile.add_child(child)
@@ -215,7 +219,9 @@ def build_tileset_quadtree(
         return tile
 
 
-def merge_with_pnts_content(tilesets: List[TileSet]) -> TileSet:
+def merge_with_pnts_content(
+    tilesets: List[TileSet], tileset_paths: Optional[Dict[TileSet, Path]] = None
+) -> TileSet:
     global_bounding_volume = BoundingVolumeBox()
     bounding_box_centers = []
 
@@ -242,7 +248,7 @@ def merge_with_pnts_content(tilesets: List[TileSet]) -> TileSet:
 
     # build hierarchical structure
     result = build_tileset_quadtree(
-        aabb, tilesets, bounding_box_centers, inv_base_transform
+        aabb, tilesets, bounding_box_centers, inv_base_transform, tileset_paths
     )
 
     if result is None:
@@ -274,19 +280,24 @@ def merge_from_files(
 
     tilesets = []
     for path in tileset_paths:
-        tilesets.append(TileSet.from_file(path.absolute()))
+        tilesets.append(TileSet.from_file(path))
 
     not_only_pnts = force_universal_merger or any(
         not isinstance(
-            tileset.root_tile.get_or_fetch_content(tileset_path.absolute()), Pnts
+            tileset.root_tile.get_or_fetch_content(tileset_path.parent), Pnts
         )
         for tileset_path, tileset in zip(tileset_paths, tilesets)
     )
 
+    relative_tileset_paths = {
+        tileset: path.absolute().relative_to(output_tileset_path.parent)
+        for tileset, path in zip(tilesets, tileset_paths)
+    }
+
     if not_only_pnts:
-        tileset = merge(tilesets, tileset_paths)
+        tileset = merge(tilesets, relative_tileset_paths)
     else:
-        tileset = merge_with_pnts_content(tilesets)
+        tileset = merge_with_pnts_content(tilesets, relative_tileset_paths)
 
     tileset.root_uri = output_tileset_path.parent
     tileset.write_to_directory(output_tileset_path)

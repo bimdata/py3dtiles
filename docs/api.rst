@@ -261,8 +261,9 @@ This basic example aims to show a set of methods to create, manipulate and write
     >>> # Create the tileset
     >>> tileset = TileSet()
     >>> tileset.root_tile = root_tile
-    >>> tileset_directory = Path("my3dtiles2/")
-    >>> tileset.write_to_directory(tileset_directory)
+    >>> tileset_path = Path("my3dtiles2/tileset.json")
+    >>> tileset_path.parent.mkdir()
+    >>> tileset.write_to_directory(tileset_path)
 
 Tile content
 ------------
