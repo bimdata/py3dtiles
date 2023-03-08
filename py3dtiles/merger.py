@@ -47,6 +47,8 @@ def merge(
         )
         if tileset_paths is not None:
             tile.content_uri = tileset_paths[tileset]
+        else:
+            tile.tile_content = tileset
 
         global_tileset.root_tile.add_child(tile)
 
@@ -117,6 +119,8 @@ def build_tileset_quadtree(
         )
         if tileset_paths is not None:
             tile.content_uri = tileset_paths[tileset]
+        else:
+            tile.tile_content = tileset
 
         return tile
     else:
