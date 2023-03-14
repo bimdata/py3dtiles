@@ -5,6 +5,7 @@ from pathlib import Path
 import shutil
 from unittest.mock import patch
 
+from _pytest.python_api import RaisesContext
 import laspy
 import numpy as np
 from numpy.testing import assert_array_equal
@@ -635,7 +636,7 @@ def test_convert_many_point_same_location(tmp_dir):
 def test_convert_rgb_classif(rgb_bool, classif_bool, tmp_dir):
 
     if not classif_bool:
-        expected_raise = raises(
+        expected_raise: RaisesContext[ValueError] | nullcontext[None] = raises(
             ValueError, match="The property Classification is not found"
         )
     else:
@@ -659,6 +660,9 @@ def test_convert_rgb_classif(rgb_bool, classif_bool, tmp_dir):
 
     tileset = TileSet.from_file(tmp_dir / "tileset.json")
     for tile_content in tileset.get_all_tile_contents():
+        if isinstance(tile_content, TileSet):
+            continue
+
         assert rgb_bool ^ (tile_content.body.feature_table.body.color is None)
         with expected_raise:
             bt_prop = tile_content.body.batch_table.get_binary_property(

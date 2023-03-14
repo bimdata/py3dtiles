@@ -42,7 +42,7 @@ class TileSet(Extendable):
 
     def get_all_tile_contents(
         self,
-    ) -> Generator[TileContent | TileSet | None, None, None]:
+    ) -> Generator[TileContent | TileSet, None, None]:
         tiles = [self.root_tile] + self.root_tile.get_all_children()
         for tile in tiles:
             yield tile.get_or_fetch_content(self.root_uri)
