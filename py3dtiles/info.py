@@ -1,9 +1,11 @@
+import argparse
 from pathlib import Path
+from typing import Any
 
 from py3dtiles.tileset.content import read_binary_tile_content
 
 
-def main(args):
+def main(args: argparse.Namespace) -> None:
     try:
         tile_content = read_binary_tile_content(args.file)
     except ValueError as e:
@@ -13,7 +15,9 @@ def main(args):
     tile_content.print_info()
 
 
-def init_parser(subparser):
+def init_parser(
+    subparser: "argparse._SubParsersAction[Any]",
+) -> argparse.ArgumentParser:
     # arg parse
     parser = subparser.add_parser(
         "info", help="Extract information from a 3DTiles file"

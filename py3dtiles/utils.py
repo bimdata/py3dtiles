@@ -10,9 +10,10 @@ import numpy.typing as npt
 from pyproj import CRS
 
 if TYPE_CHECKING:
+    from py3dtiles.tilers.node import Node
     from typing_extensions import ParamSpec
 
-T = TypeVar("T", bound=npt.NBitBase)
+_T = TypeVar("_T", bound=npt.NBitBase)
 
 
 def str_to_CRS(srs: str | CRS | None) -> CRS | None:
@@ -47,7 +48,7 @@ class ResponseType(Enum):
 
 
 class OctreeMetadata(NamedTuple):
-    aabb: npt.NDArray[np.float32]
+    aabb: npt.NDArray[np.float64]
     spacing: float
     scale: float
 
@@ -101,11 +102,13 @@ def node_name_to_path(
     return full_path
 
 
-def compute_spacing(aabb: npt.NDArray[np.floating[T]]) -> float:
+def compute_spacing(aabb: npt.NDArray[np.floating[_T]]) -> float:
     return float(np.linalg.norm(aabb[1] - aabb[0]) / 125)
 
 
-def aabb_size_to_subdivision_type(size: npt.NDArray[np.floating[T]]) -> SubdivisionType:
+def aabb_size_to_subdivision_type(
+    size: npt.NDArray[np.floating[_T]],
+) -> SubdivisionType:
     if size[2] / min(size[0], size[1]) < 0.5:
         return SubdivisionType.QUADTREE
     else:
@@ -113,8 +116,8 @@ def aabb_size_to_subdivision_type(size: npt.NDArray[np.floating[T]]) -> Subdivis
 
 
 def split_aabb(
-    aabb: npt.NDArray[np.floating[T]], index: int, force_quadtree: bool = False
-) -> npt.NDArray[np.floating[T]]:
+    aabb: npt.NDArray[np.floating[_T]], index: int, force_quadtree: bool = False
+) -> npt.NDArray[np.floating[_T]]:
     half = (aabb[1] - aabb[0]) * 0.5
     t = aabb_size_to_subdivision_type(half)
 
@@ -135,7 +138,7 @@ def split_aabb(
     return new_aabb
 
 
-def make_aabb_cubic(aabb):
+def make_aabb_cubic(aabb: npt.NDArray[np.floating[_T]]) -> npt.NDArray[np.floating[_T]]:
     s = max(aabb[1] - aabb[0])
     aabb[1][0] = aabb[0][0] + s
     aabb[1][1] = aabb[0][1] + s
@@ -143,10 +146,14 @@ def make_aabb_cubic(aabb):
     return aabb
 
 
-def node_from_name(name, parent_aabb, parent_spacing):
+def node_from_name(
+    name: bytes,
+    parent_aabb: npt.NDArray[np.floating[_T]],
+    parent_spacing: float,
+) -> Node:
     from py3dtiles.tilers.node import Node
 
     spacing = parent_spacing * 0.5
     aabb = split_aabb(parent_aabb, int(name[-1])) if len(name) > 0 else parent_aabb
-    #  let's build a new Node
-    return Node(name, aabb, spacing)
+    # let's build a new Node
+    return Node(name, aabb.astype(np.float64), spacing)
