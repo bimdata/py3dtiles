@@ -39,7 +39,7 @@ class TestBoundingVolumeBox(unittest.TestCase):
         bounding_volume_box = BoundingVolumeBox()
 
         # Empty list
-        bounding_volume_list: List = []
+        bounding_volume_list: List[float] = []
         with self.assertRaises(ValueError):
             bounding_volume_box.set_from_list(bounding_volume_list)
         self.assertIs(bounding_volume_box._box, None)

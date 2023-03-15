@@ -4,6 +4,7 @@ from typing import Generator, List, Optional, Tuple
 
 import laspy
 import numpy as np
+import numpy.typing as npt
 from pyproj import Transformer
 
 from py3dtiles.typing import MetadataReaderType, OffsetScaleType, PortionItemType
@@ -41,7 +42,11 @@ def run(
     portion: PortionItemType,
     transformer: Optional[Transformer],
     color_scale: Optional[float],
-) -> Generator[Tuple, None, None]:
+) -> Generator[
+    Tuple[npt.NDArray[np.float32], npt.NDArray[np.uint8], npt.NDArray[np.uint8]],
+    None,
+    None,
+]:
     """
     Reads points from a las file
     """

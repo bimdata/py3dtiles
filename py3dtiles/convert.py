@@ -75,14 +75,14 @@ class Worker:
     def __init__(
         self,
         activity_graph: bool,
-        transformer: Transformer,
+        transformer: Optional[Transformer],
         octree_metadata: OctreeMetadata,
         folder: Path,
         write_rgb: bool,
         color_scale: Optional[float],
         write_classification: bool,
         verbosity: int,
-        uri: str,
+        uri: bytes,
     ) -> None:
         self.activity_graph = activity_graph
         self.transformer = transformer
@@ -98,9 +98,9 @@ class Worker:
         self.context = zmq.Context()
 
     def run(self):
-        self.skt: zmq.sugar.socket.Socket = self.context.socket(zmq.DEALER)
+        self.skt: zmq.Socket[bytes] = self.context.socket(zmq.DEALER)
 
-        self.skt.connect(self.uri)
+        self.skt.connect(self.uri)  # type: ignore [arg-type]
 
         startup_time = time.time()
         idle_time = 0.0
@@ -298,7 +298,20 @@ class ZmqManager:
     We can also request general status.
     """
 
-    def __init__(self, number_of_jobs: int, process_args: tuple):
+    def __init__(
+        self,
+        number_of_jobs: int,
+        process_args: Tuple[
+            bool,
+            Optional[Transformer],
+            OctreeMetadata,
+            Path,
+            bool,
+            Optional[float],
+            bool,
+            int,
+        ],
+    ):
         """
         For the process_args argument, see the init method of Worker
         to get the list of needed parameters.
@@ -311,6 +324,10 @@ class ZmqManager:
         self.socket.bind(URI)
         # Useful only when TCP is used to get the URI with the opened port
         self.uri = self.socket.getsockopt(zmq.LAST_ENDPOINT)
+        if not isinstance(self.uri, bytes):
+            raise RuntimeError(
+                "The uri returned by self.socket.getsockopt should be bytes."
+            )
 
         self.processes = [
             Process(target=worker_target, args=(*process_args, self.uri))
@@ -497,7 +514,7 @@ class _Convert:
         classification: bool = True,
         graph: bool = False,
         color_scale: Optional[float] = None,
-        verbose: bool = False,
+        verbose: int = False,
     ):
         """
         :param files: Filenames to process. The file must use the .las, .laz, .xyz or .ply format.
@@ -1003,13 +1020,23 @@ class _Convert:
                         raise TilerException(
                             "tile_content.body.feature_table.body.color shouldn't be None here. Seems to be a py3dtiles issue."
                         )
-                    rgb = tile_color.reshape((fth.points_length, 3))
+                    if tile_color.dtype != np.uint8:
+                        raise TilerException(
+                            "The data type of tile_content.body.feature_table.body.color must be np.uint8. Seems to be a py3dtiles issue."
+                        )
+                    rgb = tile_color.reshape((fth.points_length, 3)).astype(
+                        np.uint8, copy=False
+                    )  # the astype is used for typing
                 else:
                     rgb = np.zeros(xyz.shape, dtype=np.uint8)
                 if self.classification:
-                    classification = tile_content.body.batch_table.get_binary_property(
-                        "Classification"
-                    ).reshape(-1, 1)
+                    classification = (
+                        tile_content.body.batch_table.get_binary_property(
+                            "Classification"
+                        )
+                        .astype(np.uint8)
+                        .reshape(-1, 1)
+                    )
                 else:
                     classification = np.zeros((fth.points_length, 1), dtype=np.uint8)
                 root_node.grid.insert(

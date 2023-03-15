@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
@@ -25,7 +25,7 @@ class Tile(RootProperty[TileDictType]):
     def __init__(
         self,
         geometric_error: float = 500,
-        bounding_volume: BoundingVolume | None = None,
+        bounding_volume: BoundingVolume[Any] | None = None,
         refine_mode: RefineType = "ADD",
         content_uri: Path | None = None,
     ) -> None:

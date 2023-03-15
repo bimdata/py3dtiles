@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Generic, TYPE_CHECKING, TypeVar
+from typing import Any, Generic, TYPE_CHECKING, TypeVar
 
 import numpy as np
 import numpy.typing as npt
@@ -58,7 +58,7 @@ class BoundingVolume(
         ...
 
     @abstractmethod
-    def add(self, other: BoundingVolume) -> None:
+    def add(self, other: BoundingVolume[Any]) -> None:
         ...
 
     @abstractmethod

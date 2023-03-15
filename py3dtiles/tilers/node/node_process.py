@@ -13,7 +13,7 @@ class NodeProcess:
         node_catalog: NodeCatalog,
         octree_metadata: OctreeMetadata,
         name: bytes,
-        tasks: List,
+        tasks: List[bytes],
         begin: float,
         log_file: Optional[TextIO],
     ):
@@ -31,7 +31,7 @@ class NodeProcess:
         max_depth: int = 1,
         force_forward: bool = False,
         depth: int = 0,
-    ) -> Generator[Tuple, None, None]:
+    ) -> Generator[Tuple[bytes, bytes, int], None, None]:
         if depth >= max_depth:
             threshold = 0 if force_forward else 10_000
             if node.get_pending_points_count() > threshold:
@@ -52,9 +52,9 @@ class NodeProcess:
                     depth + 1,
                 )
 
-    def _balance(self, node, max_depth=1, depth=0):
+    def _balance(self, node: Node, max_depth: int = 1, depth: int = 0) -> None:
         if depth >= max_depth:
-            return 0
+            return
 
         if node.needs_balance():
             node.grid.balance(node.aabb_size, node.aabb[0], node.inv_aabb_size)
@@ -82,8 +82,7 @@ class NodeProcess:
             halt_at_depth = 1
         return halt_at_depth
 
-    def run(self) -> Generator[Tuple, None, None]:
-
+    def run(self) -> Generator[Tuple[bytes, bytes, int], None, None]:
         log_enabled = self.log_file is not None
 
         if log_enabled:
