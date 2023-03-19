@@ -4,10 +4,8 @@ import shutil
 import unittest
 
 from py3dtiles.convert import convert
-from py3dtiles.tileset.bounding_volume_box import BoundingVolumeBox
+from py3dtiles.tileset import BoundingVolumeBox, Tile, TileSet
 from py3dtiles.tileset.extension import BaseExtension
-from py3dtiles.tileset.tile import Tile
-from py3dtiles.tileset.tileset import TileSet
 
 DATA_DIRECTORY = Path(__file__).parent / "fixtures"
 

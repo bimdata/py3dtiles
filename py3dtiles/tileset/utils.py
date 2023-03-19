@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from py3dtiles.tileset.tile_content_reader import read_file
+from .content import read_file
 
 
 def number_of_points_in_tileset(tileset_path: Path) -> int:

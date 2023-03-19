@@ -12,8 +12,8 @@ import numpy.typing as npt
 from py3dtiles.exceptions import TilerException
 from py3dtiles.tilers.pnts import MIN_POINT_SIZE
 from py3dtiles.tilers.pnts.pnts_writer import points_to_pnts
-from py3dtiles.tileset.feature_table import SemanticPoint
-from py3dtiles.tileset.tile_content_reader import read_file
+from py3dtiles.tileset.content import read_file
+from py3dtiles.tileset.content.feature_table import SemanticPoint
 from py3dtiles.typing import BoundingVolumeBoxDictType, ContentType, TileDictType
 from py3dtiles.utils import (
     aabb_size_to_subdivision_type,

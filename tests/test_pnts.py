@@ -4,9 +4,8 @@ import unittest
 import numpy as np
 from numpy.testing import assert_array_equal
 
-from py3dtiles.tileset.content import Pnts, PntsHeader
-from py3dtiles.tileset.feature_table import FeatureTableHeader, SemanticPoint
-from py3dtiles.tileset.tile_content_reader import read_file
+from py3dtiles.tileset.content import Pnts, PntsHeader, read_file
+from py3dtiles.tileset.content.feature_table import FeatureTableHeader, SemanticPoint
 
 
 class TestTileContentReader(unittest.TestCase):

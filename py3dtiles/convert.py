@@ -33,7 +33,7 @@ from py3dtiles.tilers.matrix_manipulation import (
 from py3dtiles.tilers.node import Node, NodeCatalog, NodeProcess, SharedNodeStore
 from py3dtiles.tilers.pnts import pnts_writer
 from py3dtiles.tilers.pnts.constants import MIN_POINT_SIZE
-from py3dtiles.tileset.tile_content_reader import read_file
+from py3dtiles.tileset.content import read_file
 from py3dtiles.typing import PortionsType
 from py3dtiles.utils import (
     CommandType,

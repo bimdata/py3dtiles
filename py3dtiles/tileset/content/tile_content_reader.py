@@ -6,10 +6,11 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from py3dtiles.exceptions import Invalid3dtilesError
-from .content import B3dm, Pnts
+from .b3dm import B3dm
+from .pnts import Pnts
 
 if TYPE_CHECKING:
-    from .content import TileContent
+    from py3dtiles.tileset.content import TileContent
 
 __all__ = ["read_file"]
 

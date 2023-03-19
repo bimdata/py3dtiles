@@ -8,8 +8,8 @@ import numpy as np
 import psycopg2
 
 from py3dtiles.tilers.b3dm.wkb_utils import TriangleSoup
-from py3dtiles.tileset.batch_table import BatchTable
 from py3dtiles.tileset.content import B3dm, GlTF
+from py3dtiles.tileset.content.batch_table import BatchTable
 
 
 class BoundingBox:

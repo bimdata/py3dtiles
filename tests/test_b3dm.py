@@ -6,8 +6,7 @@ import unittest
 import numpy as np
 
 from py3dtiles.tilers.b3dm.wkb_utils import TriangleSoup
-from py3dtiles.tileset.content import B3dm, GlTF
-from py3dtiles.tileset.tile_content_reader import read_file
+from py3dtiles.tileset.content import B3dm, GlTF, read_file
 
 
 class TestTileContentReader(unittest.TestCase):

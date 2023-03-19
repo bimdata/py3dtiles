@@ -8,13 +8,12 @@ import pytest
 
 from py3dtiles.convert import convert
 from py3dtiles.exceptions import InvalidTilesetError, TilerException
-from py3dtiles.tileset.bounding_volume_box import BoundingVolumeBox
+from py3dtiles.tileset import BoundingVolumeBox, Tile
 from py3dtiles.tileset.content import (
     Pnts,
     PntsBody,
     PntsHeader,
 )
-from py3dtiles.tileset.tile import Tile
 
 DATA_DIRECTORY = Path(__file__).parent / "fixtures"
 

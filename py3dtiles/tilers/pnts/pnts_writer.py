@@ -9,9 +9,9 @@ import numpy as np
 import numpy.typing as npt
 
 import py3dtiles
-from py3dtiles.tileset.batch_table import BatchTable
 from py3dtiles.tileset.content import Pnts, PntsBody, PntsHeader
-from py3dtiles.tileset.feature_table import (
+from py3dtiles.tileset.content.batch_table import BatchTable
+from py3dtiles.tileset.content.feature_table import (
     FeatureTable,
     FeatureTableBody,
     FeatureTableHeader,

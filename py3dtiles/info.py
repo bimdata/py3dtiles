@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from py3dtiles.tileset.tile_content_reader import read_file
+from py3dtiles.tileset.content import read_file
 
 
 def main(args):
