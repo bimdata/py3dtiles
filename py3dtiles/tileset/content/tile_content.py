@@ -31,6 +31,10 @@ class TileContent(ABC):
             f.write(bytes(tile_arr))
 
     @abstractmethod
+    def print_info(self) -> None:
+        ...
+
+    @abstractmethod
     def sync(self) -> None:
         """
         Allow to synchronize headers with contents.
