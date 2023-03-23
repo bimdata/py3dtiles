@@ -7,6 +7,7 @@ import numpy as np
 import numpy.typing as npt
 
 from py3dtiles.exceptions import Invalid3dtilesError
+from py3dtiles.typing import BatchTableHeaderDataType
 
 if TYPE_CHECKING:
     from py3dtiles.tileset.content import TileContentHeader
@@ -49,9 +50,7 @@ PropertyLiteralType = Literal["SCALAR", "VEC2", "VEC3", "VEC4"]
 
 
 class BatchTableHeader:
-    def __init__(
-        self, data: dict[str, list[Any] | dict[str, Any]] | None = None
-    ) -> None:
+    def __init__(self, data: BatchTableHeaderDataType | None = None) -> None:
         if data is not None:
             self.data = data
         else:

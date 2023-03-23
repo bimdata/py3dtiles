@@ -6,7 +6,6 @@ from typing import (
     List,
     Literal,
     Optional,
-    Sequence,
     Tuple,
     TYPE_CHECKING,
     TypedDict,
@@ -19,6 +18,8 @@ from pyproj import CRS
 
 if TYPE_CHECKING:
     from typing_extensions import NotRequired
+
+# Tileset types
 
 ExtensionDictType = Dict[str, Any]
 ExtraDictType = Dict[str, Any]
@@ -85,8 +86,25 @@ class TilesetDictType(ThreeDDictBase):
     extensionsUsed: NotRequired[list[str]]
 
 
-PortionType = Tuple[int, ...]
-PortionsType = Sequence[Tuple[str, PortionType]]
+# Tile content types
+
+BatchTableHeaderDataType = Dict[str, Union[List[Any], Dict[str, Any]]]
+
+FeatureTableHeaderDataType = Dict[
+    str,
+    Union[
+        int,  # points_length
+        Dict[str, int],  # byte offsets
+        Tuple[float, float, float],  # rtc
+        List[float],  # quantized_volume_offset and quantized_volume_scale
+        Tuple[int, int, int, int],  # constant_rgba
+    ],
+]
+
+# Tiler types
+
+PortionItemType = Tuple[int, ...]
+PortionsType = List[Tuple[str, PortionItemType]]
 
 
 class MetadataReaderType(TypedDict):

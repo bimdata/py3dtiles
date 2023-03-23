@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numpy.typing as npt
 
-from py3dtiles.exceptions import InvalidTilesetError, TilerException
+from py3dtiles.exceptions import InvalidTilesetError, Py3dtilesException, TilerException
 from py3dtiles.typing import RefineType, TileDictType
 from .bounding_volume import BoundingVolume
 from .bounding_volume_box import BoundingVolumeBox
@@ -79,9 +79,7 @@ class Tile(Extendable):
 
         return tile
 
-    def get_or_fetch_content(
-        self, root_uri: Path | None
-    ) -> TileContent | TileSet | None:
+    def get_or_fetch_content(self, root_uri: Path | None) -> TileContent | TileSet:
         """
         If a `tile_content` content has been set, returns this content.
         If the tile content is None and a `tile_content` uri has been set, the tile will load the file and return its content.
@@ -89,6 +87,10 @@ class Tile(Extendable):
         :param root_uri: the base uri which `tile.content_uri` is relative to. Usually the directory containing the tileset containing this tile.
         """
         self._load_tile_content(root_uri)
+        if self.tile_content is None:
+            raise Py3dtilesException(
+                "self.tile_content cannot be None here, seems to be a py3dtiles issue."
+            )
         return self.tile_content
 
     def has_content(self) -> bool:

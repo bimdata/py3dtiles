@@ -44,6 +44,42 @@ class Pnts(TileContent):
             + self.header.bt_bin_byte_length
         )
 
+    def print_info(self) -> None:
+        if self.header:
+            th = self.header
+            print("Tile Header")
+            print("-----------")
+            print("Magic Value: ", th.magic_value)
+            print("Version: ", th.version)
+            print("Tile byte length: ", th.tile_byte_length)
+            print("Feature table json byte length: ", th.ft_json_byte_length)
+            print("Feature table bin byte length: ", th.ft_bin_byte_length)
+        else:
+            print("Tile with no header")
+
+        if self.body:
+            fth = self.body.feature_table.header
+            print("")
+            print("Feature Table Header")
+            print("--------------------")
+            print(fth.to_json())
+
+            # first point data
+            if fth.points_length > 0:
+                print("")
+                print("First point")
+                print("-----------")
+                (
+                    feature_position,
+                    feature_color,
+                    feature_normal,
+                ) = self.body.feature_table.get_feature_at(0)
+                print(f"Position: {feature_position}")
+                print(f"Color: {feature_color}")
+                print(f"Normal: {feature_normal}")
+        else:
+            print("Tile with no body")
+
     @staticmethod
     def from_features(
         feature_table_header: FeatureTableHeader,
