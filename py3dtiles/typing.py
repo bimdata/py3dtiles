@@ -84,6 +84,7 @@ class TilesetDictType(RootPropertyDictType):
     root: TileDictType
     properties: NotRequired[PropertyType]
     extensionsUsed: NotRequired[list[str]]
+    extensionsRequired: NotRequired[list[str]]
 
 
 # Tile content types

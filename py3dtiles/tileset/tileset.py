@@ -53,6 +53,8 @@ class TileSet(RootProperty[TilesetDictType]):
         self.geometric_error: GeometricErrorType = geometric_error
         self.root_tile = Tile()
         self.root_uri = root_uri
+        self.extensions_used: set[str] = set()
+        self.extensions_required: set[str] = set()
 
     @classmethod
     def from_dict(cls, tileset_dict: TilesetDictType) -> Self:
@@ -61,6 +63,11 @@ class TileSet(RootProperty[TilesetDictType]):
         tileset.asset = Asset.from_dict(tileset_dict["asset"])
         tileset.root_tile = Tile.from_dict(tileset_dict["root"])
         tileset.set_properties_from_dict(tileset_dict)
+
+        if "extensionsUsed" in tileset_dict:
+            tileset.extensions_used = set(tileset_dict["extensionsUsed"])
+        if "extensionsRequired" in tileset_dict:
+            tileset.extensions_required = set(tileset_dict["extensionsRequired"])
 
         return tileset
 
@@ -130,7 +137,14 @@ class TileSet(RootProperty[TilesetDictType]):
             "geometricError": self.geometric_error,
         }
 
-        return self.add_root_properties_to_dict(tileset_dict)
+        tileset_dict = self.add_root_properties_to_dict(tileset_dict)
+
+        if self.extensions_used:
+            tileset_dict["extensionsUsed"] = list(self.extensions_used)
+        if self.extensions_required:
+            tileset_dict["extensionsRequired"] = list(self.extensions_required)
+
+        return tileset_dict
 
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), separators=(",", ":"))

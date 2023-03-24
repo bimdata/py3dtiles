@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from pathlib import Path
 import shutil
@@ -6,8 +8,18 @@ import unittest
 from py3dtiles.convert import convert
 from py3dtiles.tileset import BoundingVolumeBox, Tile, TileSet
 from py3dtiles.tileset.extension import BaseExtension
+from py3dtiles.typing import ExtensionDictType
 
 DATA_DIRECTORY = Path(__file__).parent / "fixtures"
+
+
+class MockExtension(BaseExtension):
+    @classmethod
+    def from_dict(cls, extension_dict: ExtensionDictType) -> MockExtension:
+        return cls("MockExtension")
+
+    def to_dict(self) -> ExtensionDictType:
+        return {}
 
 
 class TestTileSet(unittest.TestCase):
@@ -29,8 +41,9 @@ class TestTileSet(unittest.TestCase):
         root_tile.set_refine_mode("ADD")
         tile_set.root_tile = root_tile
 
-        extension = BaseExtension("Test")
+        extension = MockExtension("Test")
         tile_set.extensions[extension.name] = extension
+        tile_set.extensions_used.add(extension.name)
 
         return tile_set
 
@@ -66,6 +79,7 @@ class TestTileSet(unittest.TestCase):
                     "refine": "ADD",
                 },
                 "extensions": {"Test": {}},
+                "extensionsUsed": ["Test"],
                 "geometricError": 500,
                 "asset": {"version": "1.0"},
             },

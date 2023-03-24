@@ -62,6 +62,12 @@ class BatchTableHierarchy(BaseExtension):
         self.classes: list[HierarchyClass] = []
         self.instancesLength = 0
 
+    @classmethod
+    def from_dict(cls, extension_dict: ExtensionDictType) -> BatchTableHierarchy:
+        raise NotImplementedError(
+            "The load from a dictionary of the BatchTableHierarchy is not implemented."
+        )
+
     def add_class(self, class_name: str, property_names: list[str]) -> HierarchyClass:
         hierarchy_class = HierarchyClass(class_name, property_names)
         self.classes.append(hierarchy_class)
