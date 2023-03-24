@@ -30,14 +30,14 @@ class TestTileSet(unittest.TestCase):
         tile_set.root_tile = root_tile
 
         extension = BaseExtension("Test")
-        tile_set.add_extension(extension)
+        tile_set.extensions[extension.name] = extension
 
         return tile_set
 
     def test_constructor(self):
         tile_set = TileSet()
-        self.assertDictEqual(tile_set._asset, {"version": "1.0"})
-        self.assertDictEqual(tile_set._extensions, {})
+        self.assertDictEqual(tile_set.asset.to_dict(), {"version": "1.0"})
+        self.assertDictEqual(tile_set.extensions, {})
         self.assertEqual(tile_set.geometric_error, 500)
         self.assertIsNotNone(tile_set.root_tile)
 
@@ -83,7 +83,8 @@ class TestTileSet(unittest.TestCase):
         with (tmp_dir / "tileset.json").open() as f:
             tileset_dict = json.load(f)
 
-        tileset = TileSet.from_dict(tileset_dict, tmp_dir)
+        tileset = TileSet.from_dict(tileset_dict)
+        tileset.root_uri = tmp_dir
 
         self.assertDictEqual(tileset.to_dict(), tileset_dict)
 

@@ -29,20 +29,20 @@ RefineType = Literal["ADD", "REPLACE"]
 TransformDictType = List[float]
 
 
-class ThreeDDictBase(TypedDict):
+class RootPropertyDictType(TypedDict):
     extensions: NotRequired[dict[str, ExtensionDictType]]
     extras: NotRequired[ExtraDictType]
 
 
-class BoundingVolumeBoxDictType(ThreeDDictBase):
+class BoundingVolumeBoxDictType(RootPropertyDictType):
     box: list[float]
 
 
-class BoundingVolumeRegionDictType(ThreeDDictBase):
+class BoundingVolumeRegionDictType(RootPropertyDictType):
     region: list[float]
 
 
-class BoundingVolumeSphereDictType(ThreeDDictBase):
+class BoundingVolumeSphereDictType(RootPropertyDictType):
     sphere: list[float]
 
 
@@ -53,22 +53,22 @@ BoundingVolumeDictType = Union[
 ]
 
 
-class ContentType(ThreeDDictBase):
+class ContentType(RootPropertyDictType):
     boundingVolume: NotRequired[BoundingVolumeDictType]
     uri: str
 
 
-class PropertyDictType(ThreeDDictBase):
+class PropertyDictType(RootPropertyDictType):
     maximum: float
     minimum: float
 
 
-class AssetDictType(ThreeDDictBase):
-    version: str
+class AssetDictType(RootPropertyDictType):
+    version: Literal["1.0", "1.1"]
     tilesetVersion: NotRequired[str]
 
 
-class TileDictType(ThreeDDictBase):
+class TileDictType(RootPropertyDictType):
     boundingVolume: BoundingVolumeDictType
     geometricError: GeometricErrorType
     viewerRequestVolume: NotRequired[BoundingVolumeDictType]
@@ -78,7 +78,7 @@ class TileDictType(ThreeDDictBase):
     children: NotRequired[list[TileDictType]]
 
 
-class TilesetDictType(ThreeDDictBase):
+class TilesetDictType(RootPropertyDictType):
     asset: AssetDictType
     geometricError: GeometricErrorType
     root: TileDictType

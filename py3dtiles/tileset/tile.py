@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import copy
-import json
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -13,7 +12,7 @@ from py3dtiles.typing import RefineType, TileDictType
 from .bounding_volume import BoundingVolume
 from .bounding_volume_box import BoundingVolumeBox
 from .content import read_binary_tile_content, TileContent
-from .extendable import Extendable
+from .root_property import RootProperty
 
 if TYPE_CHECKING:
     from py3dtiles.tileset import TileSet
@@ -22,7 +21,7 @@ DEFAULT_TRANSFORMATION = np.identity(4, dtype=np.float64).reshape(-1)
 DEFAULT_TRANSFORMATION.setflags(write=False)
 
 
-class Tile(Extendable):
+class Tile(RootProperty[TileDictType]):
     def __init__(
         self,
         geometric_error: float = 500,
@@ -44,8 +43,7 @@ class Tile(Extendable):
     @classmethod
     def from_dict(cls, tile_dict: TileDictType) -> Tile:
         if "box" in tile_dict["boundingVolume"]:
-            bounding_volume = BoundingVolumeBox()
-            bounding_volume.set_from_list(tile_dict["boundingVolume"]["box"])  # type: ignore [typeddict-item]
+            bounding_volume = BoundingVolumeBox.from_dict(tile_dict["boundingVolume"])  # type: ignore [arg-type]
         elif (
             "region" in tile_dict["boundingVolume"]
             or "sphere" in tile_dict["boundingVolume"]
@@ -75,6 +73,8 @@ class Tile(Extendable):
 
         if "content" in tile_dict:
             tile.content_uri = Path(tile_dict["content"]["uri"])
+
+        tile.set_properties_from_dict(tile_dict)
 
         return tile
 
@@ -205,11 +205,14 @@ class Tile(Extendable):
                 f"refine should be either ADD or REPLACE, currently {refine}."
             )
 
+        # Mandatory items
         dict_data: TileDictType = {
             "boundingVolume": bounding_volume_dict,
             "geometricError": self.geometric_error,
             "refine": refine,
         }
+
+        dict_data = self.add_root_properties_to_dict(dict_data)
 
         if (
             self.transform is not None and self.transform is not DEFAULT_TRANSFORMATION
@@ -244,8 +247,8 @@ class Tile(Extendable):
             uri = root_uri / self.content_uri
 
         if uri.suffix == ".json":
-            with uri.open() as f:
-                data = json.load(f)
-                self.tile_content = TileSet.from_dict(data, uri.parent)
+            from .tileset import TileSet
+
+            self.tile_content = TileSet.from_file(uri)
         else:
             self.tile_content = read_binary_tile_content(uri)
