@@ -3,6 +3,7 @@ import multiprocessing
 import shutil
 from contextlib import nullcontext
 from pathlib import Path
+from time import sleep
 from typing import Generator, Union
 from unittest.mock import patch
 
@@ -582,6 +583,8 @@ def test_convert_xyz_exception_in_run(tmp_dir: Path) -> None:
     with patch("py3dtiles.reader.xyz_reader.run") as mock_run, raises(
         Exception, match="An exception occurred in a worker: Exception in run"
     ):
+        # NOTE: this is intentionnally different from below, we are testing 2 different things
+        # Here, we test that a very early fail wont block the run, and that it will terminate correctly
         mock_run.side_effect = Exception("Exception in run")
         convert(
             DATA_DIRECTORY / "simple.xyz",
@@ -599,7 +602,12 @@ def test_convert_las_exception_in_run(tmp_dir: Path) -> None:
     with patch("py3dtiles.reader.las_reader.run") as mock_run, raises(
         Exception, match="An exception occurred in a worker: Exception in run"
     ):
-        mock_run.side_effect = Exception("Exception in run")
+
+        def side_effect(*args):  # type: ignore
+            sleep(1)
+            raise Exception("Exception in run")
+
+        mock_run.side_effect = side_effect
         convert(
             DATA_DIRECTORY / "with_srs_3857.las",
             outfolder=tmp_dir,

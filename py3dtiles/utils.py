@@ -41,6 +41,7 @@ class CommandType(Enum):
 
 
 class ResponseType(Enum):
+    REGISTER = b"register"
     IDLE = b"idle"
     HALTED = b"halted"
     READ = b"read"
