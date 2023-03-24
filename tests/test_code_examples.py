@@ -1,5 +1,6 @@
 import doctest
 from pathlib import Path
+import shutil
 
 if __name__ == "__main__":
     # With doctest.ELLIPSIS, an ellipsis marker (...) in the expected output can match any substring in the actual output.
@@ -12,5 +13,8 @@ if __name__ == "__main__":
     # Remove files created by the tested files.
     Path("mymodel.b3dm").unlink(missing_ok=True)
     Path("mypoints.pnts").unlink(missing_ok=True)
+    shutil.rmtree("./3dtiles_output", ignore_errors=True)
+    shutil.rmtree("./my3dtiles", ignore_errors=True)
+    shutil.rmtree("./my3dtiles2", ignore_errors=True)
 
     exit(num_of_failed != 0)

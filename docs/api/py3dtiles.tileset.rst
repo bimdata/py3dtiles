@@ -55,10 +55,10 @@ py3dtiles.tileset.tile module
    :members:
    :show-inheritance:
 
-py3dtiles.tileset.tile\_content module
---------------------------------------
+py3dtiles.tileset.tile\_content\_reader module
+----------------------------------------------
 
-.. automodule:: py3dtiles.tileset.tile_content
+.. automodule:: py3dtiles.tileset.tile_content_reader
    :members:
    :show-inheritance:
 
