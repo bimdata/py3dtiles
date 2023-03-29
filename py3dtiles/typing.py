@@ -101,6 +101,13 @@ FeatureTableHeaderDataType = Dict[
     ],
 ]
 
+
+class HierarchyClassDictType(TypedDict):
+    name: str
+    length: int
+    instances: dict[str, list[Any]]
+
+
 # Tiler types
 
 PortionItemType = Tuple[int, ...]

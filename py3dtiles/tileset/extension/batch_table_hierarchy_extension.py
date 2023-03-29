@@ -1,23 +1,26 @@
 from __future__ import annotations
 
+from typing import Any
+
 from py3dtiles.tileset.extension.base_extension import BaseExtension
-from py3dtiles.typing import ExtensionDictType
+from py3dtiles.typing import ExtensionDictType, HierarchyClassDictType
 
 
 class HierarchyInstance:
     def __init__(
         self,
-        properties: dict | None = None,
+        properties: dict[str, Any] | None = None,
         parents: list[int | HierarchyInstance] | None = None,
     ):
-        self.properties = {} if properties is None else properties
-        self.parents = [] if parents is None else parents
+        if properties is not None:
+            self.properties = properties
+        else:
+            self.properties = {}
 
-    def add_property(self, property_name: str, property_value: object) -> None:
-        self.properties[property_name] = property_value
-
-    def add_parent(self, parent: int | HierarchyInstance) -> None:
-        self.parents.append(parent)
+        if parents is not None:
+            self.parents = parents
+        else:
+            self.parents = []
 
 
 class HierarchyClass:
@@ -27,16 +30,18 @@ class HierarchyClass:
         self.property_names = property_names
 
     def add_instance(
-        self, properties: dict, parents: list[int | HierarchyInstance] | None = None
+        self,
+        properties: dict[str, Any],
+        parents: list[int | HierarchyInstance] | None = None,
     ) -> HierarchyInstance:
         hierarchy_instance = HierarchyInstance(parents=parents)
         for name in self.property_names:
             if name in properties:
-                hierarchy_instance.add_property(name, properties[name])
+                hierarchy_instance.properties[name] = properties[name]
         self.instances.append(hierarchy_instance)
         return hierarchy_instance
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> HierarchyClassDictType:
         return {
             "name": self.name,
             "length": len(self.instances),
@@ -52,7 +57,7 @@ class BatchTableHierarchy(BaseExtension):
     Batch Table Hierarchy (BTH) is a BaseExtension of a Batch Table.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("3DTILES_batch_table_hierarchy")
         self.classes: list[HierarchyClass] = []
         self.instancesLength = 0
@@ -76,7 +81,7 @@ class BatchTableHierarchy(BaseExtension):
                         index += 1
         return parent_indexes
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> ExtensionDictType:
         dict_data: ExtensionDictType = {
             "classes": [],
             "classIds": [],

@@ -11,7 +11,7 @@ DATA_DIRECTORY = Path(__file__).parent / "fixtures"
 
 
 @fixture()
-def batch_table_hierarchy_with_indexes():
+def batch_table_hierarchy_with_indexes() -> BatchTableHierarchy:
     """
     Programmatically define the reference sample encountered in the
     BTH specification cf
@@ -33,7 +33,6 @@ def batch_table_hierarchy_with_indexes():
     building_class.add_instance({"name": "unit20", "address": "102 Main St"}, [10])
     building_class.add_instance({"name": "unit93", "address": "104 Main St"}, [9])
 
-
     owner_class = bth.add_class("Owner", ["type", "id"])
     owner_class.add_instance({"type": "city", "id": 1120})
     owner_class.add_instance({"type": "resident", "id": 1250})
@@ -42,7 +41,7 @@ def batch_table_hierarchy_with_indexes():
 
 
 @fixture()
-def batch_table_hierarchy_with_instances():
+def batch_table_hierarchy_with_instances() -> BatchTableHierarchy:
     bth = BatchTableHierarchy()
 
     wall_class = bth.add_class("Wall", ["color"])
@@ -75,8 +74,8 @@ def batch_table_hierarchy_with_instances():
 
 
 def test_bth_build_sample_with_indexes_and_compare_reference_file(
-    batch_table_hierarchy_with_indexes,
-):
+    batch_table_hierarchy_with_indexes: BatchTableHierarchy,
+) -> None:
     """
     Build the sample, load the version from the reference file and
     compare them (in memory as opposed to "diffing" files)
@@ -94,8 +93,8 @@ def test_bth_build_sample_with_indexes_and_compare_reference_file(
 
 
 def test_bth_build_sample_with_instances_and_compare_reference_file(
-    batch_table_hierarchy_with_instances,
-):
+    batch_table_hierarchy_with_instances: BatchTableHierarchy,
+) -> None:
     """
     Build the sample, load the version from the reference file and
     compare them (in memory as opposed to "diffing" files)
