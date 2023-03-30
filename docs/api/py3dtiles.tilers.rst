@@ -14,10 +14,10 @@ Subpackages
 Submodules
 ----------
 
-py3dtiles.tilers.transformations module
----------------------------------------
+py3dtiles.tilers.matrix\_manipulation module
+--------------------------------------------
 
-.. automodule:: py3dtiles.tilers.transformations
+.. automodule:: py3dtiles.tilers.matrix_manipulation
    :members:
    :show-inheritance:
 

@@ -28,13 +28,6 @@ py3dtiles.convert module
    :members:
    :show-inheritance:
 
-py3dtiles.earcut module
------------------------
-
-.. automodule:: py3dtiles.earcut
-   :members:
-   :show-inheritance:
-
 py3dtiles.exceptions module
 ---------------------------
 
@@ -60,6 +53,13 @@ py3dtiles.merger module
 -----------------------
 
 .. automodule:: py3dtiles.merger
+   :members:
+   :show-inheritance:
+
+py3dtiles.typing module
+-----------------------
+
+.. automodule:: py3dtiles.typing
    :members:
    :show-inheritance:
 

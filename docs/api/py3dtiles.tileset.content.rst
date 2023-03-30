@@ -25,6 +25,13 @@ py3dtiles.tileset.content.pnts module
    :members:
    :show-inheritance:
 
+py3dtiles.tileset.content.tile\_content module
+----------------------------------------------
+
+.. automodule:: py3dtiles.tileset.content.tile_content
+   :members:
+   :show-inheritance:
+
 Module contents
 ---------------
 

@@ -11,6 +11,13 @@ py3dtiles.reader.las\_reader module
    :members:
    :show-inheritance:
 
+py3dtiles.reader.ply\_reader module
+-----------------------------------
+
+.. automodule:: py3dtiles.reader.ply_reader
+   :members:
+   :show-inheritance:
+
 py3dtiles.reader.xyz\_reader module
 -----------------------------------
 
