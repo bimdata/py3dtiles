@@ -16,7 +16,10 @@ Tileset manipulation
 The tileset module contains all the classes to represent a dataset in 3D Tiles format,
 whether it is the `tileset.json` file or the content of the tiles (sub-tileset, pnts or b3dm, there is no i3dm support).
 
-Note: currently, Py3dtiles partially supports the 3d Tiles standard at version 1.0.
+.. note::
+
+    Currently, Py3dtiles partially supports the 3d Tiles standard at version 1.0. There is work to support the 1.1 standard. The main feature of 1.1 is the dropping of specific formats (pnts, b3dm and i3dm) in favor of the gltf format.
+
 There is work to support the 1.1 standard. The main feature of 1.1 is the dropping of specific formats (pnts, b3dm and i3dm)
 in favor of the gltf format.
 
@@ -51,7 +54,7 @@ an entire tileset. Here is the current state of the properties supported by Py3d
 - |check| `extensions`
 - |check| `extras`
 
-**Create a tileest from scratch:**
+**Create a tileset from scratch:**
 
 .. code-block:: python
 
@@ -89,8 +92,7 @@ an entire tileset. Here is the current state of the properties supported by Py3d
     >>> new_tileset_directory.mkdir()
     >>> tileset.write_as_json(new_tileset_directory)
 
-When reading a tileset, only the `tileset.json` file is loaded, the loading of the tile contents is lazy,
-it will load the tile contents only when needed.
+When reading a tileset, the tile content loading is done lazily, i.e. one loads only the `tileset.json` file and the tile contents is loaded only when needed.
 
 Tile class
 ~~~~~~~~~~
@@ -113,7 +115,7 @@ The Tile class represents a tile in the `tileset.json`. It will contain the prop
 - |check| `extras`
 
 .. warning::
-    In py3dtiles the data of the content and the uri of the content are in 2 seperates variables.
+    In py3dtiles the content data and the content uri are in 2 separate variables.
 
 .. code-block:: python
 
@@ -168,7 +170,26 @@ There are 3 types of bounding volume:
 Extension management
 ~~~~~~~~~~~~~~~~~~~~
 
-TODO
+When you add an extension somewhere in a tileset, you must add the name of the extension in the attribute `extensionUsed`
+of the class `TileSet` like this:
+
+.. code-block:: python
+
+    >>> from py3dtiles.tileset import TileSet
+    >>> from py3dtiles.tileset.extension import BatchTableHierarchy
+    >>>
+    >>> tileset = TileSet()
+    >>>
+    >>> extension = BatchTableHierarchy()
+    >>>
+    >>> tileset.extensions_used.add(extension.name)
+    >>> # Furthermore, if the extension is necessary to display the tileset, you should add the name in extensionsRequired
+    >>> tileset.extensions_required.add(extension.name)
+
+Since these 2 attributes are sets, the name of an extension can be added several times.
+
+.. note::
+   This section should be improved.
 
 Specific exceptions
 ~~~~~~~~~~~~~~~~~~~
@@ -254,7 +275,7 @@ specification:
 - *TileContentHeader* represents the metadata of the tile (magic value, version, ...)
 - *TileContentBody* contains varying semantic and geometric data depending on the the tile's type
 
-Moreover, a utility module *tile_content_reader.py* provides a function *read_file* to read a tile
+Moreover, a utility module *tile_content_reader.py* provides a function *read_binary_tile_content* to read a tile
 file as well as a simple command line tool to retrieve basic information about a tile:
 **py3dtiles info**. We also provide a utility to generate a tileset from a list of 3D models in
 WKB format or stored in a postGIS table.
@@ -264,7 +285,7 @@ Point Cloud
 ~~~~~~~~~~~
 
 Points Tile Format:
-https://github.com/AnalyticalGraphicsInc/3d-tiles/tree/master/specification/TileFormats/PointCloud
+https://docs.ogc.org/cs/22-025r4/22-025r4.html#toc29
 
 In the current implementation, the *Pnts* class only contains a *FeatureTable*
 (*FeatureTableHeader* and a *FeatureTableBody*, which contains features of type
@@ -436,12 +457,11 @@ file containing polyhedralsurfaces or multipolygons.
 Tiler tools
 -----------
 
-Here is an example of calling the conversion tool. The `crs_out` parameter is specified
-so a `crs_in` is needed. The las file containing this information, it is not necessary to specify it.
+Here is an example of calling the conversion tool. An input CRS is needed as the `crs_out` parameter is specified. As the `.las` file contains this information, it is not necessary to specify it.
 
-The CRS can be overwritten by another one by specifying a `crs_in` and setting the `force_crs_in` parameter to True.
+The CRS can be overwritten by specifying a value for the `crs_in` parameter and by setting the `force_crs_in` parameter to `True`.
 
-The number of jobs is set to 2. 2 processes will transform the laz into 3d Tiles and another process that handles the conversion steps.
+In the snippet below, the number of jobs is set to 2. The main process will manage 2 processes that will read the laz file, transform and write the 3D Tiles.
 
 .. code-block:: python
 

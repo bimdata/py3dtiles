@@ -28,7 +28,7 @@
 Py3dtiles
 #########
 
-Py3dtiles is a CLI tool and a library writing with Python for creating and manipulating `3D Tiles <https://docs.ogc.org/cs/18-053r2/18-053r2.html>`_.
+Py3dtiles is a CLI tool and a library writing with Python for creating and manipulating `3D Tiles <https://docs.ogc.org/cs/22-025r4/22-025r4.html>`_.
 
 
 Features
@@ -37,8 +37,8 @@ Features
 Tileset manipulation
 ====================
 
-* Read lazily tileset (to avoid useless memory consumption)
-* Write tileset with the tile contents
+* Read tileset lazily (to avoid useless memory consumption)
+* Write tilesets with their tile contents
 * Browse the tile structure, access to the properties and tile content with the ability to modify them
 * Read and write pnts and b3dm with the batch table support
 
@@ -119,12 +119,12 @@ The objectives are:
 Contributing
 ############
 
-We welcome new contributors. This may fix an issue or add a feature, but also:
+We welcome new contributions. This may be fixing an issue or adding a feature, but also:
 
-- report an issue
-- review a MR
-- improve the documentation or create a tutorial
-- talk about this project to others
+- reporting an issue
+- reviewing a MR
+- improving the documentation or creating a tutorial
+- talking about this project to others
 
 We have written a `contributing guide <CONTRIBUTING.md>`_ to help you for your first contribution.
 

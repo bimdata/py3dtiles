@@ -9,7 +9,7 @@ cz changelog --incremental --unreleased-version v4.0.0
 and then edit it to make it more user readable. Especially, the `BREAKING
 CHANGE` needs to be reviewed carefully and often to be rewritten, including
 migration guide for instance.
-- edit the version in [\_\_init\_\_.py](py3dtiles/__init__.py)
+- edit the version in [py3dtiles/\_\_init\_\_.py](py3dtiles/__init__.py)
 - edit the version in [sonar-project.properties](sonar-project.properties) (field `sonar.projectVersion`)
 - create a merge request with these changes
 - once it is merged, create a tagged release on gitlab.
