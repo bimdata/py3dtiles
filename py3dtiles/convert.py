@@ -33,7 +33,7 @@ from py3dtiles.tilers.matrix_manipulation import (
 from py3dtiles.tilers.node import Node, NodeCatalog, NodeProcess, SharedNodeStore
 from py3dtiles.tilers.pnts import pnts_writer
 from py3dtiles.tilers.pnts.constants import MIN_POINT_SIZE
-from py3dtiles.tileset.content import read_file
+from py3dtiles.tileset.content import read_binary_tile_content
 from py3dtiles.typing import PortionsType
 from py3dtiles.utils import (
     CommandType,
@@ -991,7 +991,7 @@ class _Convert:
                 self.out_folder, str(child_num).encode("ascii"), ".pnts"
             )
             if tile_path.exists():
-                tile_content = read_file(tile_path)
+                tile_content = read_binary_tile_content(tile_path)
 
                 fth = tile_content.body.feature_table.header
                 xyz = tile_content.body.feature_table.body.position.view(

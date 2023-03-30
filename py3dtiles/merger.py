@@ -6,7 +6,7 @@ import numpy as np
 import numpy.typing as npt
 
 from py3dtiles.tilers.pnts.pnts_writer import points_to_pnts
-from py3dtiles.tileset.content import read_file, TileContent
+from py3dtiles.tileset.content import read_binary_tile_content, TileContent
 from py3dtiles.tileset.content.feature_table import SemanticPoint
 from py3dtiles.typing import TileDictType
 from py3dtiles.utils import split_aabb
@@ -14,7 +14,7 @@ from py3dtiles.utils import split_aabb
 
 def _get_root_tile(tileset: dict, root_tile_path: Path) -> TileContent:
     pnts_path = root_tile_path.parent / tileset["root"]["content"]["uri"]
-    return read_file(pnts_path)
+    return read_binary_tile_content(pnts_path)
 
 
 def _get_root_transform(tileset: dict) -> np.ndarray:

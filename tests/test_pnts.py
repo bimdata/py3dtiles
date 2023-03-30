@@ -4,13 +4,13 @@ import unittest
 import numpy as np
 from numpy.testing import assert_array_equal
 
-from py3dtiles.tileset.content import Pnts, PntsHeader, read_file
+from py3dtiles.tileset.content import Pnts, PntsHeader, read_binary_tile_content
 from py3dtiles.tileset.content.feature_table import FeatureTableHeader, SemanticPoint
 
 
 class TestTileContentReader(unittest.TestCase):
     def test_read(self):
-        tile = read_file(Path("tests/fixtures/pointCloudRGB.pnts"))
+        tile = read_binary_tile_content(Path("tests/fixtures/pointCloudRGB.pnts"))
 
         self.assertEqual(tile.header.version, 1.0)
         self.assertEqual(tile.header.tile_byte_length, 15176)
@@ -31,7 +31,7 @@ class TestTileContentReader(unittest.TestCase):
 
 class TestTileBuilder(unittest.TestCase):
     def test_build_without_colors(self):
-        tread = read_file(Path("tests/fixtures/pointCloudRGB.pnts"))
+        tread = read_binary_tile_content(Path("tests/fixtures/pointCloudRGB.pnts"))
         feature_0_position = tread.body.feature_table.get_feature_position_at(0)
 
         # create features
@@ -81,7 +81,7 @@ class TestTileBuilder(unittest.TestCase):
         assert_array_equal(feature_0_position, feature_table.get_feature_position_at(0))
 
     def test_build(self):
-        tread = read_file(Path("tests/fixtures/pointCloudRGB.pnts"))
+        tread = read_binary_tile_content(Path("tests/fixtures/pointCloudRGB.pnts"))
 
         # create features
         positions = []

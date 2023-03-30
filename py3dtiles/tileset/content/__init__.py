@@ -2,7 +2,7 @@ from .b3dm import B3dm, B3dmBody, B3dmHeader
 from .gltf import GlTF
 from .pnts import Pnts, PntsBody, PntsHeader
 from .tile_content import TileContent, TileContentBody, TileContentHeader
-from .tile_content_reader import read_file
+from .tile_content_reader import read_binary_tile_content
 
 __all__ = [
     "batch_table",
@@ -14,7 +14,7 @@ __all__ = [
     "Pnts",
     "PntsBody",
     "PntsHeader",
-    "read_file",
+    "read_binary_tile_content",
     "TileContent",
     "TileContentBody",
     "TileContentHeader",

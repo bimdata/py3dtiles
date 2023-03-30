@@ -1,11 +1,11 @@
 from pathlib import Path
 
-from py3dtiles.tileset.content import read_file
+from py3dtiles.tileset.content import read_binary_tile_content
 
 
 def main(args):
     try:
-        tile_content = read_file(args.file)
+        tile_content = read_binary_tile_content(args.file)
     except ValueError as e:
         print(f"Error when reading the file {args.file}")
         raise e
