@@ -1,6 +1,7 @@
+import argparse
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, TypeVar, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -11,14 +12,16 @@ from py3dtiles.tileset.content.feature_table import SemanticPoint
 from py3dtiles.typing import TileDictType
 from py3dtiles.utils import split_aabb
 
+_T = TypeVar("_T", bound=npt.NBitBase)
 
-def _get_root_tile(tileset: dict, root_tile_path: Path) -> TileContent:
+
+def _get_root_tile(tileset: Dict[str, Any], root_tile_path: Path) -> TileContent:
     pnts_path = root_tile_path.parent / tileset["root"]["content"]["uri"]
     return read_binary_tile_content(pnts_path)
 
 
-def _get_root_transform(tileset: dict) -> np.ndarray:
-    transform = np.identity(4)
+def _get_root_transform(tileset: Dict[str, Any]) -> npt.NDArray[np.float32]:
+    transform = np.identity(4, dtype=np.float32)
     if "transform" in tileset:
         transform = np.array(tileset["transform"]).reshape(4, 4).transpose()
 
@@ -53,14 +56,14 @@ def _get_tile_points(tile, tile_transform, out_transform):
     return xyzw[:, 0:3].astype(np.float32), rgb
 
 
-def init(tilset_paths: List[Path]) -> dict:
+def init(tileset_paths: List[Path]) -> Dict[str, Any]:
     aabb = None
     total_point_count = 0
     tilesets = []
     transforms = []
 
     idx = 0
-    for tileset_path in tilset_paths:
+    for tileset_path in tileset_paths:
         with tileset_path.open() as f:
             tileset = json.load(f)
 
@@ -98,7 +101,9 @@ def init(tilset_paths: List[Path]) -> dict:
     }
 
 
-def quadtree_split(aabb: npt.NDArray) -> List[npt.NDArray]:
+def quadtree_split(
+    aabb: "npt.NDArray[np.floating[_T]]",
+) -> List["npt.NDArray[np.floating[_T]]"]:
     return [
         split_aabb(aabb, 0, True),
         split_aabb(aabb, 2, True),
@@ -160,9 +165,9 @@ def _aabb_from_3dtiles_bounding_volume(volume, transform=None):
 
 def build_tileset_quadtree(
     out_folder: Path,
-    aabb: npt.NDArray,
+    aabb: npt.NDArray[np.float32],
     tilesets: List[Dict[str, Any]],
-    inv_base_transform: npt.NDArray,
+    inv_base_transform: npt.NDArray[np.float32],
     name: str,
 ) -> Optional[TileDictType]:
     insides = [tileset for tileset in tilesets if is_tileset_inside(tileset, aabb)]
@@ -331,8 +336,10 @@ def merge(folder: Union[str, Path], overwrite: bool = False, verbose: int = 0) -
         json.dump(tileset, f)
 
 
-def init_parser(subparser):
-    parser = subparser.add_parser(
+def init_parser(
+    subparser: "argparse._SubParsersAction[Any]",
+) -> argparse.ArgumentParser:
+    parser: argparse.ArgumentParser = subparser.add_parser(
         "merge", help="Merge several pointcloud tilesets in 1 tileset"
     )
     parser.add_argument(
@@ -348,5 +355,5 @@ def init_parser(subparser):
     return parser
 
 
-def main(args):
+def main(args: argparse.Namespace) -> None:
     return merge(args.folder, args.overwrite, args.verbose)

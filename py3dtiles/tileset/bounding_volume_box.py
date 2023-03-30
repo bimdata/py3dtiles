@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import copy
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
@@ -167,7 +167,7 @@ class BoundingVolumeBox(BoundingVolume[BoundingVolumeBoxDictType]):
         """
         return BoundingVolumeBox.get_box_array_from_point(self.get_corners())
 
-    def add(self, other: BoundingVolume) -> None:
+    def add(self, other: BoundingVolume[Any]) -> None:
         """
         Compute the 'canonical' bounding volume fitting this bounding volume
         together with the added bounding volume. Again (refer above to the

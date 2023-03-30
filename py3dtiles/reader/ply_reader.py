@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Generator, Optional, Tuple
 
 import numpy as np
+import numpy.typing as npt
 from plyfile import PlyData, PlyElement
 from pyproj import Transformer
 
@@ -51,7 +52,11 @@ def run(
     portion: PortionItemType,
     transformer: Optional[Transformer],
     color_scale: Optional[float],
-) -> Generator[Tuple, None, None]:
+) -> Generator[
+    Tuple[npt.NDArray[np.float32], npt.NDArray[np.uint8], npt.NDArray[np.uint8]],
+    None,
+    None,
+]:
     """
     Reads points from a ply file.
     """

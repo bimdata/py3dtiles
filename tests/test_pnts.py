@@ -9,7 +9,7 @@ from py3dtiles.tileset.content.feature_table import FeatureTableHeader, Semantic
 
 
 class TestTileContentReader(unittest.TestCase):
-    def test_read(self):
+    def test_read(self) -> None:
         tile = read_binary_tile_content(Path("tests/fixtures/pointCloudRGB.pnts"))
 
         self.assertEqual(tile.header.version, 1.0)
@@ -30,7 +30,7 @@ class TestTileContentReader(unittest.TestCase):
 
 
 class TestTileBuilder(unittest.TestCase):
-    def test_build_without_colors(self):
+    def test_build_without_colors(self) -> None:
         tread = read_binary_tile_content(Path("tests/fixtures/pointCloudRGB.pnts"))
         feature_0_position = tread.body.feature_table.get_feature_position_at(0)
 
@@ -80,7 +80,7 @@ class TestTileBuilder(unittest.TestCase):
 
         assert_array_equal(feature_0_position, feature_table.get_feature_position_at(0))
 
-    def test_build(self):
+    def test_build(self) -> None:
         tread = read_binary_tile_content(Path("tests/fixtures/pointCloudRGB.pnts"))
 
         # create features

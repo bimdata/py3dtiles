@@ -63,8 +63,28 @@ READER_MAP = {
 }
 
 
-def worker_target(*args):
-    return Worker(*args).run()
+def worker_target(
+    activity_graph: bool,
+    transformer: Optional[Transformer],
+    octree_metadata: OctreeMetadata,
+    folder: Path,
+    write_rgb: bool,
+    color_scale: Optional[float],
+    write_classification: bool,
+    verbosity: int,
+    uri: bytes,
+) -> None:
+    return Worker(
+        activity_graph,
+        transformer,
+        octree_metadata,
+        folder,
+        write_rgb,
+        color_scale,
+        write_classification,
+        verbosity,
+        uri,
+    ).run()
 
 
 class Worker:
@@ -75,14 +95,14 @@ class Worker:
     def __init__(
         self,
         activity_graph: bool,
-        transformer: Transformer,
+        transformer: Optional[Transformer],
         octree_metadata: OctreeMetadata,
         folder: Path,
         write_rgb: bool,
         color_scale: Optional[float],
         write_classification: bool,
         verbosity: int,
-        uri: str,
+        uri: bytes,
     ) -> None:
         self.activity_graph = activity_graph
         self.transformer = transformer
@@ -97,10 +117,10 @@ class Worker:
         # Socket to receive messages on
         self.context = zmq.Context()
 
-    def run(self):
-        self.skt: zmq.sugar.socket.Socket = self.context.socket(zmq.DEALER)
+    def run(self) -> None:
+        self.skt: zmq.Socket[bytes] = self.context.socket(zmq.DEALER)
 
-        self.skt.connect(self.uri)
+        self.skt.connect(self.uri)  # type: ignore [arg-type]
 
         startup_time = time.time()
         idle_time = 0.0
@@ -170,7 +190,7 @@ class Worker:
 
         self.skt.send_multipart([ResponseType.HALTED.value])
 
-    def execute_read_file(self, content):
+    def execute_read_file(self, content: List[bytes]) -> None:
         parameters = pickle.loads(content[1])
 
         extension = PurePath(parameters["filename"]).suffix
@@ -204,7 +224,7 @@ class Worker:
 
         self.skt.send_multipart([ResponseType.READ.value])
 
-    def execute_write_pnts(self, data, node_name):
+    def execute_write_pnts(self, data: bytes, node_name: bytes) -> None:
         pnts_writer_gen = pnts_writer.run(
             data, self.folder, self.write_rgb, self.write_classification
         )
@@ -213,7 +233,7 @@ class Worker:
                 [ResponseType.PNTS_WRITTEN.value, struct.pack(">I", total), node_name]
             )
 
-    def execute_process_jobs(self, content):
+    def execute_process_jobs(self, content: List[bytes]) -> None:
         begin = time.time()
         log_enabled = self.verbosity >= 2
         if log_enabled:
@@ -254,7 +274,7 @@ class Worker:
                 )
 
             if log_enabled:
-                print(f"save on disk {name} [{time.time() - begin}]", file=log_file)
+                print(f"save on disk {name!r} [{time.time() - begin}]", file=log_file)
 
             # save node state on disk
             if len(name) > 0:
@@ -298,7 +318,20 @@ class ZmqManager:
     We can also request general status.
     """
 
-    def __init__(self, number_of_jobs: int, process_args: tuple):
+    def __init__(
+        self,
+        number_of_jobs: int,
+        process_args: Tuple[
+            bool,
+            Optional[Transformer],
+            OctreeMetadata,
+            Path,
+            bool,
+            Optional[float],
+            bool,
+            int,
+        ],
+    ) -> None:
         """
         For the process_args argument, see the init method of Worker
         to get the list of needed parameters.
@@ -311,6 +344,10 @@ class ZmqManager:
         self.socket.bind(URI)
         # Useful only when TCP is used to get the URI with the opened port
         self.uri = self.socket.getsockopt(zmq.LAST_ENDPOINT)
+        if not isinstance(self.uri, bytes):
+            raise RuntimeError(
+                "The uri returned by self.socket.getsockopt should be bytes."
+            )
 
         self.processes = [
             Process(target=worker_target, args=(*process_args, self.uri))
@@ -326,48 +363,48 @@ class ZmqManager:
         self.number_processes_killed = 0
         self.time_waiting_an_idle_process = 0.0
 
-    def send_to_process(self, message):
+    def send_to_process(self, message: List[bytes]) -> None:
         if not self.idle_clients:
             raise ValueError("idle_clients is empty")
         self.socket.send_multipart(
             [self.idle_clients.pop(), pickle.dumps(time.time())] + message
         )
 
-    def send_to_all_idle_processes(self, message):
+    def send_to_all_idle_processes(self, message: List[bytes]) -> None:
         if not self.idle_clients:
             raise ValueError("idle_clients is empty")
         for client in self.idle_clients:
             self.socket.send_multipart([client, pickle.dumps(time.time())] + message)
         self.idle_clients.clear()
 
-    def can_queue_more_jobs(self):
+    def can_queue_more_jobs(self) -> bool:
         return len(self.idle_clients) != 0
 
-    def add_idle_client(self, client_id):
+    def add_idle_client(self, client_id: bytes) -> None:
         if client_id in self.idle_clients:
-            raise ValueError(f"The client id {client_id} is already in idle_clients")
+            raise ValueError(f"The client id {client_id!r} is already in idle_clients")
         self.idle_clients.append(client_id)
 
-    def are_all_processes_idle(self):
+    def are_all_processes_idle(self) -> bool:
         return len(self.idle_clients) == self.number_of_jobs
 
-    def are_all_processes_killed(self):
+    def are_all_processes_killed(self) -> bool:
         return self.number_processes_killed == self.number_of_jobs
 
-    def kill_all_processes(self):
+    def kill_all_processes(self) -> None:
         self.send_to_all_idle_processes([CommandType.SHUTDOWN.value])
         self.killing_processes = True
 
-    def join_all_processes(self):
+    def join_all_processes(self) -> None:
         for p in self.processes:
             p.join()
 
-    def terminate_all_processes(self):
+    def terminate_all_processes(self) -> None:
         for p in self.processes:
             p.terminate()
 
 
-def is_ancestor(node_name, ancestor):
+def is_ancestor(node_name: bytes, ancestor: bytes) -> bool:
     """
     Example, the tile 22 is ancestor of 22458
     Particular case, the tile 22 is ancestor of 22
@@ -375,13 +412,20 @@ def is_ancestor(node_name, ancestor):
     return len(ancestor) <= len(node_name) and node_name[0 : len(ancestor)] == ancestor
 
 
-def is_ancestor_in_list(node_name, ancestors):
+def is_ancestor_in_list(
+    node_name: bytes, ancestors: Union[List[bytes], Dict[bytes, Any]]
+) -> bool:
     return any(
         not ancestor or is_ancestor(node_name, ancestor) for ancestor in ancestors
     )
 
 
-def can_pnts_be_written(node_name, finished_node, input_nodes, active_nodes):
+def can_pnts_be_written(
+    node_name: bytes,
+    finished_node: bytes,
+    input_nodes: Union[List[bytes], Dict[bytes, Any]],
+    active_nodes: Union[List[bytes], Dict[bytes, Any]],
+) -> bool:
     return (
         is_ancestor(node_name, finished_node)
         and not is_ancestor_in_list(node_name, active_nodes)
@@ -424,10 +468,12 @@ class State:
         # the data to write are stored in a node object.
         self.pnts_to_writing: List[bytes] = []
 
-    def is_reading_finish(self):
+    def is_reading_finish(self) -> bool:
         return not self.point_cloud_file_parts and self.number_of_reading_jobs == 0
 
-    def add_tasks_to_process(self, node_name, data, point_count):
+    def add_tasks_to_process(
+        self, node_name: bytes, data: bytes, point_count: int
+    ) -> None:
         if point_count <= 0:
             raise ValueError(
                 "point_count should be strictly positive, currently", point_count
@@ -440,14 +486,14 @@ class State:
             tasks.append(data)
             self.node_to_process[node_name] = (tasks, count + point_count)
 
-    def can_add_reading_jobs(self):
-        return (
+    def can_add_reading_jobs(self) -> bool:
+        return bool(
             self.point_cloud_file_parts
             and self.points_in_progress < self.max_point_in_progress
             and self.number_of_reading_jobs < self.max_reading_jobs
         )
 
-    def print_debug(self):
+    def print_debug(self) -> None:
         print("{:^16}|{:^8}|{:^8}|{:^8}".format("Step", "Input", "Active", "Inactive"))
         print(
             "{:^16}|{:^8}|{:^8}|{:^8}".format(
@@ -475,7 +521,7 @@ class State:
         )
 
 
-def convert(*args, **kwargs):
+def convert(*args, **kwargs) -> None:  # type: ignore [no-untyped-def] # todo use directly the _Convert class
     converter = _Convert(*args, **kwargs)
     return converter.convert()
 
@@ -497,8 +543,8 @@ class _Convert:
         classification: bool = True,
         graph: bool = False,
         color_scale: Optional[float] = None,
-        verbose: bool = False,
-    ):
+        verbose: int = False,
+    ) -> None:
         """
         :param files: Filenames to process. The file must use the .las, .laz, .xyz or .ply format.
         :param outfolder: The folder where the resulting tileset will be written.
@@ -646,12 +692,16 @@ class _Convert:
 
         return transformer
 
-    def get_rotation_matrix(self, crs_out, transformer):
+    def get_rotation_matrix(
+        self, crs_out: Optional[CRS], transformer: Optional[Transformer]
+    ) -> Tuple[
+        npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]
+    ]:
         avg_min: npt.NDArray[np.float64] = self.file_info["avg_min"]
         aabb: npt.NDArray[np.float64] = self.file_info["aabb"]
 
         rotation_matrix: npt.NDArray[np.float64] = np.identity(4)
-        if crs_out:
+        if crs_out is not None and transformer is not None:
 
             bl: npt.NDArray[np.float64] = np.array(
                 list(transformer.transform(aabb[0][0], aabb[0][1], aabb[0][2]))
@@ -693,7 +743,9 @@ class _Convert:
 
         return rotation_matrix, root_aabb, avg_min
 
-    def get_root_aabb(self, original_aabb):
+    def get_root_aabb(
+        self, original_aabb: npt.NDArray[np.float64]
+    ) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float32], float]:
         base_spacing = compute_spacing(original_aabb)
         if base_spacing > 10:
             root_scale = np.array([0.01, 0.01, 0.01])
@@ -706,7 +758,7 @@ class _Convert:
         root_spacing = compute_spacing(root_aabb)
         return root_aabb, root_scale, root_spacing
 
-    def convert(self):
+    def convert(self) -> None:
         """convert
 
         Convert pointclouds (xyz, las or laz) to 3dtiles tileset containing pnts node
@@ -800,7 +852,7 @@ class _Convert:
 
             self.zmq_manager.context.destroy()
 
-    def process_message(self):
+    def process_message(self) -> bool:
         one_job_ended = False
 
         # Blocking read but it's fine because either all our child processes are busy
@@ -857,7 +909,7 @@ class _Convert:
 
         return one_job_ended
 
-    def dispatch_processed_nodes(self, content):
+    def dispatch_processed_nodes(self, content: Dict[str, bytes]) -> None:
         if not content["name"]:
             return
 
@@ -897,7 +949,7 @@ class _Convert:
                 self.state.pnts_to_writing.append(c)
             self.state.waiting_writing_nodes.clear()
 
-    def send_pnts_to_write(self):
+    def send_pnts_to_write(self) -> None:
         node_name = self.state.pnts_to_writing.pop()
         data = self.node_store.get(node_name)
         if not data:
@@ -909,7 +961,7 @@ class _Convert:
         self.node_store.remove(node_name)
         self.state.number_of_writing_jobs += 1
 
-    def send_points_to_process(self, now):
+    def send_points_to_process(self, now: float) -> None:
         potentials = sorted(
             # a key (=task) can be in node_to_process and processing_nodes if the node isn't completely processed
             [
@@ -949,7 +1001,7 @@ class _Convert:
                     [CommandType.PROCESS_JOBS.value] + job_list
                 )
 
-    def send_file_to_read(self):
+    def send_file_to_read(self) -> None:
         if self.verbose >= 1:
             print(f"Submit next portion {self.state.point_cloud_file_parts[-1]}")
         file, portion = self.state.point_cloud_file_parts.pop()
@@ -974,7 +1026,7 @@ class _Convert:
 
         self.state.number_of_reading_jobs += 1
 
-    def write_tileset(self):
+    def write_tileset(self) -> None:
         # compute tile transform matrix
         transform = np.linalg.inv(self.rotation_matrix)
         transform = np.dot(transform, make_scale_matrix(1.0 / self.root_scale[0]))
@@ -1003,13 +1055,23 @@ class _Convert:
                         raise TilerException(
                             "tile_content.body.feature_table.body.color shouldn't be None here. Seems to be a py3dtiles issue."
                         )
-                    rgb = tile_color.reshape((fth.points_length, 3))
+                    if tile_color.dtype != np.uint8:
+                        raise TilerException(
+                            "The data type of tile_content.body.feature_table.body.color must be np.uint8. Seems to be a py3dtiles issue."
+                        )
+                    rgb = tile_color.reshape((fth.points_length, 3)).astype(
+                        np.uint8, copy=False
+                    )  # the astype is used for typing
                 else:
                     rgb = np.zeros(xyz.shape, dtype=np.uint8)
                 if self.classification:
-                    classification = tile_content.body.batch_table.get_binary_property(
-                        "Classification"
-                    ).reshape(-1, 1)
+                    classification = (
+                        tile_content.body.batch_table.get_binary_property(
+                            "Classification"
+                        )
+                        .astype(np.uint8)
+                        .reshape(-1, 1)
+                    )
                 else:
                     classification = np.zeros((fth.points_length, 1), dtype=np.uint8)
                 root_node.grid.insert(
@@ -1029,6 +1091,11 @@ class _Convert:
             b"", self.root_aabb, self.root_spacing
         ).to_tileset(self.out_folder, self.root_scale, None, 0, pool_executor)
         pool_executor.shutdown()
+
+        if root_tileset is None:
+            raise RuntimeError(
+                "root_tileset cannot be None here. This is likely a tiler bug."
+            )
 
         root_tileset["transform"] = transform.T.reshape(16).tolist()
         root_tileset[
@@ -1055,7 +1122,7 @@ class _Convert:
         with tileset_path.open("w") as f:
             f.write(json.dumps(tileset))
 
-    def print_summary(self):
+    def print_summary(self) -> None:
         print("Summary:")
         print("  - points to process: {}".format(self.file_info["point_count"]))
         print(f"  - offset to use: {self.avg_min}")
@@ -1064,7 +1131,7 @@ class _Convert:
         print(f"  - original aabb: {self.original_aabb}")
         print(f"  - scale: {self.root_scale}")
 
-    def draw_graph(self):
+    def draw_graph(self) -> None:
         import pygal
 
         dateline = pygal.XY(x_label_rotation=25, secondary_range=(0, 100))
@@ -1110,7 +1177,7 @@ class _Convert:
 
         dateline.render_to_file("activity.svg")
 
-    def print_debug(self, now):
+    def print_debug(self, now: float) -> None:
         if self.verbose >= 3:
             print("{:^16}|{:^8}|{:^8}".format("Name", "Points", "Seconds"))
             for name, v in self.state.processing_nodes.items():
@@ -1168,8 +1235,10 @@ class _Convert:
             )
 
 
-def init_parser(subparser):
-    parser = subparser.add_parser(
+def init_parser(
+    subparser: "argparse._SubParsersAction[Any]",
+) -> argparse.ArgumentParser:
+    parser: argparse.ArgumentParser = subparser.add_parser(
         "convert",
         help="Convert input 3D data to a 3dtiles tileset.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -1238,7 +1307,7 @@ def init_parser(subparser):
     return parser
 
 
-def main(args):
+def main(args: argparse.Namespace) -> None:
     try:
         return convert(
             args.files,

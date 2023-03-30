@@ -85,7 +85,9 @@ def check_semantic_type(semantic: SemanticPoint, category: SemanticCategory) -> 
 
 
 def check_array_size(
-    array: npt.NDArray, semantic: SemanticPoint, nb_points: int
+    array: npt.NDArray[np.float32 | np.uint16 | np.uint8],
+    semantic: SemanticPoint,
+    nb_points: int,
 ) -> None:
     """
     This function checks if the size of the given array is correct according semantic and nb_points.
@@ -307,7 +309,7 @@ class FeatureTableBody:
         nb_points = feature_table_header.points_length
 
         # extract positions
-        feature_table_body.position = cls._fetch_semantic_from_array(
+        feature_table_body.position = cls._fetch_semantic_from_array(  # type: ignore [assignment] # there is an error on dtype, but _fetch_semantic_from_array runs check_semantic_type.
             array,
             feature_table_header.positions,
             feature_table_header.positions_offset,
@@ -317,7 +319,7 @@ class FeatureTableBody:
 
         # extract colors
         if feature_table_header.colors != SemanticPoint.NONE:
-            feature_table_body.color = cls._fetch_semantic_from_array(
+            feature_table_body.color = cls._fetch_semantic_from_array(  # type: ignore [assignment] # there is an error on dtype, but _fetch_semantic_from_array runs check_semantic_type.
                 array,
                 feature_table_header.colors,
                 feature_table_header.colors_offset,
@@ -327,7 +329,7 @@ class FeatureTableBody:
 
         # extract normals
         if feature_table_header.normal != SemanticPoint.NONE:
-            feature_table_body.normal = cls._fetch_semantic_from_array(
+            feature_table_body.normal = cls._fetch_semantic_from_array(  # type: ignore [assignment] # there is an error on dtype, but _fetch_semantic_from_array runs check_semantic_type.
                 array,
                 feature_table_header.normal,
                 feature_table_header.colors_offset,
@@ -360,12 +362,12 @@ class FeatureTableBody:
 
     @staticmethod
     def _fetch_semantic_from_array(
-        array: npt.NDArray,
+        array: npt.NDArray[np.uint8],
         semantic: SemanticPoint,
         offset: int,
         nb_points: int,
         category: SemanticCategory,
-    ) -> npt.NDArray:
+    ) -> npt.NDArray[np.float32 | np.uint16 | np.uint8]:
         check_semantic_type(semantic, category)
 
         semantic_array = array[
@@ -391,7 +393,7 @@ class FeatureTable:
         return np.concatenate((fth_arr, *ftb_arr))
 
     @staticmethod
-    def from_array(th: PntsHeader, array: np.ndarray) -> FeatureTable:
+    def from_array(th: PntsHeader, array: npt.NDArray[np.uint8]) -> FeatureTable:
         # build feature table header
         feature_table_header = FeatureTableHeader.from_array(
             array[: th.ft_json_byte_length]

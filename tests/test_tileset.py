@@ -14,7 +14,7 @@ DATA_DIRECTORY = Path(__file__).parent / "fixtures"
 
 
 @fixture()
-def tileset():
+def tileset() -> TileSet:
     """
     Programmatically define a tileset sample encountered in the
     TileSet json header specification cf
@@ -38,7 +38,7 @@ def tileset():
     return tile_set
 
 
-def test_constructor():
+def test_constructor() -> None:
     tile_set = TileSet()
     assert tile_set.asset.to_dict() == {"version": "1.0"}
     assert tile_set.extensions == {}
@@ -46,7 +46,7 @@ def test_constructor():
     assert isinstance(tile_set.root_tile, Tile)
 
 
-def test_to_dict(tileset):
+def test_to_dict(tileset: TileSet) -> None:
     assert tileset.to_dict() == {
         "root": {
             "boundingVolume": {
@@ -75,7 +75,7 @@ def test_to_dict(tileset):
     }
 
 
-def test_from_dict():
+def test_from_dict() -> None:
     tmp_dir = Path("tmp/")
     tmp_dir.mkdir(exist_ok=True)
 

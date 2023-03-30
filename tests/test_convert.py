@@ -3,6 +3,7 @@ import json
 import multiprocessing
 from pathlib import Path
 import shutil
+from typing import Generator
 from unittest.mock import patch
 
 from _pytest.python_api import RaisesContext
@@ -23,12 +24,12 @@ DATA_DIRECTORY = Path(__file__).parent / "fixtures"
 
 
 @fixture()
-def tmp_dir():
+def tmp_dir() -> Generator[Path, None, None]:
     yield Path("tmp/")
     shutil.rmtree("./tmp", ignore_errors=True)
 
 
-def test_convert(tmp_dir):
+def test_convert(tmp_dir: Path) -> None:
     path = DATA_DIRECTORY / "ripple.las"
     convert(path, outfolder=tmp_dir)
 
@@ -49,7 +50,7 @@ def test_convert(tmp_dir):
     assert las_point_count == number_of_points_in_tileset(tileset_path)
 
 
-def test_convert_with_prune(tmp_dir):
+def test_convert_with_prune(tmp_dir: Path) -> None:
     # This file has 1 point at (-2, -2, -2) and 20001 at (1, 1, 1)
     # like this, it triggers the prune mechanism
     laz_path = DATA_DIRECTORY / "stacked_points.las"
@@ -78,7 +79,7 @@ def test_convert_with_prune(tmp_dir):
     assert las_point_count == number_of_points_in_tileset(tileset_path)
 
 
-def test_convert_without_srs(tmp_dir):
+def test_convert_without_srs(tmp_dir: Path) -> None:
     with raises(SrsInMissingException):
         convert(
             DATA_DIRECTORY / "without_srs.las",
@@ -120,7 +121,7 @@ def test_convert_without_srs(tmp_dir):
     assert_array_equal(pt1_color, np.array((187, 187, 187), dtype=np.uint8))
 
 
-def test_convert_las_color_scale(tmp_dir):
+def test_convert_las_color_scale(tmp_dir: Path) -> None:
     convert(
         DATA_DIRECTORY / "without_srs.las",
         outfolder=tmp_dir,
@@ -164,7 +165,7 @@ def test_convert_las_color_scale(tmp_dir):
     assert_array_equal(pt1_color, np.array((255, 255, 255), dtype=np.uint8))
 
 
-def test_convert_with_srs(tmp_dir):
+def test_convert_with_srs(tmp_dir: Path) -> None:
     convert(
         DATA_DIRECTORY / "with_srs_3857.las",
         outfolder=tmp_dir,
@@ -188,7 +189,7 @@ def test_convert_with_srs(tmp_dir):
     assert las_point_count == number_of_points_in_tileset(tileset_path)
 
 
-def test_convert_simple_xyz(tmp_dir):
+def test_convert_simple_xyz(tmp_dir: Path) -> None:
     convert(
         DATA_DIRECTORY / "simple.xyz",
         outfolder=tmp_dir,
@@ -215,7 +216,7 @@ def test_convert_simple_xyz(tmp_dir):
     assert box == expecting_box
 
 
-def test_convert_xyz_with_rgb(tmp_dir):
+def test_convert_xyz_with_rgb(tmp_dir: Path) -> None:
     convert(DATA_DIRECTORY / "simple_with_rgb.xyz", outfolder=tmp_dir)
 
     tile1 = read_binary_tile_content(tmp_dir / "r1.pnts")
@@ -243,7 +244,7 @@ def test_convert_xyz_with_rgb(tmp_dir):
     assert_array_equal(pt3_color, np.array((0, 10, 0), dtype=np.uint8))
 
 
-def test_convert_xyz_with_rgb_color_scale(tmp_dir):
+def test_convert_xyz_with_rgb_color_scale(tmp_dir: Path) -> None:
     convert(DATA_DIRECTORY / "simple_with_rgb.xyz", outfolder=tmp_dir, color_scale=1.5)
 
     tile1 = read_binary_tile_content(tmp_dir / "r1.pnts")
@@ -271,7 +272,7 @@ def test_convert_xyz_with_rgb_color_scale(tmp_dir):
     assert_array_equal(pt3_color, np.array((0, 15, 0), dtype=np.uint8))
 
 
-def test_convert_ply(tmp_dir):
+def test_convert_ply(tmp_dir: Path) -> None:
     convert(DATA_DIRECTORY / "simple.ply", outfolder=tmp_dir, jobs=1)
     assert Path(tmp_dir, "tileset.json").exists()
     assert Path(tmp_dir, "r.pnts").exists()
@@ -295,7 +296,7 @@ def test_convert_ply(tmp_dir):
     assert_array_equal(pt1_color, np.array((0, 0, 0), dtype=np.uint8))
 
 
-def test_convert_ply_with_color(tmp_dir):
+def test_convert_ply_with_color(tmp_dir: Path) -> None:
     # 8 bits color
     convert(DATA_DIRECTORY / "simple_with_8_bits_colors.ply", outfolder=tmp_dir, jobs=1)
     assert Path(tmp_dir, "tileset.json").exists()
@@ -377,7 +378,7 @@ def test_convert_ply_with_color(tmp_dir):
     assert_array_equal(pt1_color, np.array((255, 255, 255), dtype=np.uint8))
 
 
-def test_convert_ply_with_color_scale(tmp_dir):
+def test_convert_ply_with_color_scale(tmp_dir: Path) -> None:
     # 8 bits color
     convert(
         DATA_DIRECTORY / "simple_with_8_bits_colors.ply",
@@ -417,7 +418,7 @@ def test_convert_ply_with_color_scale(tmp_dir):
     assert_array_equal(pt1_color, np.array((120, 120, 120), dtype=np.uint8))
 
 
-def test_convert_ply_with_wrong_classification(tmp_dir):
+def test_convert_ply_with_wrong_classification(tmp_dir: Path) -> None:
     # Buggy feature name, classification is lost.
     convert(
         DATA_DIRECTORY / "simple.ply",
@@ -439,7 +440,7 @@ def test_convert_ply_with_wrong_classification(tmp_dir):
         )
 
 
-def test_convert_ply_with_good_classification(tmp_dir):
+def test_convert_ply_with_good_classification(tmp_dir: Path) -> None:
     EXPECTED_LABELS = np.array([0, 1, 2, -1], dtype=np.uint8)
     # Change the classification property name in the tested .ply file
     ply_data = plyfile.PlyData.read(DATA_DIRECTORY / "simple.ply")
@@ -472,7 +473,7 @@ def test_convert_ply_with_good_classification(tmp_dir):
     modified_ply_filename.unlink()
 
 
-def test_convert_mix_las_xyz(tmp_dir):
+def test_convert_mix_las_xyz(tmp_dir: Path) -> None:
     convert(
         [DATA_DIRECTORY / "simple.xyz", DATA_DIRECTORY / "with_srs_3857.las"],
         outfolder=tmp_dir,
@@ -516,7 +517,7 @@ def test_convert_mix_las_xyz(tmp_dir):
     assert box == expecting_box
 
 
-def test_convert_mix_input_crs(tmp_dir):
+def test_convert_mix_input_crs(tmp_dir: Path) -> None:
     with raises(SrsInMixinException):
         convert(
             [
@@ -557,7 +558,7 @@ def test_convert_mix_input_crs(tmp_dir):
     multiprocessing.get_start_method() != "fork",
     reason="'patch' function works only with the multiprocessing 'fork' method (not available on windows).",
 )
-def test_convert_xyz_exception_in_run(tmp_dir):
+def test_convert_xyz_exception_in_run(tmp_dir: Path) -> None:
     with patch("py3dtiles.reader.xyz_reader.run") as mock_run, raises(
         Exception, match="An exception occurred in a worker: Exception in run"
     ):
@@ -574,7 +575,7 @@ def test_convert_xyz_exception_in_run(tmp_dir):
     multiprocessing.get_start_method() != "fork",
     reason="'patch' function works only with the multiprocessing 'fork' method (not available on windows).",
 )
-def test_convert_las_exception_in_run(tmp_dir):
+def test_convert_las_exception_in_run(tmp_dir: Path) -> None:
     with patch("py3dtiles.reader.las_reader.run") as mock_run, raises(
         Exception, match="An exception occurred in a worker: Exception in run"
     ):
@@ -587,7 +588,7 @@ def test_convert_las_exception_in_run(tmp_dir):
         )
 
 
-def test_convert_export_folder_already_exists(tmp_dir):
+def test_convert_export_folder_already_exists(tmp_dir: Path) -> None:
 
     tmp_dir.mkdir()
     assert not (tmp_dir / "tileset.json").exists()
@@ -611,7 +612,7 @@ def test_convert_export_folder_already_exists(tmp_dir):
     assert (tmp_dir / "tileset.json").exists()
 
 
-def test_convert_many_point_same_location(tmp_dir):
+def test_convert_many_point_same_location(tmp_dir: Path) -> None:
     tmp_dir.mkdir()
 
     # This is how the file has been generated.
