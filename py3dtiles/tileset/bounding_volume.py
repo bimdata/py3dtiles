@@ -10,7 +10,7 @@ from py3dtiles.typing import BoundingVolumeDictType
 from .extendable import Extendable
 
 if TYPE_CHECKING:
-    from py3dtiles.tileset.tile import Tile
+    from py3dtiles.tileset import Tile
 
 
 class BoundingVolume(ABC, Extendable):

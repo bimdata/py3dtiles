@@ -6,15 +6,16 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from py3dtiles.exceptions import Invalid3dtilesError
-from .content import B3dm, Pnts
+from .b3dm import B3dm
+from .pnts import Pnts
 
 if TYPE_CHECKING:
-    from .content import TileContent
+    from py3dtiles.tileset.content import TileContent
 
-__all__ = ["read_file"]
+__all__ = ["read_binary_tile_content"]
 
 
-def read_file(tile_path: Path) -> TileContent:
+def read_binary_tile_content(tile_path: Path) -> TileContent:
     with tile_path.open("rb") as f:
         data = f.read()
         arr = np.frombuffer(data, dtype=np.uint8)

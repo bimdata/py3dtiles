@@ -12,12 +12,11 @@ from py3dtiles.exceptions import InvalidTilesetError, Py3dtilesException, TilerE
 from py3dtiles.typing import RefineType, TileDictType
 from .bounding_volume import BoundingVolume
 from .bounding_volume_box import BoundingVolumeBox
-from .content import TileContent
+from .content import read_binary_tile_content, TileContent
 from .extendable import Extendable
-from .tile_content_reader import read_file
 
 if TYPE_CHECKING:
-    from py3dtiles.tileset.tileset import TileSet
+    from py3dtiles.tileset import TileSet
 
 DEFAULT_TRANSFORMATION = np.identity(4, dtype=np.float64).reshape(-1)
 DEFAULT_TRANSFORMATION.setflags(write=False)
@@ -249,4 +248,4 @@ class Tile(Extendable):
                 data = json.load(f)
                 self.tile_content = TileSet.from_dict(data, uri.parent)
         else:
-            self.tile_content = read_file(uri)
+            self.tile_content = read_binary_tile_content(uri)

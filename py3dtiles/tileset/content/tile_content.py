@@ -7,8 +7,8 @@ from typing import Literal
 import numpy as np
 import numpy.typing as npt
 
-from py3dtiles.tileset.batch_table import BatchTable
-from py3dtiles.tileset.feature_table import FeatureTable
+from .batch_table import BatchTable
+from .feature_table import FeatureTable
 
 
 class TileContent(ABC):

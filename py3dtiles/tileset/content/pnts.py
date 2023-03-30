@@ -6,8 +6,8 @@ import numpy as np
 import numpy.typing as npt
 
 from py3dtiles.exceptions import InvalidPntsError
-from py3dtiles.tileset.batch_table import BatchTable
-from py3dtiles.tileset.feature_table import (
+from .batch_table import BatchTable
+from .feature_table import (
     FeatureTable,
     FeatureTableHeader,
 )

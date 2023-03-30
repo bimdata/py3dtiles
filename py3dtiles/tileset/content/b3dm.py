@@ -6,7 +6,7 @@ import numpy as np
 import numpy.typing as npt
 
 from py3dtiles.exceptions import InvalidB3dmError
-from py3dtiles.tileset.batch_table import BatchTable
+from .batch_table import BatchTable
 from .gltf import GlTF
 from .tile_content import (
     TileContent,

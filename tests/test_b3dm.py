@@ -6,13 +6,12 @@ import unittest
 import numpy as np
 
 from py3dtiles.tilers.b3dm.wkb_utils import TriangleSoup
-from py3dtiles.tileset.content import B3dm, GlTF
-from py3dtiles.tileset.tile_content_reader import read_file
+from py3dtiles.tileset.content import B3dm, GlTF, read_binary_tile_content
 
 
 class TestTileContentReader(unittest.TestCase):
     def test_read(self):
-        tile_content = read_file(
+        tile_content = read_binary_tile_content(
             Path("tests/fixtures/dragon_low.b3dm")
         )  # TODO re-export b3dm once feature table is added
         if not isinstance(tile_content, B3dm):
@@ -32,7 +31,7 @@ class TestTileContentReader(unittest.TestCase):
         self.assertDictEqual(gltf_header, tile_content.body.gltf.header)
 
     def test_read_and_write(self):
-        tile_content = read_file(
+        tile_content = read_binary_tile_content(
             Path("tests/fixtures/buildings.b3dm")
         )  # TODO re-export b3dm once feature table is added
         if not isinstance(tile_content, B3dm):

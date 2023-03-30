@@ -5,13 +5,13 @@ import numpy as np
 import numpy.typing as npt
 
 from py3dtiles.exceptions import Invalid3dtilesError
-from py3dtiles.tileset.batch_table import (
+from py3dtiles.tileset.content import PntsHeader
+from py3dtiles.tileset.content.batch_table import (
     BatchTable,
     BatchTableBody,
     BatchTableHeader,
     ComponentNumpyType,
 )
-from py3dtiles.tileset.content import PntsHeader
 from py3dtiles.typing import BatchTableHeaderDataType
 
 
