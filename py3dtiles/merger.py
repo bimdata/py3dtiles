@@ -327,7 +327,7 @@ def init_parser(
     return parser
 
 
-def main(args):
+def main(args: argparse.Namespace) -> None:
     return merge_from_files(
         [Path(tileset_file) for tileset_file in args.tilesets],
         Path(args.output_tileset),

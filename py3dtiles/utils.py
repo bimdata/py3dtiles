@@ -61,7 +61,7 @@ if TYPE_CHECKING:
 def profile(func: Callable[Param, RetType]) -> Callable[Param, RetType]:
     from line_profiler import LineProfiler
 
-    def wrapper(*args, **kwargs):
+    def wrapper(*args, **kwargs):  # type: ignore [no-untyped-def]
         lp = LineProfiler()
         deco = lp(func)
         res = deco(*args, **kwargs)
