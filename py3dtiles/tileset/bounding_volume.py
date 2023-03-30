@@ -1,25 +1,44 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from abc import abstractmethod
+from typing import Generic, TYPE_CHECKING, TypeVar
 
 import numpy as np
 import numpy.typing as npt
 
-from py3dtiles.typing import BoundingVolumeDictType
-from .extendable import Extendable
+from py3dtiles.typing import (
+    BoundingVolumeBoxDictType,
+    BoundingVolumeRegionDictType,
+    BoundingVolumeSphereDictType,
+)
+from .root_property import RootProperty
 
 if TYPE_CHECKING:
     from py3dtiles.tileset import Tile
+    from typing_extensions import Self
+
+_BoundingVolumeJsonDictT = TypeVar(
+    "_BoundingVolumeJsonDictT",
+    BoundingVolumeBoxDictType,
+    BoundingVolumeRegionDictType,
+    BoundingVolumeSphereDictType,
+)
 
 
-class BoundingVolume(ABC, Extendable):
+class BoundingVolume(
+    RootProperty[_BoundingVolumeJsonDictT], Generic[_BoundingVolumeJsonDictT]
+):
     """
     Abstract class used as interface for box, region and sphere
     """
 
     def __init__(self) -> None:
         super().__init__()
+
+    @classmethod
+    @abstractmethod
+    def from_dict(cls, bounding_volume_dict: _BoundingVolumeJsonDictT) -> Self:
+        ...
 
     def is_box(self) -> bool:
         return False
@@ -31,10 +50,6 @@ class BoundingVolume(ABC, Extendable):
         return False
 
     @abstractmethod
-    def to_dict(self) -> BoundingVolumeDictType:
-        ...
-
-    @abstractmethod
     def sync_with_children(self, owner: Tile) -> None:
         ...
 
@@ -44,4 +59,8 @@ class BoundingVolume(ABC, Extendable):
 
     @abstractmethod
     def add(self, other: BoundingVolume) -> None:
+        ...
+
+    @abstractmethod
+    def to_dict(self) -> _BoundingVolumeJsonDictT:
         ...

@@ -12,13 +12,14 @@ from .bounding_volume import BoundingVolume
 
 if TYPE_CHECKING:
     from .tile import Tile
+    from typing_extensions import Self
 
 # In order to prevent the appearance of ghost newline characters ("\n")
 # when printing a numpy.array (mainly self._box in this file):
 np.set_printoptions(linewidth=500)
 
 
-class BoundingVolumeBox(BoundingVolume):
+class BoundingVolumeBox(BoundingVolume[BoundingVolumeBoxDictType]):
     """
     A box bounding volume as defined in the 3DTiles specifications i.e. an
     array of 12 numbers that define an oriented bounding box:
@@ -45,6 +46,15 @@ class BoundingVolumeBox(BoundingVolume):
     def __init__(self) -> None:
         super().__init__()
         self._box: npt.NDArray[np.float64] | None = None
+
+    @classmethod
+    def from_dict(cls, bounding_volume_box_dict: BoundingVolumeBoxDictType) -> Self:
+        bounding_volume_box = cls()
+        bounding_volume_box.set_from_list(bounding_volume_box_dict["box"])
+
+        bounding_volume_box.set_properties_from_dict(bounding_volume_box_dict)
+
+        return bounding_volume_box
 
     def get_center(self) -> npt.NDArray[np.float64]:
         if self._box is None:
@@ -199,7 +209,8 @@ class BoundingVolumeBox(BoundingVolume):
         if self._box is None:
             raise AttributeError("Bounding Volume Box is not defined.")
 
-        return {"box": list(self._box)}
+        dict_data: BoundingVolumeBoxDictType = {"box": list(self._box)}
+        return self.add_root_properties_to_dict(dict_data)
 
     @staticmethod
     def get_box_array_from_mins_maxs(
