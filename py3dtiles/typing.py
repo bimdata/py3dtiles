@@ -117,15 +117,15 @@ PortionsType = List[Tuple[str, PortionItemType]]
 
 class MetadataReaderType(TypedDict):
     portions: PortionsType
-    aabb: npt.NDArray[np.double]
+    aabb: npt.NDArray[np.float64]
     crs_in: CRS | None
     point_count: int
-    avg_min: npt.NDArray[np.double]
+    avg_min: npt.NDArray[np.float64]
 
 
 OffsetScaleType = Tuple[
-    npt.NDArray[np.double],
-    npt.NDArray[np.double],
-    Optional[npt.NDArray[np.double]],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    Optional[npt.NDArray[np.float64]],
     Optional[float],
 ]

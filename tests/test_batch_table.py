@@ -43,9 +43,9 @@ class TestBatchTableBody(unittest.TestCase):
     def test_non_empty_body(self) -> None:
         btb = BatchTableBody(
             [
-                np.array([1, 2, 3], np.ubyte),
-                np.array([4, 5, 6], np.ubyte),
-                np.array([7, 8, 9], np.ubyte),
+                np.array([1, 2, 3], np.uint8),
+                np.array([4, 5, 6], np.uint8),
+                np.array([7, 8, 9], np.uint8),
             ]
         )
         btb_array = btb.to_array()
@@ -103,7 +103,7 @@ class TestBatchTable(unittest.TestCase):
         np.testing.assert_equal(bt.body.data[0], np.array([1, 2, 3], np.uint8))
 
         bt.add_property_as_binary(
-            "property_2", np.array([4, 5, 6], np.single), "FLOAT", "SCALAR"
+            "property_2", np.array([4, 5, 6], np.float32), "FLOAT", "SCALAR"
         )
         self.assertTrue(set(bt.header.data.keys()) == {"property_1", "property_2"})
         self.assertEqual(
@@ -111,7 +111,7 @@ class TestBatchTable(unittest.TestCase):
             {"byteOffset": 3, "componentType": "FLOAT", "type": "SCALAR"},
         )
         self.assertEqual(len(bt.body.data), 2)
-        np.testing.assert_equal(bt.body.data[1], np.array([4, 5, 6], np.single))
+        np.testing.assert_equal(bt.body.data[1], np.array([4, 5, 6], np.float32))
 
     def test_to_array_with_empty_body(self) -> None:
         bt = BatchTable()
@@ -192,8 +192,8 @@ class TestBatchTable(unittest.TestCase):
 
         # binary part
         batch_table_body_binary: list[npt.NDArray[ComponentNumpyType]] = [
-            np.array([1, 2, 3, 4], dtype=np.ubyte),
-            np.array([1, -1, 2, -2, 3, -3, 4, -4], dtype=np.intc),
+            np.array([1, 2, 3, 4], dtype=np.uint8),
+            np.array([1, -1, 2, -2, 3, -3, 4, -4], dtype=np.int32),
         ]
         batch_table_body = BatchTableBody(batch_table_body_binary)
         batch_table_json = batch_table_header.to_array()
@@ -224,8 +224,8 @@ class TestBatchTable(unittest.TestCase):
 
         # binary part
         batch_table_body_binary: list[npt.NDArray[ComponentNumpyType]] = [
-            np.array([1, 2, 3, 4], dtype=np.ubyte),
-            np.array([1, -1, 2, -2, 3, -3, 4, -4], dtype=np.intc),
+            np.array([1, 2, 3, 4], dtype=np.uint8),
+            np.array([1, -1, 2, -2, 3, -3, 4, -4], dtype=np.int32),
         ]
         batch_table_body = BatchTableBody(batch_table_body_binary)
 
