@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import json
 import struct
+from typing import Any, Sequence
 
 import numpy as np
 import numpy.typing as npt
@@ -9,7 +12,7 @@ class GlTF:
     HEADER_LENGTH = 12
     CHUNK_HEADER_LENGTH = 8
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.header = {}
         self.body = None
 
@@ -56,17 +59,7 @@ class GlTF:
         )
 
     @staticmethod
-    def from_array(array):
-        """
-        Parameters
-        ----------
-        array : numpy.array
-
-        Returns
-        -------
-        gltf : GlTf
-        """
-
+    def from_array(array: npt.NDArray[np.uint8]) -> GlTF:
         gltf = GlTF()
 
         if struct.unpack("4s", array[0:4])[0] != b"glTF":
@@ -99,7 +92,13 @@ class GlTF:
         return gltf
 
     @staticmethod
-    def from_binary_arrays(arrays, transform, batched=True, uri=None, texture_uri=None):
+    def from_binary_arrays(
+        arrays: list[dict[str, Sequence[Any]]],
+        transform: npt.NDArray[np.float64],
+        batched: bool = True,
+        uri: str | None = None,
+        texture_uri: str | None = None,
+    ) -> GlTF:
         """
         Parameters
         ----------

@@ -633,7 +633,7 @@ def test_convert_many_point_same_location(tmp_dir: Path) -> None:
     "rgb_bool,classif_bool",
     [(True, True), (False, True), (True, False), (False, False)],
 )
-def test_convert_rgb_classif(rgb_bool, classif_bool, tmp_dir):
+def test_convert_rgb_classif(rgb_bool: bool, classif_bool: bool, tmp_dir: Path) -> None:
 
     if not classif_bool:
         expected_raise: RaisesContext[ValueError] | nullcontext[None] = raises(
