@@ -2,7 +2,7 @@ import shutil
 import unittest
 from pathlib import Path
 
-from py3dtiles.tilers.node import SharedNodeStore
+from py3dtiles.tilers.point.node import SharedNodeStore
 
 
 class TestSharedNodeStore(unittest.TestCase):

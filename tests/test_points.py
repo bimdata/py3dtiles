@@ -5,8 +5,8 @@ import pytest
 from numpy.testing import assert_array_equal
 from pytest_benchmark.fixture import BenchmarkFixture
 
-from py3dtiles.tilers.node import Grid, Node
-from py3dtiles.tilers.node.distance import is_point_far_enough
+from py3dtiles.tilers.point.node import Grid, Node
+from py3dtiles.tilers.point.node.distance import is_point_far_enough
 from py3dtiles.utils import compute_spacing, node_name_to_path
 
 # test point

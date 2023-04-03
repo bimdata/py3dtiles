@@ -2,23 +2,22 @@ import pickle
 import time
 from typing import Generator, List, Optional, TextIO, Tuple
 
-from py3dtiles.tilers.node.node import Node
-from py3dtiles.tilers.node.node_catalog import NodeCatalog
-from py3dtiles.utils import OctreeMetadata
+from py3dtiles.tilers.point.node.node import Node
+from py3dtiles.tilers.point.node.node_catalog import NodeCatalog
 
 
 class NodeProcess:
     def __init__(
         self,
         node_catalog: NodeCatalog,
-        octree_metadata: OctreeMetadata,
+        scale: float,
         name: bytes,
         tasks: List[bytes],
         begin: float,
         log_file: Optional[TextIO],
     ):
         self.node_catalog = node_catalog
-        self.octree_metadata = octree_metadata
+        self.scale = scale
         self.name = name
         self.tasks = tasks
         self.begin = begin
@@ -38,7 +37,7 @@ class NodeProcess:
                 yield from node.dump_pending_points()
             return
 
-        node.flush_pending_points(self.node_catalog, self.octree_metadata.scale)
+        node.flush_pending_points(self.node_catalog, self.scale)
         if node.children is not None:
             # then flush children
             children = node.children
@@ -122,7 +121,7 @@ class NodeProcess:
 
             # insert points in node (no children handling here)
             node.insert(
-                self.octree_metadata.scale,
+                self.scale,
                 data["xyz"],
                 data["rgb"],
                 data["classification"],

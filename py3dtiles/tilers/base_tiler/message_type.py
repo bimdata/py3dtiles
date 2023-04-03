@@ -7,6 +7,7 @@ class ManagerMessage(Enum):
 
 
 class WorkerMessageType(Enum):
+    REGISTER = b"register"
     IDLE = b"idle"
     HALTED = b"halted"
     ERROR = b"error"

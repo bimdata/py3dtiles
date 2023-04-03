@@ -13,7 +13,7 @@ from py3dtiles.tileset.content import Pnts
 from py3dtiles.utils import node_name_to_path
 
 if TYPE_CHECKING:
-    from py3dtiles.tilers.node import DummyNode, Node
+    from py3dtiles.tilers.point.node import DummyNode, Node
 
 
 def points_to_pnts_file(
@@ -48,7 +48,7 @@ def node_to_pnts(
     include_rgb: bool,
     include_classification: bool,
 ) -> int:
-    points = py3dtiles.tilers.node.Node.get_points(
+    points = py3dtiles.tilers.point.node.Node.get_points(
         node, include_rgb, include_classification
     )
     point_nb, _ = points_to_pnts_file(
@@ -68,6 +68,6 @@ def run(
         root = pickle.loads(gzip.decompress(data))
         total = 0
         for name in root:
-            node = py3dtiles.tilers.node.DummyNode(pickle.loads(root[name]))
+            node = py3dtiles.tilers.point.node.DummyNode(pickle.loads(root[name]))
             total += node_to_pnts(name, node, folder, write_rgb, write_classification)
         yield total
