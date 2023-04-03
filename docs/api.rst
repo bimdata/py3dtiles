@@ -88,9 +88,9 @@ an entire tileset. Here is the current state of the properties supported by Py3d
     >>>
     >>> # a tileset can be written to the disk
     >>> # if you want the content of the tiles to be written too, use write_to_directory
-    >>> new_tileset_directory = Path("my3dtiles/")
-    >>> new_tileset_directory.mkdir()
-    >>> tileset.write_as_json(new_tileset_directory)
+    >>> new_tileset_path = Path("my3dtiles/tileset.json")
+    >>> new_tileset_path.parent.mkdir()
+    >>> tileset.write_as_json(new_tileset_path)
 
 When reading a tileset, the tile content loading is done lazily, i.e. one loads only the `tileset.json` file and the tile contents is loaded only when needed.
 
@@ -261,9 +261,9 @@ This basic example aims to show a set of methods to create, manipulate and write
     >>> # Create the tileset
     >>> tileset = TileSet()
     >>> tileset.root_tile = root_tile
-    >>> tileset_directory = Path("my3dtiles2/")
-    >>> tileset_directory.mkdir()
-    >>> tileset.write_to_directory(tileset_directory)
+    >>> tileset_path = Path("my3dtiles2/tileset.json")
+    >>> tileset_path.parent.mkdir()
+    >>> tileset.write_to_directory(tileset_path)
 
 Tile content
 ------------

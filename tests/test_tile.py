@@ -63,7 +63,7 @@ class TestTileContentManagement:
         tile.tile_content = pnts
 
         with pytest.raises(
-            TilerException, match="tile.content_uri is null, cannot write tile content"
+            TilerException, match="tile.content_uri is None, cannot write tile content"
         ):
             tile.write_content(tmp_dir)
 
@@ -91,7 +91,7 @@ class TestTile:
         assert tile.geometric_error == 500
         assert tile._refine == "ADD"
         assert tile.children == []
-        assert_array_equal(tile.transform, np.identity(4).reshape(-1))
+        assert_array_equal(tile.transform, np.identity(4))
 
         bounding_volume = BoundingVolumeBox()
         bounding_volume.set_from_list([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
@@ -100,31 +100,20 @@ class TestTile:
         assert tile.geometric_error == 200
         assert tile._refine == "ADD"
         assert tile.children == []
-        assert_array_equal(tile.transform, np.identity(4).reshape(-1))
+        assert_array_equal(tile.transform, np.identity(4))
 
     def test_transform(self) -> None:
         tile = Tile()
 
-        assert_array_equal(tile.transform, np.identity(4).reshape(-1))
+        assert_array_equal(tile.transform, np.identity(4))
 
+        # fmt: off
         tile.transform = np.array(
             [
-                1.0001,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                1.001,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                1.01,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                1.1,
+                [1.0001, 0.0, 0.0, 0.0,],
+                [0.0, 1.001, 0.0, 0.0,],
+                [0.0, 0.0, 1.01, 0.0,],
+                [0.0, 0.0, 0.0, 1.1,],
             ]
         )
 
@@ -132,25 +121,14 @@ class TestTile:
             tile.transform,
             np.array(
                 [
-                    1.0001,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    1.001,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    1.01,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    1.1,
+                    [1.0001, 0.0, 0.0, 0.0,],
+                    [0.0, 1.001, 0.0, 0.0,],
+                    [0.0, 0.0, 1.01, 0.0,],
+                    [0.0, 0.0, 0.0, 1.1,],
                 ]
             ),
         )
+        # fmt: on
 
     def test_refine_mode(self) -> None:
         tile = Tile()

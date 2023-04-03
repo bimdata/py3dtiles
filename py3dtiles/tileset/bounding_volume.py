@@ -50,7 +50,11 @@ class BoundingVolume(
         return False
 
     @abstractmethod
-    def sync_with_children(self, owner: Tile) -> None:
+    def get_center(self) -> npt.NDArray[np.float64]:
+        ...
+
+    @abstractmethod
+    def translate(self, offset: npt.NDArray[np.float64]) -> None:
         ...
 
     @abstractmethod
@@ -59,6 +63,10 @@ class BoundingVolume(
 
     @abstractmethod
     def add(self, other: BoundingVolume[Any]) -> None:
+        ...
+
+    @abstractmethod
+    def sync_with_children(self, owner: Tile) -> None:
         ...
 
     @abstractmethod

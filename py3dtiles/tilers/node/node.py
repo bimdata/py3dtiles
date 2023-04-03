@@ -11,7 +11,7 @@ import numpy.typing as npt
 
 from py3dtiles.exceptions import TilerException
 from py3dtiles.tilers.pnts import MIN_POINT_SIZE
-from py3dtiles.tilers.pnts.pnts_writer import points_to_pnts
+from py3dtiles.tilers.pnts.pnts_writer import points_to_pnts_file
 from py3dtiles.tileset.content import read_binary_tile_content
 from py3dtiles.tileset.content.feature_table import SemanticPoint
 from py3dtiles.typing import BoundingVolumeBoxDictType, ContentType, TileDictType
@@ -400,7 +400,7 @@ class Node:
             )
 
             parent_pnts_path.unlink()
-            points_to_pnts(
+            points_to_pnts_file(
                 parent_node.name,
                 np.concatenate(
                     (parent_xyz.view(np.uint8), parent_rgb, parent_classification)

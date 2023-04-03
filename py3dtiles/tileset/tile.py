@@ -17,7 +17,7 @@ from .root_property import RootProperty
 if TYPE_CHECKING:
     from py3dtiles.tileset import TileSet
 
-DEFAULT_TRANSFORMATION = np.identity(4, dtype=np.float64).reshape(-1)
+DEFAULT_TRANSFORMATION = np.identity(4, dtype=np.float64)
 DEFAULT_TRANSFORMATION.setflags(write=False)
 
 
@@ -26,6 +26,7 @@ class Tile(RootProperty[TileDictType]):
         self,
         geometric_error: float = 500,
         bounding_volume: BoundingVolume[Any] | None = None,
+        transform: npt.NDArray[np.float64] = DEFAULT_TRANSFORMATION,
         refine_mode: RefineType = "ADD",
         content_uri: Path | None = None,
     ) -> None:
@@ -38,7 +39,7 @@ class Tile(RootProperty[TileDictType]):
         self.content_uri: Path | None = content_uri
         self.children: list[Tile] = []
         # Some possible valid properties left un-delt with viewerRequestVolume
-        self.transform: npt.NDArray[np.float64] = DEFAULT_TRANSFORMATION
+        self.transform = transform
 
     @classmethod
     def from_dict(cls, tile_dict: TileDictType) -> Tile:
@@ -65,7 +66,7 @@ class Tile(RootProperty[TileDictType]):
             tile.set_refine_mode(tile_dict["refine"])
 
         if "transform" in tile_dict:
-            tile.transform = np.array(tile_dict["transform"])
+            tile.transform = np.array(tile_dict["transform"]).reshape((4, 4))
 
         if "children" in tile_dict:
             for child in tile_dict["children"]:
@@ -104,6 +105,32 @@ class Tile(RootProperty[TileDictType]):
         """
         return self.tile_content is not None
 
+    def delete_on_disk(self, root_uri: Path, delete_sub_tileset: bool = False) -> None:
+        """
+        Deletes all files linked to the tile and its children. The uri of the folder where tileset is, should be defined.
+
+        :param root_uri: The folder where tileset is
+        :param delete_sub_tileset: If True, all tilesets present as tile content will be removed as well as their content.
+        If False, the linked tilesets in tiles won't be removed.
+        """
+        for child in self.children:
+            child.delete_on_disk(root_uri, delete_sub_tileset)
+
+        # if there is no content_uri, there is no file to remove
+        if self.content_uri is None:
+            return
+
+        if self.content_uri.is_absolute():
+            tile_content_path = self.content_uri
+        else:
+            tile_content_path = root_uri / self.content_uri
+
+        if tile_content_path.suffix == ".json":
+            if delete_sub_tileset:
+                self.get_or_fetch_content(root_uri).delete_on_disk(tile_content_path)  # type: ignore
+        else:
+            tile_content_path.unlink()
+
     def set_refine_mode(self, mode: RefineType) -> None:
         if mode != "ADD" and mode != "REPLACE":
             raise InvalidTilesetError(
@@ -115,13 +142,18 @@ class Tile(RootProperty[TileDictType]):
         return self._refine
 
     def add_child(self, tile: Tile) -> None:
+        self.children.append(tile)
+
         if tile.bounding_volume is not None:
             if self.bounding_volume is None:
                 self.bounding_volume = copy.deepcopy(tile.bounding_volume)
+                self.bounding_volume.transform(tile.transform)
             else:
-                self.bounding_volume.add(tile.bounding_volume)
-
-        self.children.append(tile)
+                transformed_bounding_volume = copy.deepcopy(tile.bounding_volume)
+                transformed_bounding_volume.transform(tile.transform)
+                parent_inv_transform = np.linalg.inv(self.transform)
+                transformed_bounding_volume.transform(parent_inv_transform)
+                self.bounding_volume.add(transformed_bounding_volume)
 
     def get_all_children(self) -> list[Tile]:
         """
@@ -171,7 +203,7 @@ class Tile(RootProperty[TileDictType]):
             )
 
         if self.content_uri is None:
-            raise TilerException("tile.content_uri is null, cannot write tile content")
+            raise TilerException("tile.content_uri is None, cannot write tile content")
 
         if self.content_uri.is_absolute():
             content_path = self.content_uri
@@ -217,7 +249,7 @@ class Tile(RootProperty[TileDictType]):
         if (
             self.transform is not None and self.transform is not DEFAULT_TRANSFORMATION
         ):  # if transform has not the same id
-            dict_data["transform"] = list(self.transform)
+            dict_data["transform"] = list(self.transform.flatten())
 
         if self.children:
             # The children list exists indeed (for technical reasons) yet it

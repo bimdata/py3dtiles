@@ -9,7 +9,9 @@ from py3dtiles.exceptions import InvalidPntsError
 from .batch_table import BatchTable
 from .feature_table import (
     FeatureTable,
+    FeatureTableBody,
     FeatureTableHeader,
+    SemanticPoint,
 )
 from .tile_content import (
     TileContent,
@@ -129,6 +131,60 @@ class Pnts(TileContent):
         # build the tile with header and body
         return Pnts(pnts_header, pnts_body)
 
+    @staticmethod
+    def from_points(
+        points: npt.NDArray[np.uint8], include_rgb: bool, include_classification: bool
+    ) -> Pnts:
+        """
+        Create a pnts from an uint8 data array containing:
+         - points as SemanticPoint.POSITION
+         - if include_rgb, rgb as SemanticPoint.RGB
+         - if include_classification, classification as a single np.uint8 value that will put in the batch table
+        """
+        if len(points) == 0:
+            raise ValueError("The argument points cannot be empty.")
+
+        point_size = (
+            3 * 4 + (3 if include_rgb else 0) + (1 if include_classification else 0)
+        )
+
+        if len(points) % point_size != 0:
+            raise ValueError(
+                f"The length of points array is {len(points)} but the point size is {point_size}."
+                f"There is a rest of {len(points) % point_size}"
+            )
+
+        count = len(points) // point_size
+
+        ft = FeatureTable()
+        ft.header = FeatureTableHeader.from_semantic(
+            SemanticPoint.POSITION,
+            SemanticPoint.RGB if include_rgb else None,
+            None,
+            count,
+        )
+        ft.body = FeatureTableBody.from_array(ft.header, points)
+
+        bt = BatchTable()
+        if include_classification:
+            sdt = np.dtype([("Classification", "u1")])
+            offset = count * (3 * 4 + (3 if include_rgb else 0))
+            bt.add_property_as_binary(
+                "Classification",
+                points[offset : offset + count * sdt.itemsize],
+                "UNSIGNED_BYTE",
+                "SCALAR",
+            )
+
+        body = PntsBody()
+        body.feature_table = ft
+        body.batch_table = bt
+
+        pnts = Pnts(PntsHeader(), body)
+        pnts.sync()
+
+        return pnts
+
 
 class PntsHeader(TileContentHeader):
     BYTE_LENGTH = 28
@@ -194,6 +250,31 @@ class PntsBody(TileContentBody):
         feature_table_array = self.feature_table.to_array()
         batch_table_array = self.batch_table.to_array()
         return np.concatenate((feature_table_array, batch_table_array))
+
+    def get_points(
+        self, transform: npt.NDArray[np.float64] | None
+    ) -> tuple[npt.NDArray[np.float32], npt.NDArray[np.uint8 | np.uint16] | None]:
+        fth = self.feature_table.header
+
+        xyz = self.feature_table.body.position.view(np.float32).reshape(
+            (fth.points_length, 3)
+        )
+        if fth.colors == SemanticPoint.RGB:
+            rgb = self.feature_table.body.color
+            if rgb is None:
+                raise InvalidPntsError(
+                    "If fth.colors is SemanticPoint.RGB, rgb cannot be None."
+                )
+            rgb = rgb.reshape((fth.points_length, 3))
+        else:
+            rgb = None
+
+        if transform is not None:
+            transform = transform.reshape((4, 4))
+            xyzw = np.hstack((xyz, np.ones((xyz.shape[0], 1), dtype=xyz.dtype)))
+            xyz = np.dot(xyzw, transform.astype(xyz.dtype))[:, :3]
+
+        return xyz, rgb
 
     @staticmethod
     def from_array(header: PntsHeader, array: npt.NDArray[np.uint8]) -> PntsBody:

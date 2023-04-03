@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import copy
 import json
 from pathlib import Path
 import shutil
+from typing import Generator
 
 from pytest import fixture
 
@@ -13,7 +15,7 @@ from .fixtures.mock_extension import MockExtension
 DATA_DIRECTORY = Path(__file__).parent / "fixtures"
 
 
-@fixture()
+@fixture
 def tileset() -> TileSet:
     """
     Programmatically define a tileset sample encountered in the
@@ -36,6 +38,29 @@ def tileset() -> TileSet:
     tile_set.extensions_used.add(extension.name)
 
     return tile_set
+
+
+@fixture
+def tileset_on_disk_with_sub_tileset_path() -> Generator[Path, None, None]:
+    tmp_dir = Path("tmp/")
+    tmp_dir.mkdir(exist_ok=True)
+    convert(DATA_DIRECTORY / "simple.xyz", outfolder=tmp_dir, overwrite=True)
+
+    sub_tileset_path = tmp_dir / "tileset.json"
+    main_tileset_path = tmp_dir / "upper_tileset.json"
+    sub_tileset = TileSet.from_file(sub_tileset_path)
+
+    tileset = TileSet()
+    tileset.root_tile.content_uri = Path("tileset.json")
+    tileset.root_tile.bounding_volume = copy.deepcopy(
+        sub_tileset.root_tile.bounding_volume
+    )
+    tileset.root_tile.transform = copy.deepcopy(sub_tileset.root_tile.transform)
+    tileset.write_as_json(main_tileset_path)
+
+    yield main_tileset_path
+
+    shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
 def test_constructor() -> None:
@@ -93,3 +118,35 @@ def test_from_dict() -> None:
     assert tileset.to_dict() == tileset_dict
 
     shutil.rmtree(tmp_dir, ignore_errors=True)
+
+
+def test_delete_on_disk(tileset_on_disk_with_sub_tileset_path: Path) -> None:
+    # This test only checks if delete_on_disk doesn't delete sub-tileset
+
+    tmp_folder = tileset_on_disk_with_sub_tileset_path.parent
+    assert (tmp_folder / "tileset.json").exists()
+    assert (tmp_folder / "upper_tileset.json").exists()
+
+    tileset = TileSet.from_file(tileset_on_disk_with_sub_tileset_path)
+    tileset.delete_on_disk(tmp_folder / "upper_tileset.json")
+
+    assert (tmp_folder / "tileset.json").exists()
+    assert (tmp_folder / "r.pnts").exists()
+    assert not (tmp_folder / "upper_tileset.json").exists()
+
+
+def test_delete_on_disk_with_sub_tileset(
+    tileset_on_disk_with_sub_tileset_path: Path,
+) -> None:
+    # This test manly checks if delete_on_disk removes correctly all tile contents (binary and sub tileset)
+
+    tmp_folder = tileset_on_disk_with_sub_tileset_path.parent
+    assert (tmp_folder / "tileset.json").exists()
+    assert (tmp_folder / "upper_tileset.json").exists()
+
+    tileset = TileSet.from_file(tileset_on_disk_with_sub_tileset_path)
+    tileset.delete_on_disk(tmp_folder / "upper_tileset.json", delete_sub_tileset=True)
+
+    assert not (tmp_folder / "tileset.json").exists()
+    assert not (tmp_folder / "r.pnts").exists()
+    assert not (tmp_folder / "upper_tileset.json").exists()

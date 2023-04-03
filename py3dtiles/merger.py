@@ -1,104 +1,66 @@
 import argparse
-import json
+import copy
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TypeVar, Union
+from typing import Any, Dict, List, Optional, TypeVar
 
 import numpy as np
 import numpy.typing as npt
 
-from py3dtiles.tilers.pnts.pnts_writer import points_to_pnts
-from py3dtiles.tileset.content import read_binary_tile_content, TileContent
-from py3dtiles.tileset.content.feature_table import SemanticPoint
-from py3dtiles.typing import TileDictType
+from py3dtiles.exceptions import (
+    BoundingVolumeMissingException,
+    InvalidTilesetError,
+    TilerException,
+)
+from py3dtiles.tileset.bounding_volume_box import BoundingVolumeBox
+from py3dtiles.tileset.content import Pnts
+from py3dtiles.tileset.tile import Tile
+from py3dtiles.tileset.tileset import TileSet
 from py3dtiles.utils import split_aabb
 
 _T = TypeVar("_T", bound=npt.NBitBase)
 
 
-def _get_root_tile(tileset: Dict[str, Any], root_tile_path: Path) -> TileContent:
-    pnts_path = root_tile_path.parent / tileset["root"]["content"]["uri"]
-    return read_binary_tile_content(pnts_path)
+def merge(
+    tilesets: List[TileSet], tileset_paths: Optional[Dict[TileSet, Path]] = None
+) -> TileSet:
+    """
+    Create a tileset that include all input tilesets. The tilesets don't need to be written.
+    The output tileset is not written but return as dict (TilesetDictType).
+    """
+    if not tilesets:
+        raise ValueError("The tileset list cannot be empty")
 
-
-def _get_root_transform(tileset: Dict[str, Any]) -> npt.NDArray[np.float32]:
-    transform = np.identity(4, dtype=np.float32)
-    if "transform" in tileset:
-        transform = np.array(tileset["transform"]).reshape(4, 4).transpose()
-
-    if "transform" in tileset["root"]:
-        transform = np.dot(
-            transform, np.array(tileset["root"]["transform"]).reshape(4, 4).transpose()
-        )
-
-    return transform
-
-
-def _get_tile_points(tile, tile_transform, out_transform):
-    fth = tile.body.feature_table.header
-
-    xyz = tile.body.feature_table.body.position.view(np.float32).reshape(
-        (fth.points_length, 3)
-    )
-    if fth.colors == SemanticPoint.RGB:
-        rgb = tile.body.feature_table.body.color.reshape((fth.points_length, 3))
-    else:
-        rgb = None
-
-    x = xyz[:, 0]
-    y = xyz[:, 1]
-    z = xyz[:, 2]
-    w = np.ones(x.shape[0])
-
-    transform = np.dot(out_transform, tile_transform)
-
-    xyzw = np.dot(np.vstack((x, y, z, w)).transpose(), transform.T)
-
-    return xyzw[:, 0:3].astype(np.float32), rgb
-
-
-def init(tileset_paths: List[Path]) -> Dict[str, Any]:
-    aabb = None
-    total_point_count = 0
-    tilesets = []
-    transforms = []
-
-    idx = 0
-    for tileset_path in tileset_paths:
-        with tileset_path.open() as f:
-            tileset = json.load(f)
-
-            tile = _get_root_tile(tileset, tileset_path)
-            fth = tile.body.feature_table.header
-
-            # apply transformation
-            transform = _get_root_transform(tileset)
-            bbox = _aabb_from_3dtiles_bounding_volume(
-                tileset["root"]["boundingVolume"], transform
+    global_tileset = TileSet()
+    for tileset in tilesets:
+        bounding_volume = copy.deepcopy(tileset.root_tile.bounding_volume)
+        if bounding_volume is None:
+            raise BoundingVolumeMissingException(
+                "The root tile of all tilesets should have a bounding volume"
             )
 
-            if aabb is None:
-                aabb = bbox
-            else:
-                aabb[0] = np.minimum(aabb[0], bbox[0])
-                aabb[1] = np.maximum(aabb[1], bbox[1])
+        bounding_volume.transform(tileset.root_tile.transform)
 
-            total_point_count += fth.points_length
+        tile = Tile(
+            geometric_error=tileset.root_tile.geometric_error,
+            bounding_volume=bounding_volume,
+            refine_mode="REPLACE",
+        )
+        if tileset_paths is not None:
+            tile.content_uri = tileset_paths[tileset]
+        else:
+            tile.tile_content = tileset
 
-            tileset["id"] = idx
-            tileset["filename"] = str(tileset_path)
-            tileset["center"] = (bbox[0] + bbox[1]) * 0.5
-            tilesets += [tileset]
+        global_tileset.root_tile.add_child(tile)
 
-            transforms += [transform]
+    biggest_geometric_error = 0.0
+    for child in global_tileset.root_tile.children:
+        biggest_geometric_error = max(biggest_geometric_error, child.geometric_error)
 
-            idx += 1
+    global_tileset.geometric_error = biggest_geometric_error
+    global_tileset.root_tile.geometric_error = biggest_geometric_error
+    global_tileset.root_tile.set_refine_mode("REPLACE")
 
-    return {
-        "tilesets": tilesets,
-        "aabb": aabb,
-        "point_count": total_point_count,
-        "transforms": transforms,
-    }
+    return global_tileset
 
 
 def quadtree_split(
@@ -112,239 +74,249 @@ def quadtree_split(
     ]
 
 
-def is_tileset_inside(tileset, aabb):
-    return np.all(aabb[0] <= tileset["center"]) and np.all(tileset["center"] <= aabb[1])
-
-
-def _3dtiles_bounding_box_from_aabb(aabb, transform=None):
-    if transform is not None:
-        aabb = np.dot(aabb, transform.T)
-    ab_min = aabb[0]
-    ab_max = aabb[1]
-    center = (ab_min + ab_max) * 0.5
-    half_size = (ab_max - ab_min) * 0.5
-
-    return {
-        "box": [
-            center[0],
-            center[1],
-            center[2],
-            half_size[0],
-            0,
-            0,
-            0,
-            half_size[1],
-            0,
-            0,
-            0,
-            half_size[2],
-        ]
-    }
-
-
-def _aabb_from_3dtiles_bounding_volume(volume, transform=None):
-    center = np.array(volume["box"][0:3])
-    h_x_axis = np.array(volume["box"][3:6])
-    h_y_axis = np.array(volume["box"][6:9])
-    h_z_axis = np.array(volume["box"][9:12])
-
-    amin = center - h_x_axis - h_y_axis - h_z_axis
-    amax = center + h_x_axis + h_y_axis + h_z_axis
-    amin.resize((4,))
-    amax.resize((4,))
-    amin[3] = 1
-    amax[3] = 1
-
-    aabb = np.array([amin, amax])
-
-    if transform is not None:
-        aabb = np.dot(aabb, transform.T)
-
-    return aabb
+def is_point_inside(
+    point: "npt.NDArray[np.floating[_T]]", aabb: "npt.NDArray[np.floating[_T]]"
+) -> np.bool_:
+    return np.all(aabb[0] <= point) and np.all(point < aabb[1])
 
 
 def build_tileset_quadtree(
-    out_folder: Path,
-    aabb: npt.NDArray[np.float32],
-    tilesets: List[Dict[str, Any]],
-    inv_base_transform: npt.NDArray[np.float32],
-    name: str,
-) -> Optional[TileDictType]:
-    insides = [tileset for tileset in tilesets if is_tileset_inside(tileset, aabb)]
+    aabb: npt.NDArray[np.float64],
+    tilesets: List[TileSet],
+    bounding_box_centers: List[npt.NDArray[np.float64]],
+    inv_base_transform: npt.NDArray[np.float64],
+    tileset_paths: Optional[Dict[TileSet, Path]] = None,
+) -> Optional[Tile]:
+    insides = [
+        (tileset, center)
+        for tileset, center in zip(tilesets, bounding_box_centers)
+        if is_point_inside(center, aabb)
+    ]
+
+    if len(insides) == 0:
+        return None
+
+    tileset_insides = [tileset for tileset, _ in insides]
+    center_insides = [center for _, center in insides]
 
     quadtree_diag = np.linalg.norm(aabb[1][:2] - aabb[0][:2])
 
-    if not insides:
-        return None
-    elif len(insides) == 1 or quadtree_diag < 1:
+    if len(tileset_insides) == 1 or quadtree_diag < 1:
         # apply transform to boundingVolume
-        box = _aabb_from_3dtiles_bounding_volume(
-            insides[0]["root"]["boundingVolume"], _get_root_transform(insides[0])
+        tileset = tileset_insides[0]
+        bvb = copy.deepcopy(tileset.root_tile.bounding_volume)
+        if bvb is None:
+            raise InvalidTilesetError(
+                "The root tile of the tileset must have a bounding volume."
+            )
+        if tileset.root_tile.transform is not None:
+            bvb.transform(tileset.root_tile.transform)
+
+        tile = Tile(
+            geometric_error=tileset.root_tile.geometric_error,
+            transform=inv_base_transform,
+            bounding_volume=bvb,
         )
+        if tileset_paths is not None:
+            tile.content_uri = tileset_paths[tileset]
+        else:
+            tile.tile_content = tileset
 
-        return {
-            "transform": inv_base_transform.T.reshape(16).tolist(),
-            "geometricError": insides[0]["root"]["geometricError"],
-            "boundingVolume": _3dtiles_bounding_box_from_aabb(box),
-            "content": {
-                "uri": str(Path(insides[0]["filename"]).relative_to(out_folder))
-            },
-        }
+        return tile
     else:
-        children: List[TileDictType] = []
+        children = []
 
-        sub = 0
         for quarter in quadtree_split(aabb):
             r = build_tileset_quadtree(
-                out_folder,
                 quarter,
-                insides,
+                tileset_insides,
+                center_insides,
                 inv_base_transform,
-                name + str(sub),
+                tileset_paths,
             )
-            sub += 1
             if r is not None:
                 children.append(r)
 
-        union_aabb = _aabb_from_3dtiles_bounding_volume(
-            insides[0]["root"]["boundingVolume"], _get_root_transform(insides[0])
-        )
+        main_root_tile = tileset_insides[0].root_tile
+        union_aabb = copy.deepcopy(main_root_tile.bounding_volume)
+        if union_aabb is None:
+            raise InvalidTilesetError(
+                "The root tile of the tileset must have a bounding volume."
+            )
+
+        if main_root_tile.transform is not None:
+            union_aabb.transform(main_root_tile.transform)
+
         # take half points from our children
         xyz = np.zeros((0, 3), dtype=np.float32)
         rgb = np.zeros((0, 3), dtype=np.uint8)
 
         max_point_count = 50000
         point_count = 0
-        for tileset in insides:
-            root_tile = _get_root_tile(tileset, Path(tileset["filename"]))
-            point_count += root_tile.body.feature_table.header.points_length
+        for tileset in tileset_insides:
+            if tileset.root_tile.tile_content is not None:
+                root_tile_content = tileset.root_tile.tile_content
+            elif tileset_paths is not None:
+                root_tile_content = tileset.root_tile.get_or_fetch_content(
+                    tileset_paths[tileset]
+                )
+            else:
+                root_tile_content = None
+
+            if root_tile_content is not None:
+                if not isinstance(root_tile_content, Pnts):
+                    raise TilerException(
+                        "The tileset must only have Pnts as tile content on the root tile."
+                    )
+                point_count += root_tile_content.body.feature_table.header.points_length
 
         ratio = min(0.5, max_point_count / point_count)
 
-        for tileset in insides:
-            root_tile = _get_root_tile(tileset, Path(tileset["filename"]))
-            _xyz, _rgb = _get_tile_points(
-                root_tile, _get_root_transform(tileset), inv_base_transform
-            )
+        for tileset in tileset_insides:
+            root_tile = tileset.root_tile
+            root_tile_content = root_tile.tile_content
+            if not isinstance(root_tile_content, Pnts):
+                raise TilerException(
+                    "The tileset must only have Pnts as tile content on the root tile."
+                )
+
+            local_transform = root_tile.transform @ inv_base_transform
+            _xyz, _rgb = root_tile_content.body.get_points(local_transform)
+
             select = np.random.choice(_xyz.shape[0], int(_xyz.shape[0] * ratio))
             xyz = np.concatenate((xyz, _xyz[select]))
             if _rgb is not None:
                 rgb = np.concatenate((rgb, _rgb[select]))
 
-            ab = _aabb_from_3dtiles_bounding_volume(
-                tileset["root"]["boundingVolume"], _get_root_transform(tileset)
-            )
-            union_aabb[0] = np.minimum(union_aabb[0], ab[0])
-            union_aabb[1] = np.maximum(union_aabb[1], ab[1])
+            ab = copy.deepcopy(root_tile.bounding_volume)
+            if ab is None:
+                raise InvalidTilesetError(
+                    "The root tile of the tileset must have a bounding volume."
+                )
 
-        _, pnts_path = points_to_pnts(
-            name.encode("ascii"),
+            if root_tile.transform is not None:
+                ab.transform(root_tile.transform)
+            union_aabb.add(ab)
+
+        pnts = Pnts.from_points(
             np.concatenate((xyz.view(np.uint8).ravel(), rgb.ravel())),
-            out_folder,
             rgb.shape[0] > 0,
             False,  # TODO: Handle classification in the merging process
         )
 
-        return {
-            "children": children,
-            "content": {
-                "uri": str(pnts_path.relative_to(out_folder)) if pnts_path else ""
-            },
-            "geometricError": max([t["root"]["geometricError"] for t in insides])
+        union_aabb.transform(inv_base_transform)
+
+        tile = Tile(
+            refine_mode="REPLACE",
+            geometric_error=max(
+                [tileset.root_tile.geometric_error for tileset in tileset_insides]
+            )
             / ratio,
-            "boundingVolume": _3dtiles_bounding_box_from_aabb(
-                union_aabb, inv_base_transform
-            ),
-        }
+        )
+        if pnts is not None:
+            tile.tile_content = pnts
+            tile.content_uri = Path("r.pnts")
+
+        for child in children:
+            tile.add_child(child)
+
+        return tile
 
 
-def extract_content_uris(tileset):
-    contents = []
-    for key in tileset:
-        if key == "content":
-            contents.append(Path(tileset[key]["uri"]))
-        elif key == "children":
-            for child in tileset["children"]:
-                contents += extract_content_uris(child)
-        elif key == "root":
-            contents += extract_content_uris(tileset["root"])
+def merge_with_pnts_content(
+    tilesets: List[TileSet], tileset_paths: Optional[Dict[TileSet, Path]] = None
+) -> TileSet:
+    global_bounding_volume = BoundingVolumeBox()
+    bounding_box_centers = []
 
-    return contents
-
-
-def remove_tileset(tilset_path: Path) -> None:
-    with tilset_path.open() as f:
-        tileset = json.load(f)
-
-    contents = [
-        tilset_path.parent / content for content in extract_content_uris(tileset)
-    ]
-
-    for content in contents:
-        if content.suffix == ".pnts":
-            content.unlink()
-        elif content.suffix != ".json":
-            raise ValueError(f"unknown extension {content.suffix}")
-
-    tilset_path.unlink()
-
-
-def merge(folder: Union[str, Path], overwrite: bool = False, verbose: int = 0) -> None:
-    folder = Path(folder)
-    merger_tileset_path = folder / "tileset.json"
-    if merger_tileset_path.exists():
-        if overwrite:
-            remove_tileset(merger_tileset_path)
-        else:
-            raise FileExistsError(
-                f"Destination tileset {merger_tileset_path} already exists."
+    for tileset in tilesets:
+        # apply transformation
+        if tileset.root_tile.bounding_volume is None:
+            raise BoundingVolumeMissingException(
+                "The root tile should have a bounding volume."
             )
 
-    tilesets = list(folder.glob("**/tileset.json"))
+        bounding_box = copy.deepcopy(tileset.root_tile.bounding_volume)
+        if tileset.root_tile.transform is not None:
+            bounding_box.transform(tileset.root_tile.transform)
 
-    if verbose >= 1:
-        print(f"Found {len(tilesets)} tilesets to merge")
-    if verbose >= 2:
-        print(f"Tilesets: {tilesets}")
+        global_bounding_volume.add(bounding_box)
 
-    infos = init(tilesets)
+        bounding_box_centers.append(bounding_box.get_center())
 
-    aabb = infos["aabb"]
+    corners = global_bounding_volume.get_corners()
+    aabb = np.array((corners[0], corners[-1]))
 
-    base_transform = infos["transforms"][0]
-
+    base_transform = tilesets[0].root_tile.transform
     inv_base_transform = np.linalg.inv(base_transform)
-    print("------------------------")
+
     # build hierarchical structure
     result = build_tileset_quadtree(
-        folder, aabb, infos["tilesets"], inv_base_transform, ""
+        aabb, tilesets, bounding_box_centers, inv_base_transform, tileset_paths
     )
 
     if result is None:
-        raise ValueError("result is None")  # todo better message
+        raise RuntimeError("Result shouldn't be None")
 
-    result["transform"] = base_transform.T.reshape(16).tolist()
-    tileset = {
-        "asset": {"version": "1.0"},
-        "refine": "REPLACE",
-        "geometricError": np.linalg.norm((aabb[1] - aabb[0])[0:3]),
-        "root": result,
+    result.transform = base_transform
+    tileset = TileSet(geometric_error=float(np.linalg.norm((aabb[1] - aabb[0])[0:3])))
+    tileset.root_tile = result
+
+    return tileset
+
+
+def merge_from_files(
+    tileset_paths: List[Path],
+    output_tileset_path: Path,
+    overwrite: bool = True,
+    force_universal_merger: bool = False,
+) -> None:
+    output_tileset_path = output_tileset_path.absolute()
+    if output_tileset_path.exists():
+        if overwrite:
+            TileSet.from_file(output_tileset_path).delete_on_disk(
+                output_tileset_path, delete_sub_tileset=False
+            )
+        else:
+            raise FileExistsError(
+                f"Destination tileset {output_tileset_path} already exists."
+            )
+
+    tilesets = []
+    for path in tileset_paths:
+        tilesets.append(TileSet.from_file(path))
+
+    not_only_pnts = force_universal_merger or any(
+        not isinstance(
+            tileset.root_tile.get_or_fetch_content(tileset_path.parent), Pnts
+        )
+        for tileset_path, tileset in zip(tileset_paths, tilesets)
+    )
+
+    relative_tileset_paths = {
+        tileset: path.absolute().relative_to(output_tileset_path.parent)
+        for tileset, path in zip(tilesets, tileset_paths)
     }
 
-    output_tileset_path = folder / "tileset.json"
-    with output_tileset_path.open("w") as f:
-        json.dump(tileset, f)
+    if not_only_pnts:
+        tileset = merge(tilesets, relative_tileset_paths)
+    else:
+        tileset = merge_with_pnts_content(tilesets, relative_tileset_paths)
+
+    tileset.root_uri = output_tileset_path.parent
+    tileset.write_to_directory(output_tileset_path)
 
 
 def init_parser(
     subparser: "argparse._SubParsersAction[Any]",
 ) -> argparse.ArgumentParser:
     parser: argparse.ArgumentParser = subparser.add_parser(
-        "merge", help="Merge several pointcloud tilesets in 1 tileset"
+        "merge",
+        help="Merge several pointcloud tilesets in 1 tileset. All input tilesets must be relative to the output tileset.",
     )
+    parser.add_argument("tilesets", nargs="+", help="All tileset paths to merge")
     parser.add_argument(
-        "folder",
-        help="Folder that contains tileset folders inside (the merged tileset will be inside folder)",
+        "--output-tileset", required=True, help="The path to the output tileset."
     )
     parser.add_argument(
         "--overwrite",
@@ -355,5 +327,9 @@ def init_parser(
     return parser
 
 
-def main(args: argparse.Namespace) -> None:
-    return merge(args.folder, args.overwrite, args.verbose)
+def main(args):
+    return merge_from_files(
+        [Path(tileset_file) for tileset_file in args.tilesets],
+        Path(args.output_tileset),
+        args.overwrite,
+    )
