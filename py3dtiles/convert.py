@@ -50,14 +50,14 @@ def worker_target(
     verbosity: int,
     uri: bytes,
 ) -> None:
-    return Worker(
+    return WorkerDispatcher(
         worker_tilers,
         verbosity,
         uri,
     ).run()
 
 
-class Worker:
+class WorkerDispatcher:
     """
     This class waits from jobs commands from the Zmq socket.
     """
