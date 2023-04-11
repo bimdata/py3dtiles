@@ -19,4 +19,5 @@ class PointSharedMetadata(SharedMetadata):
     write_rgb: bool
     color_scale: Optional[float]
     write_classification: bool
+    write_intensity: bool
     verbosity: int

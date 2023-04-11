@@ -202,6 +202,7 @@ def build_tileset_quadtree(
             np.concatenate((xyz.view(np.uint8).ravel(), rgb.ravel())),
             rgb.shape[0] > 0,
             False,  # TODO: Handle classification in the merging process
+            False,  # TODO: Handle intensity in the merging process
         )
 
         union_aabb.transform(inv_base_transform)

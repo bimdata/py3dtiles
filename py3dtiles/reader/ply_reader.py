@@ -53,7 +53,12 @@ def run(
     transformer: Optional[Transformer],
     color_scale: Optional[float],
 ) -> Generator[
-    Tuple[npt.NDArray[np.float32], npt.NDArray[np.uint8], npt.NDArray[np.uint8]],
+    Tuple[
+        npt.NDArray[np.float32],
+        npt.NDArray[np.uint8],
+        npt.NDArray[np.uint8],
+        npt.NDArray[np.uint8],
+    ],
     None,
     None,
 ]:
@@ -123,7 +128,14 @@ def run(
         else:
             classification = np.zeros((coords.shape[0], 1), dtype=np.uint8)
 
-        yield coords, colors, classification
+        if "intensity" in ply_vertices:
+            intensity = np.array(
+                ply_vertices["intensity"].reshape(-1, 1), dtype=np.uint8
+            )
+        else:
+            intensity = np.zeros((coords.shape[0], 1), dtype=np.uint8)
+
+        yield coords, colors, classification, intensity
 
 
 def create_plydata_with_renamed_property(

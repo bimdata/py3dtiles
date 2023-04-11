@@ -48,13 +48,18 @@ class PointTilerWorker(TilerWorker[PointSharedMetadata]):
             self.shared_metadata.transformer,
             self.shared_metadata.color_scale,
         )
-        for coords, colors, classification in reader_gen:
+        for coords, colors, classification, intensity in reader_gen:
             skt.send_multipart(
                 [
                     PointWorkerMessageType.NEW_TASK.value,
                     b"",
                     pickle.dumps(
-                        {"xyz": coords, "rgb": colors, "classification": classification}
+                        {
+                            "xyz": coords,
+                            "rgb": colors,
+                            "classification": classification,
+                            "intensity": intensity,
+                        }
                     ),
                     struct.pack(">I", len(coords)),
                 ],
@@ -71,6 +76,7 @@ class PointTilerWorker(TilerWorker[PointSharedMetadata]):
             self.shared_metadata.out_folder,
             self.shared_metadata.write_rgb,
             self.shared_metadata.write_classification,
+            self.shared_metadata.write_intensity,
         )
         for total in pnts_writer_gen:
             skt.send_multipart(

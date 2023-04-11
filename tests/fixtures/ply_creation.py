@@ -63,3 +63,46 @@ vertex = numpy.array(
 )
 el = PlyElement.describe(vertex, "vertex")
 PlyData([el]).write("simple_with_classification.ply")
+
+# with intensity
+vertex = numpy.array(
+    [
+        (0, 0, 0, 0, 128, 0, 80),
+        (0, 1, 1, 256, 0, 0, 90),
+        (1, 0, 1, 0, 0, 1024, 15),
+        (1, 1, 0, 65535, 65535, 65535, 129),
+    ],
+    dtype=[
+        ("x", "f4"),
+        ("y", "f4"),
+        ("z", "f4"),
+        ("red", "u2"),
+        ("green", "u2"),
+        ("blue", "u2"),
+        ("intensity", "u1"),
+    ],
+)
+el = PlyElement.describe(vertex, "vertex")
+PlyData([el]).write("simple_with_intensity.ply")
+
+# with classification AND intensity
+vertex = numpy.array(
+    [
+        (0, 0, 0, 0, 128, 0, 1, 80),
+        (0, 1, 1, 256, 0, 0, 1, 90),
+        (1, 0, 1, 0, 0, 1024, 2, 15),
+        (1, 1, 0, 65535, 65535, 65535, 2, 129),
+    ],
+    dtype=[
+        ("x", "f4"),
+        ("y", "f4"),
+        ("z", "f4"),
+        ("red", "u2"),
+        ("green", "u2"),
+        ("blue", "u2"),
+        ("classification", "u1"),
+        ("intensity", "u1"),
+    ],
+)
+el = PlyElement.describe(vertex, "vertex")
+PlyData([el]).write("simple_with_classification_and_intensity.ply")

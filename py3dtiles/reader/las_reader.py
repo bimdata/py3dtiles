@@ -43,7 +43,12 @@ def run(
     transformer: Optional[Transformer],
     color_scale: Optional[float],
 ) -> Generator[
-    Tuple[npt.NDArray[np.float32], npt.NDArray[np.uint8], npt.NDArray[np.uint8]],
+    Tuple[
+        npt.NDArray[np.float32],
+        npt.NDArray[np.uint8],
+        npt.NDArray[np.uint8],
+        npt.NDArray[np.uint8],
+    ],
     None,
     None,
 ]:
@@ -109,4 +114,9 @@ def run(
             else:
                 classification = np.zeros((len(points.x), 1), dtype=np.uint8)
 
-            yield coords, colors, classification
+            if "intensity" in f.header.point_format.dimension_names:
+                intensity = np.array(points["intensity"], dtype=np.uint8).reshape(-1, 1)
+            else:
+                intensity = np.zeros((len(points.x), 1), dtype=np.uint8)
+
+            yield coords, colors, classification, intensity
