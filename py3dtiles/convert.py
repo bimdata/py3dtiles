@@ -8,6 +8,7 @@ import pickle
 import shutil
 import struct
 import sys
+import tempfile
 import time
 import traceback
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -53,7 +54,9 @@ CPU_COUNT = cpu_count()
 if os.name == "nt":
     URI = "tcp://127.0.0.1:0"
 else:
-    URI = "ipc:///tmp/py3dtiles1"
+    # Generate a unique name for this socket
+    tmpdir = tempfile.TemporaryDirectory()
+    URI = f"ipc://{tmpdir.name}/py3dtiles.sock"
 
 READER_MAP = {
     ".xyz": xyz_reader,
