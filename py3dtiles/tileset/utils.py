@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from .content import read_binary_tile_content
+from .content import Pnts, read_binary_tile_content
 
 
 def number_of_points_in_tileset(tileset_path: Path) -> int:
@@ -23,7 +23,8 @@ def number_of_points_in_tileset(tileset_path: Path) -> int:
             pnts_should_count = "children" not in child_tileset or child_refine == "ADD"
             if content.suffix == ".pnts" and pnts_should_count:
                 tile = read_binary_tile_content(content)
-                nb_points += tile.body.feature_table.nb_points()
+                if isinstance(tile, Pnts):
+                    nb_points += tile.body.feature_table.nb_points()
             elif content.suffix == ".json":
                 with content.open() as f:
                     sub_tileset = json.load(f)

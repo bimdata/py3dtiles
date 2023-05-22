@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 import struct
 
 import numpy as np
@@ -182,6 +183,13 @@ class Pnts(TileContent):
         pnts.sync()
 
         return pnts
+
+    @staticmethod
+    def from_file(tile_path: Path) -> Pnts:
+        with tile_path.open("rb") as f:
+            data = f.read()
+            arr = np.frombuffer(data, dtype=np.uint8)
+            return Pnts.from_array(arr)
 
 
 class PntsHeader(TileContentHeader):

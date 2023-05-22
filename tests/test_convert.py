@@ -18,7 +18,7 @@ from py3dtiles.convert import convert
 from py3dtiles.exceptions import SrsInMissingException, SrsInMixinException
 from py3dtiles.reader.ply_reader import create_plydata_with_renamed_property
 from py3dtiles.tileset import number_of_points_in_tileset, TileSet
-from py3dtiles.tileset.content import read_binary_tile_content
+from py3dtiles.tileset.content import Pnts
 
 DATA_DIRECTORY = Path(__file__).parent / "fixtures"
 
@@ -112,7 +112,7 @@ def test_convert_without_srs(tmp_dir: Path) -> None:
 
     assert las_point_count == number_of_points_in_tileset(tileset_path)
 
-    tile1 = read_binary_tile_content(tmp_dir / "r0.pnts")
+    tile1 = Pnts.from_file(tmp_dir / "r0.pnts")
     assert tile1.body.feature_table.nb_points() == 1
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     # Note the first point is taken as offset base
@@ -128,7 +128,7 @@ def test_convert_las_color_scale(tmp_dir: Path) -> None:
         jobs=1,
     )
 
-    tile1 = read_binary_tile_content(tmp_dir / "r0.pnts")
+    tile1 = Pnts.from_file(tmp_dir / "r0.pnts")
     assert tile1.body.feature_table.nb_points() == 1
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     if pt1_color is None:
@@ -141,7 +141,7 @@ def test_convert_las_color_scale(tmp_dir: Path) -> None:
         outfolder=tmp_dir,
         jobs=1,
     )
-    tile1 = read_binary_tile_content(tmp_dir / "r0.pnts")
+    tile1 = Pnts.from_file(tmp_dir / "r0.pnts")
     assert tile1.body.feature_table.nb_points() == 1
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     # it should clamp to 255
@@ -156,7 +156,7 @@ def test_convert_las_color_scale(tmp_dir: Path) -> None:
         outfolder=tmp_dir,
         jobs=1,
     )
-    tile1 = read_binary_tile_content(tmp_dir / "r0.pnts")
+    tile1 = Pnts.from_file(tmp_dir / "r0.pnts")
     assert tile1.body.feature_table.nb_points() == 1
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     # it should clamp to 255
@@ -239,7 +239,7 @@ def test_convert_xyz_rgb_i_c_with_srs(tmp_dir: Path) -> None:
 def test_convert_xyz_with_rgb(tmp_dir: Path) -> None:
     convert(DATA_DIRECTORY / "simple_with_rgb.xyz", outfolder=tmp_dir)
 
-    tile1 = read_binary_tile_content(tmp_dir / "r0.pnts")
+    tile1 = Pnts.from_file(tmp_dir / "r0.pnts")
     assert tile1.body.feature_table.nb_points() == 1
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     # Note the first point is taken as offset base
@@ -247,7 +247,7 @@ def test_convert_xyz_with_rgb(tmp_dir: Path) -> None:
         raise RuntimeError("pt1_color shouldn't be None.")
     assert_array_equal(pt1_color, np.array((10, 0, 0), dtype=np.uint8))
 
-    tile2 = read_binary_tile_content(tmp_dir / "r4.pnts")
+    tile2 = Pnts.from_file(tmp_dir / "r4.pnts")
     assert tile2.body.feature_table.nb_points() == 1
     pt2_color = tile2.body.feature_table.get_feature_color_at(0)
     # Note the first point is taken as offset base
@@ -255,7 +255,7 @@ def test_convert_xyz_with_rgb(tmp_dir: Path) -> None:
         raise RuntimeError("pt2_color shouldn't be None.")
     assert_array_equal(pt2_color, np.array((0, 0, 200), dtype=np.uint8))
 
-    tile3 = read_binary_tile_content(tmp_dir / "r6.pnts")
+    tile3 = Pnts.from_file(tmp_dir / "r6.pnts")
     assert tile3.body.feature_table.nb_points() == 1
     pt3_color = tile3.body.feature_table.get_feature_color_at(0)
     # Note the first point is taken as offset base
@@ -267,7 +267,7 @@ def test_convert_xyz_with_rgb(tmp_dir: Path) -> None:
 def test_convert_xyz_with_rgb_color_scale(tmp_dir: Path) -> None:
     convert(DATA_DIRECTORY / "simple_with_rgb.xyz", outfolder=tmp_dir, color_scale=1.5)
 
-    tile1 = read_binary_tile_content(tmp_dir / "r0.pnts")
+    tile1 = Pnts.from_file(tmp_dir / "r0.pnts")
     assert tile1.body.feature_table.nb_points() == 1
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     # Note the first point is taken as offset base
@@ -275,7 +275,7 @@ def test_convert_xyz_with_rgb_color_scale(tmp_dir: Path) -> None:
         raise RuntimeError("pt1_color shouldn't be None.")
     assert_array_equal(pt1_color, np.array((15, 0, 0), dtype=np.uint8))
 
-    tile2 = read_binary_tile_content(tmp_dir / "r4.pnts")
+    tile2 = Pnts.from_file(tmp_dir / "r4.pnts")
     assert tile2.body.feature_table.nb_points() == 1
     pt2_color = tile2.body.feature_table.get_feature_color_at(0)
     # Note the first point is taken as offset base
@@ -283,7 +283,7 @@ def test_convert_xyz_with_rgb_color_scale(tmp_dir: Path) -> None:
         raise RuntimeError("pt2_color shouldn't be None.")
     assert_array_equal(pt2_color, np.array((0, 0, 255), dtype=np.uint8))
 
-    tile3 = read_binary_tile_content(tmp_dir / "r6.pnts")
+    tile3 = Pnts.from_file(tmp_dir / "r6.pnts")
     assert tile3.body.feature_table.nb_points() == 1
     pt3_color = tile3.body.feature_table.get_feature_color_at(0)
     # Note the first point is taken as offset base
@@ -308,7 +308,7 @@ def test_convert_ply(tmp_dir: Path) -> None:
     box = [round(value, 4) for value in tileset["root"]["boundingVolume"]["box"]]
     assert box == expecting_box
 
-    tile1 = read_binary_tile_content(tmp_dir / "r0.pnts")
+    tile1 = Pnts.from_file(tmp_dir / "r0.pnts")
     assert tile1.body.feature_table.nb_points() == 5293
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     if pt1_color is None:
@@ -326,28 +326,28 @@ def test_convert_ply_with_color(tmp_dir: Path) -> None:
     tileset_path = tmp_dir / "tileset.json"
     assert expected_point_count == number_of_points_in_tileset(tileset_path)
 
-    tile1 = read_binary_tile_content(tmp_dir / "r0.pnts")
+    tile1 = Pnts.from_file(tmp_dir / "r0.pnts")
     assert tile1.body.feature_table.nb_points() == 1
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     if pt1_color is None:
         raise RuntimeError("pt1_color shouldn't be None.")
     assert_array_equal(pt1_color, np.array((0, 128, 0), dtype=np.uint8))
 
-    tile1 = read_binary_tile_content(tmp_dir / "r3.pnts")
+    tile1 = Pnts.from_file(tmp_dir / "r3.pnts")
     assert tile1.body.feature_table.nb_points() == 1
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     if pt1_color is None:
         raise RuntimeError("pt1_color shouldn't be None.")
     assert_array_equal(pt1_color, np.array((10, 0, 0), dtype=np.uint8))
 
-    tile1 = read_binary_tile_content(tmp_dir / "r5.pnts")
+    tile1 = Pnts.from_file(tmp_dir / "r5.pnts")
     assert tile1.body.feature_table.nb_points() == 1
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     if pt1_color is None:
         raise RuntimeError("pt1_color shouldn't be None.")
     assert_array_equal(pt1_color, np.array((0, 0, 20), dtype=np.uint8))
 
-    tile1 = read_binary_tile_content(tmp_dir / "r6.pnts")
+    tile1 = Pnts.from_file(tmp_dir / "r6.pnts")
     assert tile1.body.feature_table.nb_points() == 1
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     if pt1_color is None:
@@ -369,28 +369,28 @@ def test_convert_ply_with_color(tmp_dir: Path) -> None:
     tileset_path = tmp_dir / "tileset.json"
     assert expected_point_count == number_of_points_in_tileset(tileset_path)
 
-    tile1 = read_binary_tile_content(tmp_dir / "r0.pnts")
+    tile1 = Pnts.from_file(tmp_dir / "r0.pnts")
     assert tile1.body.feature_table.nb_points() == 1
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     if pt1_color is None:
         raise RuntimeError("pt1_color shouldn't be None.")
     assert_array_equal(pt1_color, np.array((0, 0, 0), dtype=np.uint8))
 
-    tile1 = read_binary_tile_content(tmp_dir / "r3.pnts")
+    tile1 = Pnts.from_file(tmp_dir / "r3.pnts")
     assert tile1.body.feature_table.nb_points() == 1
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     if pt1_color is None:
         raise RuntimeError("pt1_color shouldn't be None.")
     assert_array_equal(pt1_color, np.array((1, 0, 0), dtype=np.uint8))
 
-    tile1 = read_binary_tile_content(tmp_dir / "r5.pnts")
+    tile1 = Pnts.from_file(tmp_dir / "r5.pnts")
     assert tile1.body.feature_table.nb_points() == 1
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     if pt1_color is None:
         raise RuntimeError("pt1_color shouldn't be None.")
     assert_array_equal(pt1_color, np.array((0, 0, 4), dtype=np.uint8))
 
-    tile1 = read_binary_tile_content(tmp_dir / "r6.pnts")
+    tile1 = Pnts.from_file(tmp_dir / "r6.pnts")
     assert tile1.body.feature_table.nb_points() == 1
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     if pt1_color is None:
@@ -409,28 +409,28 @@ def test_convert_ply_with_color_scale(tmp_dir: Path) -> None:
     assert Path(tmp_dir, "tileset.json").exists()
     assert Path(tmp_dir, "r.pnts").exists()
 
-    tile1 = read_binary_tile_content(tmp_dir / "r0.pnts")
+    tile1 = Pnts.from_file(tmp_dir / "r0.pnts")
     assert tile1.body.feature_table.nb_points() == 1
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     if pt1_color is None:
         raise RuntimeError("pt1_color shouldn't be None.")
     assert_array_equal(pt1_color, np.array((0, 255, 0), dtype=np.uint8))
 
-    tile1 = read_binary_tile_content(tmp_dir / "r3.pnts")
+    tile1 = Pnts.from_file(tmp_dir / "r3.pnts")
     assert tile1.body.feature_table.nb_points() == 1
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     if pt1_color is None:
         raise RuntimeError("pt1_color shouldn't be None.")
     assert_array_equal(pt1_color, np.array((30, 0, 0), dtype=np.uint8))
 
-    tile1 = read_binary_tile_content(tmp_dir / "r5.pnts")
+    tile1 = Pnts.from_file(tmp_dir / "r5.pnts")
     assert tile1.body.feature_table.nb_points() == 1
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     if pt1_color is None:
         raise RuntimeError("pt1_color shouldn't be None.")
     assert_array_equal(pt1_color, np.array((0, 0, 60), dtype=np.uint8))
 
-    tile1 = read_binary_tile_content(tmp_dir / "r6.pnts")
+    tile1 = Pnts.from_file(tmp_dir / "r6.pnts")
     assert tile1.body.feature_table.nb_points() == 1
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     if pt1_color is None:
@@ -452,7 +452,7 @@ def test_convert_ply_with_wrong_classification(tmp_dir: Path) -> None:
     for py3dt_file in tmp_dir.iterdir():
         if py3dt_file.suffix != ".pnts":
             continue
-        tile_content = read_binary_tile_content(py3dt_file)
+        tile_content = Pnts.from_file(py3dt_file)
         assert "Classification" in tile_content.body.batch_table.header.data
         assert np.array_equal(
             np.unique(tile_content.body.batch_table.body.data[0]),
@@ -481,7 +481,7 @@ def test_convert_ply_with_good_classification(tmp_dir: Path) -> None:
     for py3dt_file in tmp_dir.iterdir():
         if py3dt_file.suffix != ".pnts":
             continue
-        tile_content = read_binary_tile_content(py3dt_file)
+        tile_content = Pnts.from_file(py3dt_file)
         assert "Classification" in tile_content.body.batch_table.header.data
         pnts_labels = np.unique(tile_content.body.batch_table.body.data[0])
         # classification is OK for each pnts
@@ -609,7 +609,6 @@ def test_convert_las_exception_in_run(tmp_dir: Path) -> None:
 
 
 def test_convert_export_folder_already_exists(tmp_dir: Path) -> None:
-
     tmp_dir.mkdir()
     assert not (tmp_dir / "tileset.json").exists()
 
@@ -654,7 +653,6 @@ def test_convert_many_point_same_location(tmp_dir: Path) -> None:
     [(True, True), (False, True), (True, False), (False, False)],
 )
 def test_convert_rgb_classif(rgb_bool: bool, classif_bool: bool, tmp_dir: Path) -> None:
-
     if not classif_bool:
         expected_raise: RaisesContext[ValueError] | nullcontext[None] = raises(
             ValueError, match="The property Classification is not found"
