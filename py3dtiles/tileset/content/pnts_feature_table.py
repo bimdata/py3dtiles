@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from enum import Enum
 import json
-from typing import Literal, Sequence, TYPE_CHECKING
+from typing import Literal, TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
@@ -344,7 +344,7 @@ class PntsFeatureTableBody(FeatureTableBody):
 
         return feature_table_body
 
-    def to_array(self) -> Sequence[npt.NDArray[np.uint8]]:
+    def to_array(self) -> npt.NDArray[np.uint8]:
         position_array = self.position.view(np.uint8)
         length_array = len(position_array)
 
@@ -363,7 +363,7 @@ class PntsFeatureTableBody(FeatureTableBody):
         padding_str = " " * ((8 - length_array) % 8 % 8)
         padding = np.frombuffer(padding_str.encode("utf-8"), dtype=np.uint8)
 
-        return position_array, color_array, normal_array, padding
+        return np.concatenate((position_array, color_array, normal_array, padding))
 
     @staticmethod
     def _fetch_semantic_from_array(
@@ -395,7 +395,7 @@ class PntsFeatureTable(FeatureTable[PntsFeatureTableHeader, PntsFeatureTableBody
     def to_array(self) -> npt.NDArray[np.uint8]:
         fth_arr = self.header.to_array()
         ftb_arr = self.body.to_array()
-        return np.concatenate((fth_arr, *ftb_arr))
+        return np.concatenate((fth_arr, ftb_arr))
 
     @staticmethod
     def from_array(

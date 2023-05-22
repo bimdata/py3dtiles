@@ -32,9 +32,7 @@ class Pnts(TileContent):
         Synchronizes headers with the Pnts body.
         """
         self.header.ft_json_byte_length = len(self.body.feature_table.header.to_array())
-        self.header.ft_bin_byte_length = sum(
-            len(array) for array in self.body.feature_table.body.to_array()
-        )
+        self.header.ft_bin_byte_length = len(self.body.feature_table.body.to_array())
         self.header.bt_json_byte_length = len(self.body.batch_table.header.to_array())
         self.header.bt_bin_byte_length = len(self.body.batch_table.body.to_array())
 
