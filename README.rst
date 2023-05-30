@@ -58,13 +58,35 @@ All tiling tools are **available with the API and the CLI**
 Installation
 ############
 
+With pip
+========
+
 To install Py3dtiles with pip (recommended method)
 
 .. code-block:: bash
 
-    $ pip install py3dtiles
+    pip install py3dtiles
 
-For more information about installation (laz support or install from source), you could read the installation section in the `documentation <https://oslandia.gitlab.io/py3dtiles/>`_
+For more information about installation (laz support or install from source), please read the installation section in the `documentation <https://oslandia.gitlab.io/py3dtiles/>`_
+
+With docker
+===========
+
+At the moment we only publish on gitlab registry.
+
+.. code-block:: bash
+
+    docker run -it --rm \
+        --mount type=bind,source="$(pwd)",target=/app/data/ \
+        --volume /etc/passwd:/etc/passwd:ro --volume /etc/group:/etc/group:ro --user $(id -u):$(id -g) \
+        registry.gitlab.com/oslandia/py3dtiles:<version> \
+        convert <file>
+
+
+NOTE:
+
+- the `--mount` option is necessary for docker to read your source data and to write the result. The way it is written in this example only allows you to read source files in the current folder or in a subfolder
+- This line `--volume /etc/passwd:/etc/passwd:ro --volume /etc/group:/etc/group:ro --user $(id -u):$(id -g)` is only necessary if your uid is different from 1000.
 
 API basic example
 #################

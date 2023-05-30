@@ -10,6 +10,20 @@ From pypi
 pip install py3dtiles
 ```
 
+From docker
+~~~~~~~~~~~~
+
+We currently publish docker images on gitlab registry. Please see [the currently published versions](https://gitlab.com/Oslandia/py3dtiles/container_registry/4248842).
+```
+docker run --rm registry.gitlab.com/oslandia/py3dtiles:<version> --help
+```
+
+
+NOTE:
+
+- the `--mount` option is necessary for docker to read your source data and to write the result. The way it is written in this example only allows you to read source files in the current folder or in a subfolder
+- This line `--volume /etc/passwd:/etc/passwd:ro --volume /etc/group:/etc/group:ro --user $(id -u):$(id -g)` is only necessary if your uid is different from 1000.
+
 From sources
 ~~~~~~~~~~~~
 
