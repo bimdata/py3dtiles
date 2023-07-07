@@ -411,8 +411,11 @@ https://docs.ogc.org/cs/22-025r4/22-025r4.html#toc27
 
 **How to write a .b3dm file**
 
-To write a Batched 3D Model file, you have to import the geometry from a wkb
-file containing polyhedralsurfaces or multipolygons.
+To write a Batched 3D Model file, you have to import the geometry from a wkb file containing
+polyhedralsurfaces or multipolygons. For now, `py3dtiles` only supports `ISOWKB`_ format. It is of
+user responsibility to check the input WKB format before using the `py3dtiles` API.
+
+.. _ISOWKB: https://libgeos.org/specifications/wkb/#iso-wkb
 
 .. code-block:: python
 
@@ -423,7 +426,7 @@ file containing polyhedralsurfaces or multipolygons.
     >>> from py3dtiles.tilers.b3dm.wkb_utils import TriangleSoup
     >>> from py3dtiles.tileset.content import B3dm, GlTF
     >>>
-    >>> # load a wkb file
+    >>> # load a wkb file (ISO WKB format only)
     >>> wkb = open('tests/fixtures/building.wkb', 'rb').read()
     >>>
     >>> # define the geometry's bounding box
