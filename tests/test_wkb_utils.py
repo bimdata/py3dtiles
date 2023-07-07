@@ -1,11 +1,17 @@
 import json
+from pathlib import Path
+from typing import List
 
 import numpy as np
+import numpy.typing as npt
 import pytest
 from pytest_benchmark.fixture import BenchmarkFixture
 
 from py3dtiles.tilers.b3dm import wkb_utils
 from py3dtiles.tilers.b3dm.wkb_utils import PolygonType
+
+
+DATA_DIRECTORY = Path(__file__).parent / "fixtures"
 
 
 @pytest.fixture
@@ -200,6 +206,40 @@ def test_big_poly_winding_order(big_poly: PolygonType) -> None:
     assert all(
         crossprod_triangle1 == np.array([0, 0, 1], dtype=np.float32)
     ), "Check winding order is coherent with vertex order: counter-clockwise"
+
+
+@pytest.mark.parametrize(
+    "wkb_filename",
+    # square_ewkb.wkb is marked as 'xfail' as py3dtiles does not support extended WKB yet
+    ["square.wkb", pytest.param("square_ewkb.wkb", marks=pytest.mark.xfail)],
+)
+def test_parse_wkb(wkb_filename: str) -> None:
+    expected_geom: List[List[List[npt.NDArray[np.float32]]]] = [
+        [
+            [
+                np.array([0.0, 0.0, 0.0], dtype=np.float32),
+                np.array([0.0, 10.0, 0.0], dtype=np.float32),
+                np.array([10.0, 10.0, 0.0], dtype=np.float32),
+                np.array([10.0, 0.0, 0.0], dtype=np.float32),
+            ]
+        ]
+    ]
+    with open(DATA_DIRECTORY / wkb_filename, "rb") as fobj:
+        geom: List[List[List[npt.NDArray[np.float32]]]] = wkb_utils.parse(fobj.read())
+        assert len(geom) == 1 and len(geom[0]) == 1
+        # The following assertion fails for square_ewkb.wkb, due to parsing problem with the
+        # Extended WKB version: we do not get a 3D-geom...
+        assert np.all([np.all(g == e) for g, e in zip(geom[0][0], expected_geom[0][0])])
+
+
+@pytest.mark.parametrize(
+    "wkb_filename",
+    # square_ewkb.wkb is marked as 'xfail' as py3dtiles does not support extended WKB yet
+    ["square.wkb", pytest.param("square_ewkb.wkb", marks=pytest.mark.xfail)],
+)
+def test_triangle_soup_from_wkb(wkb_filename: str) -> None:
+    with open(DATA_DIRECTORY / wkb_filename, "rb") as fobj:
+        wkb_utils.TriangleSoup.from_wkb_multipolygon(fobj.read())
 
 
 ################
