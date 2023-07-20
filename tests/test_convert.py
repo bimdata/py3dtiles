@@ -128,7 +128,7 @@ def test_convert_las_color_scale(tmp_dir: Path) -> None:
         jobs=1,
     )
 
-    tile1 = read_binary_tile_content(tmp_dir / "r2.pnts")
+    tile1 = read_binary_tile_content(tmp_dir / "r0.pnts")
     assert tile1.body.feature_table.nb_points() == 1
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     if pt1_color is None:
@@ -141,7 +141,7 @@ def test_convert_las_color_scale(tmp_dir: Path) -> None:
         outfolder=tmp_dir,
         jobs=1,
     )
-    tile1 = read_binary_tile_content(tmp_dir / "r2.pnts")
+    tile1 = read_binary_tile_content(tmp_dir / "r0.pnts")
     assert tile1.body.feature_table.nb_points() == 1
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     # it should clamp to 255
@@ -156,7 +156,7 @@ def test_convert_las_color_scale(tmp_dir: Path) -> None:
         outfolder=tmp_dir,
         jobs=1,
     )
-    tile1 = read_binary_tile_content(tmp_dir / "r2.pnts")
+    tile1 = read_binary_tile_content(tmp_dir / "r0.pnts")
     assert tile1.body.feature_table.nb_points() == 1
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     # it should clamp to 255
@@ -219,7 +219,7 @@ def test_convert_simple_xyz(tmp_dir: Path) -> None:
 def test_convert_xyz_with_rgb(tmp_dir: Path) -> None:
     convert(DATA_DIRECTORY / "simple_with_rgb.xyz", outfolder=tmp_dir)
 
-    tile1 = read_binary_tile_content(tmp_dir / "r1.pnts")
+    tile1 = read_binary_tile_content(tmp_dir / "r0.pnts")
     assert tile1.body.feature_table.nb_points() == 1
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     # Note the first point is taken as offset base
@@ -227,7 +227,7 @@ def test_convert_xyz_with_rgb(tmp_dir: Path) -> None:
         raise RuntimeError("pt1_color shouldn't be None.")
     assert_array_equal(pt1_color, np.array((10, 0, 0), dtype=np.uint8))
 
-    tile2 = read_binary_tile_content(tmp_dir / "r5.pnts")
+    tile2 = read_binary_tile_content(tmp_dir / "r4.pnts")
     assert tile2.body.feature_table.nb_points() == 1
     pt2_color = tile2.body.feature_table.get_feature_color_at(0)
     # Note the first point is taken as offset base
@@ -235,7 +235,7 @@ def test_convert_xyz_with_rgb(tmp_dir: Path) -> None:
         raise RuntimeError("pt2_color shouldn't be None.")
     assert_array_equal(pt2_color, np.array((0, 0, 200), dtype=np.uint8))
 
-    tile3 = read_binary_tile_content(tmp_dir / "r7.pnts")
+    tile3 = read_binary_tile_content(tmp_dir / "r6.pnts")
     assert tile3.body.feature_table.nb_points() == 1
     pt3_color = tile3.body.feature_table.get_feature_color_at(0)
     # Note the first point is taken as offset base
@@ -247,7 +247,7 @@ def test_convert_xyz_with_rgb(tmp_dir: Path) -> None:
 def test_convert_xyz_with_rgb_color_scale(tmp_dir: Path) -> None:
     convert(DATA_DIRECTORY / "simple_with_rgb.xyz", outfolder=tmp_dir, color_scale=1.5)
 
-    tile1 = read_binary_tile_content(tmp_dir / "r1.pnts")
+    tile1 = read_binary_tile_content(tmp_dir / "r0.pnts")
     assert tile1.body.feature_table.nb_points() == 1
     pt1_color = tile1.body.feature_table.get_feature_color_at(0)
     # Note the first point is taken as offset base
@@ -255,7 +255,7 @@ def test_convert_xyz_with_rgb_color_scale(tmp_dir: Path) -> None:
         raise RuntimeError("pt1_color shouldn't be None.")
     assert_array_equal(pt1_color, np.array((15, 0, 0), dtype=np.uint8))
 
-    tile2 = read_binary_tile_content(tmp_dir / "r5.pnts")
+    tile2 = read_binary_tile_content(tmp_dir / "r4.pnts")
     assert tile2.body.feature_table.nb_points() == 1
     pt2_color = tile2.body.feature_table.get_feature_color_at(0)
     # Note the first point is taken as offset base
@@ -263,7 +263,7 @@ def test_convert_xyz_with_rgb_color_scale(tmp_dir: Path) -> None:
         raise RuntimeError("pt2_color shouldn't be None.")
     assert_array_equal(pt2_color, np.array((0, 0, 255), dtype=np.uint8))
 
-    tile3 = read_binary_tile_content(tmp_dir / "r7.pnts")
+    tile3 = read_binary_tile_content(tmp_dir / "r6.pnts")
     assert tile3.body.feature_table.nb_points() == 1
     pt3_color = tile3.body.feature_table.get_feature_color_at(0)
     # Note the first point is taken as offset base
