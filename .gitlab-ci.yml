@@ -156,7 +156,7 @@ windows-test:
 3d-tiles-validator:
   stage: 🤞 test
   image:
-    name: node:18
+    name: node:18-bullseye
   cache:
     - key: 3d-tiles-validator
       paths:
