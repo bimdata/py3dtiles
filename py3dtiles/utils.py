@@ -15,6 +15,8 @@ if TYPE_CHECKING:
 
 _T = TypeVar("_T", bound=npt.NBitBase)
 
+MIN_AABB_SIZE = 0.00001
+
 
 def str_to_CRS(srs: str | CRS | None) -> CRS | None:
     """
@@ -144,6 +146,15 @@ def make_aabb_cubic(aabb: npt.NDArray[np.floating[_T]]) -> npt.NDArray[np.floati
     aabb[1][1] = aabb[0][1] + s
     aabb[1][2] = aabb[0][2] + s
     return aabb
+
+
+def make_aabb_valid(aabb: list[list[float]]) -> None:
+    """
+    Modify inplace the aabb so that no dimension is 0-sized
+    """
+    for i in range(3):
+        if aabb[0][i] == aabb[1][i]:
+            aabb[1][i] = aabb[1][i] + MIN_AABB_SIZE
 
 
 def node_from_name(

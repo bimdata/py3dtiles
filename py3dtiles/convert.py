@@ -39,6 +39,7 @@ from py3dtiles.typing import PortionsType
 from py3dtiles.utils import (
     CommandType,
     compute_spacing,
+    make_aabb_valid,
     node_from_name,
     node_name_to_path,
     OctreeMetadata,
@@ -674,6 +675,13 @@ class _Convert:
             total_point_count += file_info["point_count"]
             avg_min += file_info["avg_min"] / len(self.files)
 
+        # The fact self.files is not empty have been checked before, so this shouldn't happen
+        # but this keeps mypy happy and also serve as "defensive programming"
+        if aabb is None:
+            raise RuntimeError("No aabb could be computed!")
+        # correct aabb, so that we don't have null sized box
+        # we add 10^-5, supposing it's reasonable for most use case
+        make_aabb_valid(aabb)
         return {
             "portions": pointcloud_file_portions,
             "aabb": aabb,
