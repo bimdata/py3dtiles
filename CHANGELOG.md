@@ -2,6 +2,132 @@
 
 All notable changes to this project will be documented in this file.
 
+## v6.0.0 (2023-04-04)
+
+### BREAKING CHANGE
+
+- `py3dtiles merge` now takes tileset path instead of a folder path.
+- The class `BaseExtension` becomes an abstract class. Please use one of the subclasses
+- `TileContentReader` class has been removed and its static methods are now plain functions in `tile_content_reader.py`.
+- The `read_file` function has been renamed to `read_binary_tile_content` instance created with FeatureTableHeader.from_semantic method.
+- the `queue` argument is removed from reader `run` method signatures (these functions do not send messages anymore)
+- The method `sync` of the `PntsBody` and `B3dmBody` has been moved to `TileContent` class. The parameter `body` has been removed.
+- The `Pnts.from_feature` method signature has completely changed. Numpy data type isn't used anymore but a `FeatureTableHeader`
+- The attributes:
+  - `B3dm.from_glTF` has been renamed to `B3dm.from_gltf`
+  - `B3dmBody.from_glTF` has been renamed to `B3dmBody.from_gltf`
+  - `B3dmBody.glTF` has been renamed to `B3dmBody.gltf`
+- Few import changes:
+  - Change `from py3dtiles.tileset.tile_content_reader import read_file` to `from py3dtiles.tileset.content import read_file`
+  - Change `import py3dtiles.tileset.batch_table` to `import py3dtiles.tileset.content.batch_table`
+  - Change `import py3dtiles.tileset.content.feature_table` in `import py3dtiles.tileset.content.feature_table`
+  - The import of `TileContent` has been changed, now it is : `from py3dtiles.tileset.content import TileContent, TileContentBody, TileContentHeader`
+
+- The type `ThreeDDictBase` has been renamed to `RootPropertyDictType`
+- The class `Extendable` has been renamed to `RootProperty` and :
+  - its method `add_extension` has been deleted, add directly to the attribute `extensions`
+  - its method `has_extensions` has been deleted, check directly the content of the attribute `extensions`
+  - its method `get_extension` has been deleted, retrieve directly the extension with its name in the dict attribute `extensions`
+  - its method `get_extensions` has been deleted, get directly the attribute `extensions`
+- The class `Tile` has been modified:
+  - The `get_content` method has been renamed to `get_or_fetch_content`. If the `content` is already loaded or the `content_uri` is absolute, `root_uri` must be None.
+  - The `set_content` method has been removed, set directly the attribute `tile_content`
+  - The `set_content_uri` and Tile `get_content_uri` methods have been removed, set and get directly the `content_uri` attribute.
+  - The method `get_children` has been renamed to `get_all_children`
+  - The method `get_direct_children` has been deleted, use directly the attribute `children` to get them.
+    Note: It is highly recommended to still use the method Tile.add_children (and not children.append)
+  - The method `has_children` has been removed, check directly if the attribute `children` is empty.
+- The class `TileSet` has been modified:
+  - The `from_dict` requires a new parameter: `root_uri`, that is the folder where the tileset is.
+  - The method `add_asset_extras()` has been deleted, use directly the attribute `extra` (dict)
+  - The classes for tile content have been modified:
+  - The class `TileContent` is now an abstract class, use `B3dm` or `Pnts` class instead
+  - To create a `Pnts` or `B3dm` instance, you must indicate the header and the body instance in the constructor
+  - The `TileContentType` class has been removed
+  - The type attribute of the class `TileContentBody` has been removed
+  - The class `Feature` has been removed
+  - The `FeatureTableHeader.from_dtype` method has been replaced by `from_semantic`
+  - The `positions_dtype`, `colors_dtype` and `normal_dtype` attributes of the class `FeatureTableHeader` has been removed. To get the data type, use
+    `SEMANTIC_TYPE_MAP[semantic]` with semantic either `feature_table_header.positions`, `feature_table_header.colors` or `feature_table_header.normal`
+  - The `FeatureTableBody.positions_arr` attribute has been renamed to `position`
+  - The `FeatureTableBody.colors_arr` attribute has been renamed to `colors`
+  - The `FeatureTableBody.positions_itemsize` has been removed
+  - The `FeatureTableBody.colors_itemsize` has been removed
+  - The `FeatureTableBody.from_features` method has been removed, use  `FeatureTable.from_features` instead
+  - The `FeatureTableBody.positions` and `FeatureTableBody.colors` methods have  been removed,
+    use `FeatureTable.get_feature_color_at` and `FeatureTable.get_feature_position_at` instead
+  - The `FeatureTable.feature` method has been renamed to `get_feature_at` and return tuple instead of Feature instance
+  - The signature of `FeatureTable.from_features` has completely changed. Numpy data type isn't anymore use,
+    but a `FeatureTableHeader` instance created with `FeatureTableHeader.from_semantic()` method
+-
+### Feat
+
+- Windows is fully supported
+- a docker image is now built on each release
+- Classification data can now be exported in the tileset
+- Add an universal merger
+- Load tileset from dictionary with lazy tile content loading
+- Add methods to remove tilesets and tiles on disk
+- Add the support of extras and extensions properties for Asset, BoundingVolume, Tile and TileSet
+- Import and export extensionsUsed and extensionsRequired (TileSet)
+- **tileset.py**: Sync root uri of tiles when the tileset is written as json
+- **tileset.py**: Add methods `from_file` and `get_tile_contents`
+- **tile.py**: The transformation attribute can be set in `__init__()`
+- **bounding_volume.py**: Add new methods as abstractmethod
+- new Py3dtiles exceptions have been created:
+  - TilerException
+  - ThreeDTileSpecError
+  - PntsSpecError
+  - B3dmSpecError
+  - TilesetSpecError
+  - BoundingVolumeMissingException
+- Use transformation when sync bounding volume
+- **feature_table.py**: Improve the support of pnts feature table
+- **batch_table.py**: Allow mix of json and binary data
+- Create a dedicated type for the export of the feature table header
+- Add the Batch Table Hierarchy extension
+- Add get_points method to PntsBody
+- Add the from_points method in Pnts class
+- Publish number_of_points_in_tileset on the API
+- Typing work largely completed
+
+### Fix
+
+- **api.rst**: Correct the examples in the api doc
+- Change gltf padding to fix b3dm body alignment
+- **las_reader**: Correct color_scale calculation
+- **convert.py**: Allow `convert` to work with the `spawn` multiprocess method
+- Reverse the recursivity to prune from leafs to root instead of root to leafs
+- allow multiple user to convert simultaneously on the same machine
+- fix a warning about a 0 division that can occur when aabb have a 0-size dimension.
+
+### Refactor
+
+- Remove useless llvm dependency
+- Retrieve crs with laspy instead of pdal and remove the pdal dependency
+- Rename `read_file` function to `read_binary_tile_content`
+- Move `print_b3dm_info` and `print_pnts_info` in the `tile_content` classes
+-
+- use tile.content_uri in write_to_directory method
+- **merger.py**: use tileset module instead of using custom tools
+- **bounding_volume_box.py**: improve the readability of some methods
+- use fix size numpy data type (`np.uint8` instead of `np.ubytes`)
+- explicit re-export module with a better API import style
+-
+- move all node_process functions in a class to clean/simplify code
+- move the main node processing loop to `convert.py` for centralizing message sending
+- yield node process and send message in the main node processing function
+- Remove useless try..except blocks
+- `halt_at_depth` defined starting from node name length
+- Remove `node_catalog` parameter of `insert` and _`split` methods since it is useless.
+- yield node process and send message with yielded values [WIP]
+- Reader `run` methods now yields tuples of coordinate, color and classification arrays and the message is sent by the Worker object
+- **pnts_writer.py**: `run` method now yields the total amount of nodes and the message is sent by the Worker object
+- transform `TileContent` class to abstract class and add typing info
+- **tileset/utils.py**: The static methods in `TileContentReader` become functions in a dedicated `tile_content_reader.py` module
+- Lowercase all `glTF` occurrences
+- **node.py**: Rename `reminder` occurrences to `remainder`
+
 ## v5.0.0 (2023-02-02)
 
 ### BREAKING CHANGE
