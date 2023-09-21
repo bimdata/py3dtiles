@@ -18,9 +18,9 @@ This command needs to be used only when new files are added (TODO check if sphin
 To regenerate the doc for one version:
 
 ```
-make clean && make html
+sphinx-build -A current_version=HEAD -A "versions=[master]" -b html docs ./_build/html
 ```
-(For some reason, make clean is often necessary if the toctree changes)
+(NOTE: For some reason, `make clean` in the `docs/` folder is often necessary if the toctree changes)
 
 To generate the doc as gitlab does it:
 
