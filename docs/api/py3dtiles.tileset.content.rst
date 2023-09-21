@@ -11,6 +11,20 @@ py3dtiles.tileset.content.b3dm module
    :members:
    :show-inheritance:
 
+py3dtiles.tileset.content.batch\_table module
+---------------------------------------------
+
+.. automodule:: py3dtiles.tileset.content.batch_table
+   :members:
+   :show-inheritance:
+
+py3dtiles.tileset.content.feature\_table module
+-----------------------------------------------
+
+.. automodule:: py3dtiles.tileset.content.feature_table
+   :members:
+   :show-inheritance:
+
 py3dtiles.tileset.content.gltf module
 -------------------------------------
 
@@ -29,6 +43,13 @@ py3dtiles.tileset.content.tile\_content module
 ----------------------------------------------
 
 .. automodule:: py3dtiles.tileset.content.tile_content
+   :members:
+   :show-inheritance:
+
+py3dtiles.tileset.content.tile\_content\_reader module
+------------------------------------------------------
+
+.. automodule:: py3dtiles.tileset.content.tile_content_reader
    :members:
    :show-inheritance:
 

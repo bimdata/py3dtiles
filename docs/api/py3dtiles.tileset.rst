@@ -13,13 +13,6 @@ Subpackages
 Submodules
 ----------
 
-py3dtiles.tileset.batch\_table module
--------------------------------------
-
-.. automodule:: py3dtiles.tileset.batch_table
-   :members:
-   :show-inheritance:
-
 py3dtiles.tileset.bounding\_volume module
 -----------------------------------------
 
@@ -34,17 +27,10 @@ py3dtiles.tileset.bounding\_volume\_box module
    :members:
    :show-inheritance:
 
-py3dtiles.tileset.extendable module
------------------------------------
-
-.. automodule:: py3dtiles.tileset.extendable
-   :members:
-   :show-inheritance:
-
-py3dtiles.tileset.feature\_table module
+py3dtiles.tileset.root\_property module
 ---------------------------------------
 
-.. automodule:: py3dtiles.tileset.feature_table
+.. automodule:: py3dtiles.tileset.root_property
    :members:
    :show-inheritance:
 
@@ -52,13 +38,6 @@ py3dtiles.tileset.tile module
 -----------------------------
 
 .. automodule:: py3dtiles.tileset.tile
-   :members:
-   :show-inheritance:
-
-py3dtiles.tileset.tile\_content\_reader module
-----------------------------------------------
-
-.. automodule:: py3dtiles.tileset.tile_content_reader
    :members:
    :show-inheritance:
 
