@@ -8,13 +8,10 @@ here = os.path.abspath(os.path.dirname(__file__))
 requirements = (
     "cython",
     "earcut==1.1.5",
-    "laspy>=2.0,<3.0",
     "lz4",
     "numba",
     "numpy>=1.20.0,<1.23",
-    "plyfile",
     "psutil",
-    "psycopg2-binary",
     "pyproj",
     "pyzmq",
 )
@@ -38,13 +35,12 @@ doc_requirements = (
     "sphinx_rtd_theme",
 )
 
-packaging_requirements = sum(
-    (
-        dev_requirements,
-        ("build", "twine", "wheel"),
-    ),
-    (),
-)
+packaging_requirements = dev_requirements + ("build", "twine", "wheel")
+
+# here follows specific format requirements
+postgres_requirements = ("psycopg2-binary",)
+las_requirements = ("laspy>=2.0,<3.0",)
+ply_requirements = ("plyfile",)
 
 
 def read(fname):
@@ -91,6 +87,10 @@ setup(
     install_requires=requirements,
     test_suite="tests",
     extras_require={
+        "postgres": postgres_requirements,
+        "las": las_requirements,
+        "ply": ply_requirements,
+        "all": postgres_requirements + las_requirements + ply_requirements,
         "dev": dev_requirements,
         "doc": doc_requirements,
         "pack": packaging_requirements,
