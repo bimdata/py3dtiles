@@ -4,11 +4,13 @@ import getpass
 import json
 import math
 import os
+import sys
+import traceback
 from typing import Any
 
 import numpy as np
-import psycopg2
 
+from py3dtiles.constants import EXIT_CODES
 from py3dtiles.tilers.b3dm.wkb_utils import TriangleSoup
 from py3dtiles.tileset.content import B3dm, GlTF
 from py3dtiles.tileset.content.batch_table import BatchTable
@@ -257,6 +259,8 @@ def build_secure_conn(db_conn_info):
     -------
     psycopg2.extensions.connection
     """
+    import psycopg2
+
     try:
         connection = psycopg2.connect(db_conn_info)
     except psycopg2.OperationalError:
@@ -368,11 +372,19 @@ def init_parser(
 def main(args: argparse.Namespace) -> None:
     if args.D is not None:
         if args.t is None or args.c is None:
-            print("Error: please define a table (-t) and column (-c)")
-            exit()
+            print("Error: please define a table (-t) and column (-c)", file=sys.stderr)
+            exit(EXIT_CODES.MISSING_ARGS.value)
 
-        from_db(args.D, args.t, args.c, args.i)
+        try:
+            from_db(args.D, args.t, args.c, args.i)
+        except ImportError:
+            traceback.print_exc()
+            print(
+                "Cannot import psycopg2. You might have to execute `pip install py3dtiles[postgres]`. Please read the installation documentation."
+            )
+            exit(EXIT_CODES.MISSING_DEPS.value)
     elif args.d is not None:
         from_directory(args.d, args.o)
     else:
-        raise NameError("Error: database or directory must be set")
+        print("Error: database or directory must be set", file=sys.stderr)
+        exit(EXIT_CODES.MISSING_ARGS.value)

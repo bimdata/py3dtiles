@@ -19,13 +19,15 @@ import psutil
 from pyproj import CRS, Transformer
 import zmq
 
+from py3dtiles.constants import EXIT_CODES
 from py3dtiles.exceptions import (
+    FormatSupportMissingException,
     SrsInMissingException,
     SrsInMixinException,
     TilerException,
     WorkerException,
 )
-from py3dtiles.reader import las_reader, ply_reader, xyz_reader
+from py3dtiles.reader import xyz_reader
 from py3dtiles.tilers.matrix_manipulation import (
     make_rotation_matrix,
     make_scale_matrix,
@@ -59,12 +61,29 @@ else:
     tmpdir = tempfile.TemporaryDirectory()
     URI = f"ipc://{tmpdir.name}/py3dtiles.sock"
 
+
 READER_MAP = {
     ".xyz": xyz_reader,
-    ".las": las_reader,
-    ".laz": las_reader,
-    ".ply": ply_reader,
 }
+
+try:
+    from py3dtiles.reader import las_reader
+
+    READER_MAP[".las"] = las_reader
+    # then check for the presence of laz support
+    from importlib.util import find_spec
+
+    if find_spec("laszip") or find_spec("lazrs"):
+        READER_MAP[".laz"] = las_reader
+except ImportError:
+    pass
+
+try:
+    from py3dtiles.reader import ply_reader
+
+    READER_MAP[".ply"] = ply_reader
+except ImportError:
+    pass
 
 
 def worker_target(
@@ -203,7 +222,7 @@ class Worker:
         else:
             raise ValueError(
                 f"The file with {extension} extension can't be read, "
-                f"the available extensions are: {READER_MAP.keys()}"
+                f"the available extensions are: {', '.join(READER_MAP.keys())}"
             )
 
         reader_gen = reader.run(
@@ -649,9 +668,10 @@ class _Convert:
             if extension in READER_MAP:
                 reader = READER_MAP[extension]
             else:
-                raise ValueError(
+                raise FormatSupportMissingException(
                     f"The file with {extension} extension can't be read, "
-                    f"the available extensions are: {READER_MAP.keys()}"
+                    f"the available extensions are: {', '.join(READER_MAP.keys())}. "
+                    f"NOTE: for ply, las and laz support, some additional dependencies are needed. Please check the documentation."
                 )
 
             file_info = reader.get_metadata(file)
@@ -1338,5 +1358,11 @@ def main(args: argparse.Namespace) -> None:
             verbose=args.verbose,
         )
     except SrsInMissingException:
-        print("No SRS information in input files, you should specify it with --srs_in")
-        sys.exit(1)
+        print(
+            "No SRS information in input files, you should specify it with --srs_in",
+            file=sys.stderr,
+        )
+        sys.exit(EXIT_CODES.MISSING_SRS_IN_FILE.value)
+    except FormatSupportMissingException as e:
+        print(e, file=sys.stderr)
+        sys.exit(EXIT_CODES.UNSPECIFIED_ERROR.value)
