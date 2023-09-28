@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Generic, TypeVar
 
+from py3dtiles.tileset.extension import create_extension
 from py3dtiles.typing import ExtraDictType, RootPropertyDictType
 
 if TYPE_CHECKING:
@@ -48,6 +49,12 @@ class RootProperty(ABC, Generic[_JsonDictT]):
         self,
         dict_data: _JsonDictT,
     ) -> None:
-        self.extensions = {}  # TODO not yet implemented
+        if "extensions" in dict_data:
+            for key in dict_data["extensions"]:
+                self.extensions[key] = create_extension(
+                    key, dict_data["extensions"][key]
+                )
+                if not self.extensions[key].name:
+                    self.extensions[key].name = key
         if "extras" in dict_data:
             self.extras = dict_data["extras"]
