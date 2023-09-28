@@ -39,8 +39,8 @@ class TestTileContentReader(unittest.TestCase):
                 f"The file 'tests/fixtures/buildings.b3dm' is a b3dm, not a {type(tile_content)}"
             )
 
-        self.assertEqual(tile_content.header.tile_byte_length, 6156)
-        self.assertEqual(tile_content.header.ft_json_byte_length, 24)
+        self.assertEqual(tile_content.header.tile_byte_length, 6152)
+        self.assertEqual(tile_content.header.ft_json_byte_length, 20)
         self.assertEqual(tile_content.header.ft_bin_byte_length, 0)
         self.assertEqual(tile_content.header.bt_json_byte_length, 64)
         self.assertEqual(tile_content.header.bt_bin_byte_length, 0)

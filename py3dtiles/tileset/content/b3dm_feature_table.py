@@ -67,8 +67,8 @@ class B3dmFeatureTableHeader(FeatureTableHeader):
             return np.empty((0,), dtype=np.uint8)
 
         json_str = json.dumps(self.data, separators=(",", ":"))
-        if len(json_str) % 8 != 0:
-            json_str += " " * (8 - len(json_str) % 8)
+        if (len(json_str) + 28) % 8 != 0:
+            json_str += " " * (8 - (len(json_str) + 28) % 8)
         return np.frombuffer(json_str.encode("utf-8"), dtype=np.uint8)
 
 
