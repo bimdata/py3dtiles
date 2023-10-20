@@ -10,9 +10,6 @@ Subpackages
    py3dtiles.tileset.content
    py3dtiles.tileset.extension
 
-Submodules
-----------
-
 py3dtiles.tileset.bounding\_volume module
 -----------------------------------------
 

@@ -1,9 +1,6 @@
 py3dtiles.tileset.extension package
 ===================================
 
-Submodules
-----------
-
 py3dtiles.tileset.extension.base\_extension module
 --------------------------------------------------
 

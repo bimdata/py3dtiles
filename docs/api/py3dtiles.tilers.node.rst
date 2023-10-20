@@ -1,8 +1,6 @@
 py3dtiles.tilers.node package
 =============================
 
-Submodules
-----------
 
 py3dtiles.tilers.node.distance module
 -------------------------------------

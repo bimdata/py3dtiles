@@ -1,9 +1,6 @@
 py3dtiles.tileset.content package
 =================================
 
-Submodules
-----------
-
 py3dtiles.tileset.content.b3dm module
 -------------------------------------
 

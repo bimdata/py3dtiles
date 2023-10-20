@@ -11,9 +11,6 @@ Subpackages
    py3dtiles.tilers.node
    py3dtiles.tilers.pnts
 
-Submodules
-----------
-
 py3dtiles.tilers.matrix\_manipulation module
 --------------------------------------------
 

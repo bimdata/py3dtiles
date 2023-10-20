@@ -1,9 +1,6 @@
 py3dtiles.reader package
 ========================
 
-Submodules
-----------
-
 py3dtiles.reader.las\_reader module
 -----------------------------------
 

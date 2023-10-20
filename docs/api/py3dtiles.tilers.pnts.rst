@@ -1,9 +1,6 @@
 py3dtiles.tilers.pnts package
 =============================
 
-Submodules
-----------
-
 py3dtiles.tilers.pnts.constants module
 --------------------------------------
 

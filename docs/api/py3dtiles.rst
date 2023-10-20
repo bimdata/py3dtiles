@@ -11,9 +11,6 @@ Subpackages
    py3dtiles.tilers
    py3dtiles.tileset
 
-Submodules
-----------
-
 py3dtiles.command\_line module
 ------------------------------
 

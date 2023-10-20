@@ -1,9 +1,6 @@
 py3dtiles.tilers.b3dm package
 =============================
 
-Submodules
-----------
-
 py3dtiles.tilers.b3dm.wkb\_utils module
 ---------------------------------------
 
