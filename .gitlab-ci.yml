@@ -108,7 +108,7 @@ test:
       - ${PIP_CACHE_DIR}
   before_script:
     - pip install -U pip setuptools
-    - pip install .[dev]
+    - pip install .[all,dev]
   script:
     - pytest
     # TODO move that in unit tests
@@ -144,7 +144,7 @@ windows-test:
     - choco install -y python --version=3.9.5
     - RefreshEnv
     - python -m pip install --upgrade pip setuptools wheel
-    - python -m pip install .[dev]
+    - python -m pip install .[all,dev]
   script:
     - pytest
     - py3dtiles info tests/fixtures/pointCloudRGB.pnts
@@ -167,7 +167,7 @@ windows-test:
     - apt update
     - apt install -y python3-pip liblaszip8
     - pip install -U pip setuptools
-    - pip install .
+    - pip install .[las]
     - pip install laspy[laszip]
     - wget -nv -N -P laz https://download.data.grandlyon.com/files/grandlyon/imagerie/mnt2018/lidar/laz/1843_5175.laz
     - wget -nv -N -P laz https://download.data.grandlyon.com/files/grandlyon/imagerie/mnt2018/lidar/laz/1845_5173.laz
@@ -211,7 +211,7 @@ test-api-doc-examples:
     - paths:
       - ${PIP_CACHE_DIR}
   before_script:
-    - pip install .
+    - pip install .[all]
   script:
     - python tests/test_code_examples.py
   only:

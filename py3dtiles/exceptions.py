@@ -6,6 +6,13 @@ class Py3dtilesException(Exception):
     """
 
 
+class FormatSupportMissingException(Py3dtilesException):
+    """
+    This exception is thrown when the user attempts to convert a file in an unsupported format.
+    The format can be unsupported either because support is not implemented, or because a dependency is missing.
+    """
+
+
 class TilerException(Py3dtilesException):
     """
     This exception will be thrown when there is an issue during a tiling task.

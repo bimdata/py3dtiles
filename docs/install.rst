@@ -6,23 +6,11 @@ From pypi
 
 `py3dtiles` is published on pypi.org.
 
-```
-pip install py3dtiles
-```
+.. code-block:: shell
 
-From docker
-~~~~~~~~~~~~
+    pip install py3dtiles
 
-We currently publish docker images on gitlab registry. Please see [the currently published versions](https://gitlab.com/Oslandia/py3dtiles/container_registry/4248842).
-```
-docker run --rm registry.gitlab.com/oslandia/py3dtiles:<version> --help
-```
-
-
-NOTE:
-
-- the `--mount` option is necessary for docker to read your source data and to write the result. The way it is written in this example only allows you to read source files in the current folder or in a subfolder
-- This line `--volume /etc/passwd:/etc/passwd:ro --volume /etc/group:/etc/group:ro --user $(id -u):$(id -g)` is only necessary if your uid is different from 1000.
+Please read the section ":ref:`File formats support`" next.
 
 From sources
 ~~~~~~~~~~~~
@@ -38,6 +26,8 @@ To use py3dtiles from sources:
     $ . venv/bin/activate
     (venv)$ pip install .
 
+You might need to install specific format dependencies as described in the section "From pypi".
+
 If you want to run unit tests:
 
 .. code-block:: shell
@@ -45,9 +35,24 @@ If you want to run unit tests:
     (venv)$ pip install -e .[dev]
     (venv)$ pytest
 
+Please read the section ":ref:`File formats support`" next.
 
-Supporting LAZ files
+File formats support
 ~~~~~~~~~~~~~~~~~~~~
+
+By default, no specific format dependencies are installed. You should either install them separately, or use our `extra_requires` sections:
+
+.. code-block:: shell
+
+    # las support
+    pip install py3dtiles[las]
+    # ply
+    pip install py3dtiles[ply]
+    # postgres
+    pip install py3dtiles[postgres]
+    # everythin at once
+    pip install py3dtiles[all]`
+
 
 To support laz files you need an external library and a laz backend for
 laspy, see [this link]](https://laspy.readthedocs.io/en/latest/installation.html#pip). Short answer, for laszip, you need to follow these steps:
@@ -59,3 +64,20 @@ laspy, see [this link]](https://laspy.readthedocs.io/en/latest/installation.html
 
   $ # Install with LAZ support via laszip
   $ pip install laspy[laszip]
+
+
+If you don't need waveform support, lazrs is also a good option.
+
+From docker
+~~~~~~~~~~~~
+
+We currently publish docker images on gitlab registry. Please see [the currently published versions](https://gitlab.com/Oslandia/py3dtiles/container_registry/4248842).
+```
+docker run --rm registry.gitlab.com/oslandia/py3dtiles:<version> --help
+```
+
+
+NOTE:
+
+- the `--mount` option is necessary for docker to read your source data and to write the result. The way it is written in this example only allows you to read source files in the current folder or in a subfolder
+- This line `--volume /etc/passwd:/etc/passwd:ro --volume /etc/group:/etc/group:ro --user $(id -u):$(id -g)` is only necessary if your uid is different from 1000.
