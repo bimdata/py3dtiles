@@ -21,10 +21,6 @@
 .. image:: https://img.shields.io/gitlab/last-commit/Oslandia/py3dtiles?gitlab_url=https%3A%2F%2Fgitlab.com
     :alt: GitLab last commit
 
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/psf/black
-    :alt: black code format
-
 .. image:: https://img.shields.io/gitlab/license/Oslandia/py3dtiles
     :alt: Py3dtiles license
 
