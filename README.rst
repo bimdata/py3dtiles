@@ -1,3 +1,7 @@
+.. image:: https://img.shields.io/matrix/py3dtiles:matrix.org
+    :target: https://matrix.to/#/#py3dtiles:matrix.org
+    :alt: chat link
+
 .. image:: https://img.shields.io/gitlab/pipeline/Oslandia/py3dtiles/master
     :target: https://gitlab.com/Oslandia/py3dtiles/-/pipelines
     :alt: Build pipeline status
@@ -16,10 +20,6 @@
 
 .. image:: https://img.shields.io/gitlab/last-commit/Oslandia/py3dtiles?gitlab_url=https%3A%2F%2Fgitlab.com
     :alt: GitLab last commit
-
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/psf/black
-    :alt: black code format
 
 .. image:: https://img.shields.io/gitlab/license/Oslandia/py3dtiles
     :alt: Py3dtiles license
@@ -147,6 +147,7 @@ We welcome new contributions. This may be fixing an issue or adding a feature, b
 - reviewing a MR
 - improving the documentation or creating a tutorial
 - talking about this project to others
+- help others on the [chat room](https://matrix.to/#/#py3dtiles:matrix.org)
 
 We have written a `contributing guide <CONTRIBUTING.md>`_ to help you for your first contribution.
 
