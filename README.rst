@@ -67,7 +67,7 @@ To install Py3dtiles with pip (recommended method)
 
     pip install py3dtiles
 
-For installing specific format dependencies (las/laz, ply, postgis, install from source...), please read the installation section in the `documentation <https://oslandia.gitlab.io/py3dtiles/>`_.
+For installing specific format dependencies (las/laz, ply, postgis, install from source...), please read the installation section in the `documentation <https://py3dtiles.org/>`_.
 
 With docker
 ===========
@@ -126,8 +126,8 @@ Documentation
 
 The CLI and API documentation with examples are available here:
 
-- master: https://oslandia.gitlab.io/py3dtiles/master
-- last stable: https://oslandia.gitlab.io/py3dtiles/
+- master: https://py3dtiles.org/master
+- last stable: https://py3dtiles.org/
 
 Roadmap
 #######
