@@ -231,3 +231,15 @@ Funding the project allow organizations to assign manpower to the items of the r
 - [Meritocratic Governance Model document](http://oss-watch.ac.uk/resources/meritocraticgovernancemodel)
 - [OSGeo project graduation checklist](https://www.osgeo.org/resources/project-graduation-checklist/)
 - [Apache Forrest governance document, with voting methods](https://forrest.apache.org/guidelines.html#decision)
+
+## Current team composition
+
+**Committers**
+
+- Augustin Trancart
+- Lorenzo Marnat
+- Raphaël Delhomme
+
+**PSC**
+
+TBD
