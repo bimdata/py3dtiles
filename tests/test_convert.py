@@ -216,6 +216,26 @@ def test_convert_simple_xyz(tmp_dir: Path) -> None:
     assert box == expecting_box
 
 
+def test_convert_xyz_rgb_i_c_with_srs(tmp_dir: Path) -> None:
+    convert(
+        DATA_DIRECTORY / "simple_with_irgb_and_classification.csv",
+        outfolder=tmp_dir,
+        crs_in=CRS.from_epsg(28992),
+        crs_out=CRS.from_epsg(4978),
+        jobs=1,
+    )
+    assert Path(tmp_dir, "tileset.json").exists()
+    assert Path(tmp_dir, "r.pnts").exists()
+
+    xyz_point_count = -1  # compensate for header line
+    with open(DATA_DIRECTORY / "simple_with_irgb_and_classification.csv") as f:
+        while line := f.readline():
+            xyz_point_count += 1 if line != "" else 0
+
+    tileset_path = tmp_dir / "tileset.json"
+    assert xyz_point_count == number_of_points_in_tileset(tileset_path)
+
+
 def test_convert_xyz_with_rgb(tmp_dir: Path) -> None:
     convert(DATA_DIRECTORY / "simple_with_rgb.xyz", outfolder=tmp_dir)
 

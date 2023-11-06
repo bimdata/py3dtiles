@@ -64,6 +64,7 @@ else:
 
 READER_MAP = {
     ".xyz": xyz_reader,
+    ".csv": xyz_reader,
 }
 
 try:
