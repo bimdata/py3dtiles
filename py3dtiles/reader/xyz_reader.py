@@ -1,3 +1,4 @@
+import csv
 import math
 from pathlib import Path
 from typing import Generator, List, Optional, Tuple
@@ -15,6 +16,15 @@ def get_metadata(path: Path, fraction: int = 100) -> MetadataReaderType:
     seek_values = []
 
     with path.open() as f:
+        file_sample = f.read(
+            2048
+        )  # For performance reasons we just snif the first part
+        dialect = csv.Sniffer().sniff(file_sample)
+
+        f.seek(0)
+        if csv.Sniffer().has_header(file_sample):
+            f.readline()
+
         while True:
             batch = 10_000
             points = np.zeros((batch, 3))
@@ -25,7 +35,7 @@ def get_metadata(path: Path, fraction: int = 100) -> MetadataReaderType:
                 if not line:
                     points = np.resize(points, (i, 3))
                     break
-                points[i] = [float(s) for s in line.split(" ")][:3]
+                points[i] = [float(s) for s in line.split(dialect.delimiter)][:3]
 
             if points.shape[0] == 0:
                 break
@@ -83,14 +93,23 @@ def run(
     None,
 ]:
     """
-    Reads points from a xyz file
+    Reads points from a .xyz or .csv file
 
-    Consider XYZIRGB format following FME documentation(*). If the number of
-    features does not correspond (i.e. does not equal to 7), we do the
-    following hypothesis:
-    - 3 features mean XYZ
-    - 4 features mean XYZI
-    - 6 features mean XYZRGB
+    Consider XYZIRGB format following FME documentation(*). We do the
+    following hypothesis and enhancements:
+
+    - A header line defining columns in CSV style may be present, but will be ignored.
+    - The separator separating the columns is automagically guessed by the
+      reader. This is generally fail safe. It will not harm to use commonly
+      accepted separators like space, tab, colon, semi-colon.
+    - The order of columns is fixed. The reader does the following assumptions:
+      - 3 columns mean XYZ
+      - 4 columns mean XYZI
+      - 6 columns mean XYZRGB
+      - 7 columns mean XYZIRGB
+      - 8 columns mean XYZIRGB followed by classification data.
+        Classification data must be integers only.
+      - all columns after the 8th column will be ignored.
 
     NOTE: we assume RGB are 8 bits components.
 
@@ -98,13 +117,22 @@ def run(
     """
     with open(filename) as f:
 
+        dialect = csv.Sniffer().sniff(f.read(2048))
+        f.seek(0)
+        f.readline()  # skip first line in case there is a header we promised to ignore
+        feature_nb = len(f.readline().split(dialect.delimiter))
+        if feature_nb < 8:
+            feature_nb = 7  # we pad to 7 columns with 0
+        if feature_nb > 8:
+            feature_nb = 8  # We ignore other data as downstream only 1 value for classification data is supported.
+            # Once downstream supports multiple classification values this reader will as well
+            # when this line is removed.
+
         point_count = portion[1] - portion[0]
 
         step = min(point_count, max((point_count) // 10, 100000))
 
         f.seek(portion[2])
-
-        feature_nb = 7
 
         for _ in range(0, point_count, step):
             points = np.zeros((step, feature_nb), dtype=np.float32)
@@ -114,7 +142,9 @@ def run(
                 if not line:
                     points = np.resize(points, (j, feature_nb))
                     break
-                line_features: List[float | None] = [float(s) for s in line.split(" ")]
+                line_features: List[float | None] = [
+                    float(s) for s in line.split(dialect.delimiter)[:feature_nb]
+                ]
                 if len(line_features) == 3:
                     line_features += [None] * 4  # Insert intensity and RGB
                 elif len(line_features) == 4:
@@ -141,12 +171,15 @@ def run(
 
             coords = np.ascontiguousarray(coords.astype(np.float32))
 
-            # Read colors: 3 last columns of the point cloud
+            # Read colors: 3 last columns when excluding classification data
             if color_scale is None:
-                colors = points[:, -3:].astype(np.uint8)
+                colors = points[:, 4:7].astype(np.uint8)
             else:
-                colors = np.clip(points[:, -3:] * color_scale, 0, 255).astype(np.uint8)
+                colors = np.clip(points[:, 4:7] * color_scale, 0, 255).astype(np.uint8)
 
-            classification = np.zeros((points.shape[0], 1), dtype=np.uint8)
+            if feature_nb > 7:  # we have classification data
+                classification = np.array(points[:, 7:], dtype=np.uint8).reshape(-1, 1)
+            else:
+                classification = np.zeros((points.shape[0], 1), dtype=np.uint8)
 
             yield coords, colors, classification
