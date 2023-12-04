@@ -126,7 +126,7 @@ Documentation
 
 The CLI and API documentation with examples are available here:
 
-- master: https://py3dtiles.org/master
+- main: https://py3dtiles.org/main
 - last stable: https://py3dtiles.org/
 
 Roadmap
