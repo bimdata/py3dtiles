@@ -164,7 +164,7 @@ class FeatureTableHeader:
 
         if self.constant_rgba is not None:
             # cannot give the shape of self.constant_rgba to mypy
-            constant_rgba_tuple: tuple[int, int, int, int] = tuple(self.constant_rgba)  # type: ignore [assignment]
+            constant_rgba_tuple: tuple[int, int, int, int] = tuple(self.constant_rgba)
             jsond["CONSTANT_RGBA"] = constant_rgba_tuple
 
         # normal
