@@ -5,6 +5,8 @@ stages:
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
+  GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
 
 .pre-commit-check:
   image:
@@ -253,6 +255,7 @@ sonarcloud-check:
   needs: [test]
   image:
     name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
     GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
@@ -266,7 +269,6 @@ sonarcloud-check:
     refs:
       - merge_requests
       - develop
-      - tags
       - master
     changes:
       - "**/*.py"
