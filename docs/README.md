@@ -18,7 +18,7 @@ This command needs to be used only when new files are added (TODO check if sphin
 To regenerate the doc for one version:
 
 ```
-sphinx-build -A current_version=HEAD -A "versions=[master]" -b html docs ./_build/html
+sphinx-build -A current_version=HEAD -A "versions=[main]" -b html docs ./_build/html
 ```
 (NOTE: For some reason, `make clean` in the `docs/` folder is often necessary if the toctree changes)
 

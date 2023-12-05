@@ -20,7 +20,7 @@ To use py3dtiles from sources:
 .. code-block:: shell
 
     $ apt install git python3 python3-pip virtualenv
-    $ git clone git@gitlab.com:Oslandia/py3dtiles.git
+    $ git clone git@gitlab.com:py3dtiles/py3dtiles.git
     $ cd py3dtiles
     $ virtualenv -p python3 venv
     $ . venv/bin/activate
@@ -71,9 +71,9 @@ If you don't need waveform support, lazrs is also a good option.
 From docker
 ~~~~~~~~~~~~
 
-We currently publish docker images on gitlab registry. Please see [the currently published versions](https://gitlab.com/Oslandia/py3dtiles/container_registry/4248842).
+We currently publish docker images on gitlab registry. Please see [the currently published versions](https://gitlab.com/py3dtiles/py3dtiles/container_registry/4248842).
 ```
-docker run --rm registry.gitlab.com/oslandia/py3dtiles:<version> --help
+docker run --rm registry.gitlab.com/py3dtiles/py3dtiles:<version> --help
 ```
 
 

@@ -90,7 +90,7 @@ It is strongly discouraged to ignore an error (with the comment `type: ignore`) 
 
 ### Tests
 
-Your changes must be covered by tests as much as possible. We target a 80% coverage. This indicator is monitored through [SonarCloud](https://sonarcloud.io/summary/new_code?id=Oslandia_py3dtiles), and automatically computed by the CI in each merge request.
+Your changes must be covered by tests as much as possible. We target a 80% coverage. This indicator is monitored through [SonarCloud](https://sonarcloud.io/summary/new_code?id=py3dtiles_py3dtiles), and automatically computed by the CI in each merge request.
 
 The CI runs the tests on each supported version of python. Currently, part of the tests are written with the pytest framework and another part with the unittest framework. All new tests must be written with pytest and gradually, the tests written with unittest will be migrated to pytest.
 

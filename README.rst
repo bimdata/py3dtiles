@@ -2,8 +2,8 @@
     :target: https://matrix.to/#/#py3dtiles:matrix.org
     :alt: chat link
 
-.. image:: https://img.shields.io/gitlab/pipeline/Oslandia/py3dtiles/master
-    :target: https://gitlab.com/Oslandia/py3dtiles/-/pipelines
+.. image:: https://img.shields.io/gitlab/pipeline/py3dtiles/py3dtiles/main
+    :target: https://gitlab.com/py3dtiles/py3dtiles/-/pipelines
     :alt: Build pipeline status
 
 .. image:: https://img.shields.io/pypi/v/py3dtiles
@@ -14,14 +14,14 @@
     :target: https://pypi.org/project/py3dtiles/
     :alt: Supported python versions
 
-.. image:: https://sonarcloud.io/api/project_badges/measure?project=Oslandia_py3dtiles&metric=coverage
-    :target: https://sonarcloud.io/summary/new_code?id=Oslandia_py3dtiles
+.. image:: https://sonarcloud.io/api/project_badges/measure?project=py3dtiles_py3dtiles&metric=coverage
+    :target: https://sonarcloud.io/summary/new_code?id=py3dtiles_py3dtiles
     :alt: Code coverage py3dtiles
 
-.. image:: https://img.shields.io/gitlab/last-commit/Oslandia/py3dtiles?gitlab_url=https%3A%2F%2Fgitlab.com
+.. image:: https://img.shields.io/gitlab/last-commit/py3dtiles/py3dtiles?gitlab_url=https%3A%2F%2Fgitlab.com
     :alt: GitLab last commit
 
-.. image:: https://img.shields.io/gitlab/license/Oslandia/py3dtiles
+.. image:: https://img.shields.io/gitlab/license/py3dtiles/py3dtiles
     :alt: Py3dtiles license
 
 
@@ -79,7 +79,7 @@ At the moment we only publish on gitlab registry.
     docker run -it --rm \
         --mount type=bind,source="$(pwd)",target=/app/data/ \
         --volume /etc/passwd:/etc/passwd:ro --volume /etc/group:/etc/group:ro --user $(id -u):$(id -g) \
-        registry.gitlab.com/oslandia/py3dtiles:<version> \
+        registry.gitlab.com/py3dtiles/py3dtiles:<version> \
         convert <file>
 
 
@@ -126,7 +126,7 @@ Documentation
 
 The CLI and API documentation with examples are available here:
 
-- master: https://py3dtiles.org/master
+- main: https://py3dtiles.org/main
 - last stable: https://py3dtiles.org/
 
 Roadmap

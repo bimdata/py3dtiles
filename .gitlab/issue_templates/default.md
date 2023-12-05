@@ -3,7 +3,7 @@ Please read this!
 
 Before opening a new issue, make sure to search the existing issues for your problems, using the `bug` label :
 
-https://gitlab.com/Oslandia/py3dtiles/-/issues/?sort=created_date&state=opened&label_name%5B%5D=Bug&first_page_size=20
+https://gitlab.com/py3dtiles/py3dtiles/-/issues/?sort=created_date&state=opened&label_name%5B%5D=Bug&first_page_size=20
 -->
 
 ## Summary
