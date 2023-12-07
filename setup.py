@@ -10,7 +10,7 @@ requirements = (
     "earcut==1.1.5",
     "lz4",
     "numba",
-    "numpy>=1.20.0,<1.23",
+    "numpy>=1.26.0,<2.0.0",
     "psutil",
     "pyproj",
     "pyzmq",
