@@ -48,5 +48,6 @@ Update the following files:
     - add the new version in the python version matrix for the `test` job
   - in case of a python version that is no longer supported
     - remove the old version in the python version matrix for the `test` job
+    - change the python version for the mypy job
 
 For the commit message, don't use `chore`, else the breaking change won't be displayed by commitizen...

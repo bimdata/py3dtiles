@@ -65,7 +65,8 @@ pre-commit-built-in:
 typing-check:
   stage: 🐍 lint
   image:
-    name: python:3.10-slim
+    # this should always be the oldest python we support
+    name: python:3.8-slim
   cache:
     - key: $CI_COMMIT_REF_NAME
       paths:
