@@ -1,10 +1,10 @@
-from pathlib import Path
 import shutil
+from pathlib import Path
 from typing import Generator
 
+import pytest
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from pyproj import CRS
-import pytest
 
 from py3dtiles.convert import convert
 from py3dtiles.merger import merge, merge_from_files, merge_with_pnts_content

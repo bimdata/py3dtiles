@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from enum import Enum
 import json
-from typing import Literal, TYPE_CHECKING
+from enum import Enum
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import numpy.typing as npt

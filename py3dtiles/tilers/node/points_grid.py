@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from numba import njit  # type: ignore [attr-defined]
-from numba.typed import List
 import numpy as np
 import numpy.typing as npt
+from numba import njit  # type: ignore [attr-defined]
+from numba.typed import List
 
 from py3dtiles.exceptions import TilerException
-from py3dtiles.utils import aabb_size_to_subdivision_type, SubdivisionType
+from py3dtiles.utils import SubdivisionType, aabb_size_to_subdivision_type
+
 from .distance import is_point_far_enough, xyz_to_key
 
 if TYPE_CHECKING:

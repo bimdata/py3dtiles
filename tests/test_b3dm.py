@@ -1,7 +1,7 @@
-from filecmp import cmp
 import json
-from pathlib import Path
 import unittest
+from filecmp import cmp
+from pathlib import Path
 
 import numpy as np
 

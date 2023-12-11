@@ -7,6 +7,7 @@ import numpy as np
 import numpy.typing as npt
 
 from py3dtiles.exceptions import Invalid3dtilesError
+
 from .b3dm import B3dm
 from .pnts import Pnts
 

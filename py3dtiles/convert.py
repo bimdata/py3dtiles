@@ -1,9 +1,7 @@
 import argparse
 import concurrent.futures
 import json
-from multiprocessing import cpu_count, Process
 import os
-from pathlib import Path, PurePath
 import pickle
 import shutil
 import struct
@@ -11,13 +9,15 @@ import sys
 import tempfile
 import time
 import traceback
+from multiprocessing import Process, cpu_count
+from pathlib import Path, PurePath
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
 import psutil
-from pyproj import CRS, Transformer
 import zmq
+from pyproj import CRS, Transformer
 
 from py3dtiles.constants import EXIT_CODES
 from py3dtiles.exceptions import (
@@ -40,12 +40,12 @@ from py3dtiles.tileset.content import read_binary_tile_content
 from py3dtiles.typing import PortionsType
 from py3dtiles.utils import (
     CommandType,
+    OctreeMetadata,
+    ResponseType,
     compute_spacing,
     make_aabb_valid,
     node_from_name,
     node_name_to_path,
-    OctreeMetadata,
-    ResponseType,
     str_to_CRS,
 )
 

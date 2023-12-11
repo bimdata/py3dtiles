@@ -1,6 +1,6 @@
-from pathlib import Path
 import shutil
 import unittest
+from pathlib import Path
 
 from py3dtiles.tilers.node import SharedNodeStore
 

@@ -6,14 +6,11 @@ import numpy as np
 import numpy.typing as npt
 
 from py3dtiles.exceptions import InvalidB3dmError
+
 from .b3dm_feature_table import B3dmFeatureTable
 from .batch_table import BatchTable
 from .gltf import GlTF
-from .tile_content import (
-    TileContent,
-    TileContentBody,
-    TileContentHeader,
-)
+from .tile_content import TileContent, TileContentBody, TileContentHeader
 
 
 class B3dm(TileContent):

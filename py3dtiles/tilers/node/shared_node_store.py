@@ -1,7 +1,7 @@
 import gc
+import time
 from pathlib import Path
 from sys import getsizeof
-import time
 from typing import Dict, List, Optional, Tuple
 
 import lz4.frame as gzip

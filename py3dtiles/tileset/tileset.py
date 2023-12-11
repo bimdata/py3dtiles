@@ -2,15 +2,17 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Generator, Literal, TYPE_CHECKING
+from typing import TYPE_CHECKING, Generator, Literal
 
 from py3dtiles.typing import AssetDictType, GeometricErrorType, TilesetDictType
+
 from .root_property import RootProperty
 from .tile import Tile
 
 if TYPE_CHECKING:
-    from .content import TileContent
     from typing_extensions import Self
+
+    from .content import TileContent
 
 
 class Asset(RootProperty[AssetDictType]):

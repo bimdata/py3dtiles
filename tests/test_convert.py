@@ -1,23 +1,23 @@
-from contextlib import nullcontext
 import json
 import multiprocessing
-from pathlib import Path
 import shutil
+from contextlib import nullcontext
+from pathlib import Path
 from typing import Generator, Union
 from unittest.mock import patch
 
-from _pytest.python_api import RaisesContext
 import laspy
 import numpy as np
-from numpy.testing import assert_array_equal
 import plyfile
+from _pytest.python_api import RaisesContext
+from numpy.testing import assert_array_equal
 from pyproj import CRS
 from pytest import fixture, mark, raises
 
 from py3dtiles.convert import convert
 from py3dtiles.exceptions import SrsInMissingException, SrsInMixinException
 from py3dtiles.reader.ply_reader import create_plydata_with_renamed_property
-from py3dtiles.tileset import number_of_points_in_tileset, TileSet
+from py3dtiles.tileset import TileSet, number_of_points_in_tileset
 from py3dtiles.tileset.content import Pnts
 
 DATA_DIRECTORY = Path(__file__).parent / "fixtures"

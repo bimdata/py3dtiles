@@ -4,9 +4,9 @@ import math
 import struct
 from typing import List
 
-from earcut.earcut import earcut
 import numpy as np
 import numpy.typing as npt
+from earcut.earcut import earcut
 
 CoordinateType = npt.NDArray[np.float32]
 LineType = List[CoordinateType]
