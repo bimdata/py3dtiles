@@ -14,7 +14,7 @@
 # -- Project information -----------------------------------------------------
 
 project = "py3dtiles"
-copyright = "2019, Augustin Trancart, Paul Blottière, Jérémy Gaillard, Ludovic Delauné, Nicolas Saul, Pierre-Éric Pelloux-Prayer, Raphaël Delhome, Vincent Jaillot, Éric Lemoine, Antoine Facchini"  # noqa: A001
+copyright = "2023, the py3dtiles contributors"  # noqa: A001
 author = "Augustin Trancart, Paul Blottière, Jérémy Gaillard, Ludovic Delauné, Nicolas Saul, Pierre-Éric Pelloux-Prayer, Raphaël Delhome, Vincent Jaillot, Éric Lemoine, Antoine Facchini"
 
 # -- General configuration ---------------------------------------------------
