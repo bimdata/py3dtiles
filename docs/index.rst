@@ -26,6 +26,7 @@ py3dtiles is distributed under the Apache 2 Licence.
    api
    API doc <api/modules>
    FAQ and Troubleshooting <faq>
+   Changelog <changelog>
 
 
 
