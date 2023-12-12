@@ -1,20 +1,16 @@
 import copy
-from pathlib import Path
 import shutil
+from pathlib import Path
 from typing import Generator
 
 import numpy as np
-from numpy.testing import assert_array_equal
 import pytest
+from numpy.testing import assert_array_equal
 
 from py3dtiles.convert import convert
 from py3dtiles.exceptions import InvalidTilesetError, TilerException
 from py3dtiles.tileset import BoundingVolumeBox, Tile
-from py3dtiles.tileset.content import (
-    Pnts,
-    PntsBody,
-    PntsHeader,
-)
+from py3dtiles.tileset.content import Pnts, PntsBody, PntsHeader
 
 DATA_DIRECTORY = Path(__file__).parent / "fixtures"
 

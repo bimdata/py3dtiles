@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from concurrent.futures import ProcessPoolExecutor
 import json
-from pathlib import Path
 import pickle
-from typing import Any, Generator, Iterator, TYPE_CHECKING, TypedDict
+from concurrent.futures import ProcessPoolExecutor
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Generator, Iterator, TypedDict
 
 import numpy as np
 import numpy.typing as npt
@@ -16,17 +16,19 @@ from py3dtiles.tileset.content import read_binary_tile_content
 from py3dtiles.tileset.content.pnts_feature_table import SemanticPoint
 from py3dtiles.typing import BoundingVolumeBoxDictType, ContentType, TileDictType
 from py3dtiles.utils import (
+    SubdivisionType,
     aabb_size_to_subdivision_type,
     node_from_name,
     node_name_to_path,
-    SubdivisionType,
 )
+
 from .distance import xyz_to_child_index
 from .points_grid import Grid
 
 if TYPE_CHECKING:
-    from .node_catalog import NodeCatalog
     from typing_extensions import NotRequired
+
+    from .node_catalog import NodeCatalog
 
 
 def node_to_tileset(

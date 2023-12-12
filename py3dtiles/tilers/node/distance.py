@@ -1,5 +1,6 @@
-from numba import jit, njit  # type: ignore [attr-defined]
 import numpy as np
+from numba import jit  # type: ignore [attr-defined]
+from numba import njit
 
 
 @njit(

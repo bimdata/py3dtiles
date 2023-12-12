@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Any, Generic, TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 import numpy as np
 import numpy.typing as npt
@@ -11,11 +11,13 @@ from py3dtiles.typing import (
     BoundingVolumeRegionDictType,
     BoundingVolumeSphereDictType,
 )
+
 from .root_property import RootProperty
 
 if TYPE_CHECKING:
-    from py3dtiles.tileset import Tile
     from typing_extensions import Self
+
+    from py3dtiles.tileset import Tile
 
 _BoundingVolumeJsonDictT = TypeVar(
     "_BoundingVolumeJsonDictT",

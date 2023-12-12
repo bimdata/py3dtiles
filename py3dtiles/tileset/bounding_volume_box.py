@@ -1,18 +1,20 @@
 from __future__ import annotations
 
 import copy
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import numpy.typing as npt
 
 from py3dtiles.exceptions import TilerException
 from py3dtiles.typing import BoundingVolumeBoxDictType
+
 from .bounding_volume import BoundingVolume
 
 if TYPE_CHECKING:
-    from .tile import Tile
     from typing_extensions import Self
+
+    from .tile import Tile
 
 # In order to prevent the appearance of ghost newline characters ("\n")
 # when printing a numpy.array (mainly self._box in this file):

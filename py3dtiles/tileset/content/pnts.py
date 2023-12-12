@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from pathlib import Path
 import struct
+from pathlib import Path
 
 import numpy as np
 import numpy.typing as npt
 
 from py3dtiles.exceptions import InvalidPntsError
+
 from .batch_table import BatchTable
 from .pnts_feature_table import (
     PntsFeatureTable,
@@ -14,11 +15,7 @@ from .pnts_feature_table import (
     PntsFeatureTableHeader,
     SemanticPoint,
 )
-from .tile_content import (
-    TileContent,
-    TileContentBody,
-    TileContentHeader,
-)
+from .tile_content import TileContent, TileContentBody, TileContentHeader
 
 
 class Pnts(TileContent):

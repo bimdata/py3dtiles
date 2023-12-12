@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Literal, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Any, Literal, Union
 
 import numpy as np
 import numpy.typing as npt

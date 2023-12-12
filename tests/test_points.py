@@ -1,8 +1,8 @@
 from pathlib import Path
 
 import numpy as np
-from numpy.testing import assert_array_equal
 import pytest
+from numpy.testing import assert_array_equal
 from pytest_benchmark.fixture import BenchmarkFixture
 
 from py3dtiles.tilers.node import Grid, Node

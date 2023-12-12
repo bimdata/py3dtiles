@@ -2,16 +2,17 @@ from __future__ import annotations
 
 import copy
 from pathlib import Path
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import numpy.typing as npt
 
 from py3dtiles.exceptions import InvalidTilesetError, Py3dtilesException, TilerException
 from py3dtiles.typing import RefineType, TileDictType
+
 from .bounding_volume import BoundingVolume
 from .bounding_volume_box import BoundingVolumeBox
-from .content import read_binary_tile_content, TileContent
+from .content import TileContent, read_binary_tile_content
 from .root_property import RootProperty
 
 if TYPE_CHECKING:

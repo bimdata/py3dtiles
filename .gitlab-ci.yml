@@ -33,6 +33,24 @@ flake8:
   extends: .pre-commit-check
   stage: 🐍 lint
   script:
+    - pre-commit run --show-diff-on-failure --all-files flake8
+  only:
+    changes:
+      - "**/*.py"
+
+isort:
+  extends: .pre-commit-check
+  stage: 🐍 lint
+  script:
+    - pre-commit run --show-diff-on-failure --all-files isort
+  only:
+    changes:
+      - "**/*.py"
+
+black:
+  extends: .pre-commit-check
+  stage: 🐍 lint
+  script:
     - pre-commit run --show-diff-on-failure --all-files black
   only:
     changes:

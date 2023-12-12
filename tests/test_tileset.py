@@ -2,14 +2,15 @@ from __future__ import annotations
 
 import copy
 import json
-from pathlib import Path
 import shutil
+from pathlib import Path
 from typing import Generator
 
 from pytest import fixture
 
 from py3dtiles.convert import convert
 from py3dtiles.tileset import BoundingVolumeBox, Tile, TileSet
+
 from .fixtures.mock_extension import MockExtension
 
 DATA_DIRECTORY = Path(__file__).parent / "fixtures"

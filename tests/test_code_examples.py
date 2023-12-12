@@ -1,6 +1,6 @@
 import doctest
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 if __name__ == "__main__":
     # With doctest.ELLIPSIS, an ellipsis marker (...) in the expected output can match any substring in the actual output.

@@ -1,11 +1,10 @@
-from typing import List
 import unittest
+from typing import List
 
 import numpy as np
 from numpy.testing import assert_array_equal
 
 from py3dtiles.tileset import BoundingVolumeBox
-
 
 # fmt: off
 DUMMY_MATRIX = [

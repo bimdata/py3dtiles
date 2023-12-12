@@ -1,6 +1,6 @@
 import json
-from typing import List
 import unittest
+from typing import List
 
 import numpy as np
 import numpy.typing as npt

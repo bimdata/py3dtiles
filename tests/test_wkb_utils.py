@@ -10,7 +10,6 @@ from pytest_benchmark.fixture import BenchmarkFixture
 from py3dtiles.tilers.b3dm import wkb_utils
 from py3dtiles.tilers.b3dm.wkb_utils import PolygonType
 
-
 DATA_DIRECTORY = Path(__file__).parent / "fixtures"
 
 

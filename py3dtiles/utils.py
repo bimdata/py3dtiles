@@ -3,15 +3,16 @@ from __future__ import annotations
 from enum import Enum
 from io import StringIO
 from pathlib import Path, PurePath
-from typing import Callable, NamedTuple, TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Callable, NamedTuple, TypeVar
 
 import numpy as np
 import numpy.typing as npt
 from pyproj import CRS
 
 if TYPE_CHECKING:
-    from py3dtiles.tilers.node import Node
     from typing_extensions import ParamSpec
+
+    from py3dtiles.tilers.node import Node
 
 _T = TypeVar("_T", bound=npt.NBitBase)
 

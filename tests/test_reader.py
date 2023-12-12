@@ -13,7 +13,6 @@ from pytest import fixture, raises
 
 from py3dtiles.reader import ply_reader
 
-
 DATA_DIRECTORY = Path(__file__).parent / "fixtures"
 
 
