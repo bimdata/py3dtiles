@@ -11,7 +11,7 @@ import time
 import traceback
 from multiprocessing import Process, cpu_count
 from pathlib import Path, PurePath
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -381,8 +381,8 @@ class ZmqManager:
             p.start()
 
         self.activities = [p.pid for p in self.processes]
-        self.clients: set[bytes] = set()
-        self.idle_clients: set[bytes] = set()
+        self.clients: Set[bytes] = set()
+        self.idle_clients: Set[bytes] = set()
 
         self.killing_processes = False
         self.number_processes_killed = 0
