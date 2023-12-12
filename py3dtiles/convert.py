@@ -11,7 +11,7 @@ import time
 import traceback
 from multiprocessing import Process, cpu_count
 from pathlib import Path, PurePath
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -153,7 +153,7 @@ class Worker:
             activity = open(f"activity.{os.getpid()}.csv", "w")
 
         # notify we're ready
-        self.skt.send_multipart([ResponseType.IDLE.value])
+        self.skt.send_multipart([ResponseType.REGISTER.value])
 
         while True:
             try:
@@ -381,11 +381,15 @@ class ZmqManager:
             p.start()
 
         self.activities = [p.pid for p in self.processes]
-        self.idle_clients: List[bytes] = []
+        self.clients: Set[bytes] = set()
+        self.idle_clients: Set[bytes] = set()
 
         self.killing_processes = False
         self.number_processes_killed = 0
         self.time_waiting_an_idle_process = 0.0
+
+    def all_clients_registered(self) -> bool:
+        return len(self.clients) == self.number_of_jobs
 
     def send_to_process(self, message: List[bytes]) -> None:
         if not self.idle_clients:
@@ -393,6 +397,12 @@ class ZmqManager:
         self.socket.send_multipart(
             [self.idle_clients.pop(), pickle.dumps(time.time())] + message
         )
+
+    def send_to_all_processes(self, message: List[bytes]) -> None:
+        if len(self.clients) == 0:
+            raise ValueError("No registered clients")
+        for client in self.clients:
+            self.socket.send_multipart([client, pickle.dumps(time.time())] + message)
 
     def send_to_all_idle_processes(self, message: List[bytes]) -> None:
         if not self.idle_clients:
@@ -404,10 +414,17 @@ class ZmqManager:
     def can_queue_more_jobs(self) -> bool:
         return len(self.idle_clients) != 0
 
+    def register_client(self, client_id: bytes) -> None:
+        if client_id in self.clients:
+            print(f"Warning: {client_id!r} already registered")
+        else:
+            self.clients.add(client_id)
+        self.add_idle_client(client_id)
+
     def add_idle_client(self, client_id: bytes) -> None:
         if client_id in self.idle_clients:
             raise ValueError(f"The client id {client_id!r} is already in idle_clients")
-        self.idle_clients.append(client_id)
+        self.idle_clients.add(client_id)
 
     def are_all_processes_idle(self) -> bool:
         return len(self.idle_clients) == self.number_of_jobs
@@ -415,17 +432,13 @@ class ZmqManager:
     def are_all_processes_killed(self) -> bool:
         return self.number_processes_killed == self.number_of_jobs
 
-    def kill_all_processes(self) -> None:
-        self.send_to_all_idle_processes([CommandType.SHUTDOWN.value])
+    def shutdown_all_processes(self) -> None:
+        self.send_to_all_processes([CommandType.SHUTDOWN.value])
         self.killing_processes = True
 
     def join_all_processes(self) -> None:
         for p in self.processes:
             p.join()
-
-    def terminate_all_processes(self) -> None:
-        for p in self.processes:
-            p.terminate()
 
 
 def is_ancestor(node_name: bytes, ancestor: bytes) -> bool:
@@ -808,6 +821,11 @@ class _Convert:
                 ):
                     at_least_one_job_ended = self.process_message()
 
+                # we wait for all processes/threads to register
+                # if we don't there are tricky cases where an exception fires in a worker before all the workers registered, which means that not all workers will receive the shutdown signal
+                if not self.zmq_manager.all_clients_registered():
+                    continue
+
                 while (
                     self.state.pnts_to_writing
                     and self.zmq_manager.can_queue_more_jobs()
@@ -825,7 +843,7 @@ class _Convert:
 
                 # if at this point we have no work in progress => we're done
                 if self.zmq_manager.are_all_processes_idle():
-                    self.zmq_manager.kill_all_processes()
+                    break
 
                 if at_least_one_job_ended:
                     self.print_debug(now)
@@ -842,8 +860,6 @@ class _Convert:
                         )
 
                 self.node_store.control_memory_usage(self.cache_size, self.verbose)
-
-            self.zmq_manager.join_all_processes()
 
             if self.state.points_in_pnts != self.file_info["point_count"]:
                 raise ValueError(
@@ -870,7 +886,8 @@ class _Convert:
                     )
                 )
         finally:
-            self.zmq_manager.terminate_all_processes()
+            self.zmq_manager.shutdown_all_processes()
+            self.zmq_manager.join_all_processes()
 
             if self.verbose >= 1:
                 print(
@@ -896,7 +913,9 @@ class _Convert:
         result = message[1:]
         return_type = result[0]
 
-        if return_type == ResponseType.IDLE.value:
+        if return_type == ResponseType.REGISTER.value:
+            self.zmq_manager.register_client(client_id)
+        elif return_type == ResponseType.IDLE.value:
             self.zmq_manager.add_idle_client(client_id)
 
             if not self.zmq_manager.can_queue_more_jobs():
