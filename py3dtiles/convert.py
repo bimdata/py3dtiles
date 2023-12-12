@@ -382,7 +382,7 @@ class ZmqManager:
 
         self.activities = [p.pid for p in self.processes]
         self.clients: set[bytes] = set()
-        self.idle_clients: List[bytes] = []
+        self.idle_clients: set[bytes] = set()
 
         self.killing_processes = False
         self.number_processes_killed = 0
@@ -416,7 +416,7 @@ class ZmqManager:
 
     def register_client(self, client_id: bytes) -> None:
         if client_id in self.clients:
-            print(f"Warning: {client_id} already registered")
+            print(f"Warning: {client_id!r} already registered")
         else:
             self.clients.add(client_id)
         self.add_idle_client(client_id)
@@ -424,7 +424,7 @@ class ZmqManager:
     def add_idle_client(self, client_id: bytes) -> None:
         if client_id in self.idle_clients:
             raise ValueError(f"The client id {client_id!r} is already in idle_clients")
-        self.idle_clients.append(client_id)
+        self.idle_clients.add(client_id)
 
     def are_all_processes_idle(self) -> bool:
         return len(self.idle_clients) == self.number_of_jobs
