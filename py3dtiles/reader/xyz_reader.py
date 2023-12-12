@@ -142,7 +142,7 @@ def run(
                 if not line:
                     points = np.resize(points, (j, feature_nb))
                     break
-                line_features: List[float | None] = [
+                line_features: List[Optional[float]] = [
                     float(s) for s in line.split(dialect.delimiter)[:feature_nb]
                 ]
                 if len(line_features) == 3:

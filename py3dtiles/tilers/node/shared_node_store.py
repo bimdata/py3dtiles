@@ -2,7 +2,7 @@ import gc
 from pathlib import Path
 from sys import getsizeof
 import time
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import lz4.frame as gzip
 
@@ -12,8 +12,8 @@ from py3dtiles.utils import node_name_to_path
 
 class SharedNodeStore:
     def __init__(self, folder: Path) -> None:
-        self.metadata: Dict[bytes, Tuple[float, int] | None] = {}
-        self.data: List[bytes | None] = []
+        self.metadata: Dict[bytes, Optional[Tuple[float, int]]] = {}
+        self.data: List[Optional[bytes]] = []
         self.folder = folder
         self.stats = {
             "hit": 0,

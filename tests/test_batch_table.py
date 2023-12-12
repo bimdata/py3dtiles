@@ -1,4 +1,5 @@
 import json
+from typing import List
 import unittest
 
 import numpy as np
@@ -157,7 +158,7 @@ class TestBatchTable(unittest.TestCase):
         batch_table_json = batch_table_header.to_array()
 
         # binary part
-        batch_table_body_binary: list[npt.NDArray[ComponentNumpyType]] = [
+        batch_table_body_binary: List[npt.NDArray[ComponentNumpyType]] = [
             np.array([1, 2, 3, 4], dtype=np.uint8),
             np.array([1, -1, 2, -2, 3, -3, 4, -4], dtype=np.int32),
         ]
@@ -191,7 +192,7 @@ class TestBatchTable(unittest.TestCase):
         batch_table_header = BatchTableHeader(batch_table_header_dict)
 
         # binary part
-        batch_table_body_binary: list[npt.NDArray[ComponentNumpyType]] = [
+        batch_table_body_binary: List[npt.NDArray[ComponentNumpyType]] = [
             np.array([1, 2, 3, 4], dtype=np.uint8),
             np.array([1, -1, 2, -2, 3, -3, 4, -4], dtype=np.int32),
         ]
@@ -223,7 +224,7 @@ class TestBatchTable(unittest.TestCase):
         batch_table_json = batch_table_header.to_array()
 
         # binary part
-        batch_table_body_binary: list[npt.NDArray[ComponentNumpyType]] = [
+        batch_table_body_binary: List[npt.NDArray[ComponentNumpyType]] = [
             np.array([1, 2, 3, 4], dtype=np.uint8),
             np.array([1, -1, 2, -2, 3, -3, 4, -4], dtype=np.int32),
         ]
