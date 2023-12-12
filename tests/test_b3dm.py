@@ -39,8 +39,8 @@ class TestTileContentReader(unittest.TestCase):
                 f"The file 'tests/fixtures/buildings.b3dm' is a b3dm, not a {type(tile_content)}"
             )
 
-        self.assertEqual(tile_content.header.tile_byte_length, 6180)
-        self.assertEqual(tile_content.header.ft_json_byte_length, 0)
+        self.assertEqual(tile_content.header.tile_byte_length, 6152)
+        self.assertEqual(tile_content.header.ft_json_byte_length, 20)
         self.assertEqual(tile_content.header.ft_bin_byte_length, 0)
         self.assertEqual(tile_content.header.bt_json_byte_length, 64)
         self.assertEqual(tile_content.header.bt_bin_byte_length, 0)
@@ -48,7 +48,8 @@ class TestTileContentReader(unittest.TestCase):
             tile_content.body.batch_table.header.data,
             {"id": ["BATIMENT0000000240853073", "BATIMENT0000000240853157"]},
         )
-        self.assertEqual(tile_content.body.gltf.to_array().nbytes, 6088)
+        self.assertEqual(tile_content.body.feature_table.get_batch_length(), 2)
+        self.assertEqual(tile_content.body.gltf.to_array().nbytes, 6040)
         self.assertEqual(tile_content.body.gltf.header["asset"]["version"], "2.0")
 
         path_name = Path("tests/output_tests/buildings.b3dm")

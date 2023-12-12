@@ -220,7 +220,7 @@ This basic example aims to show a set of methods to create, manipulate and write
     >>>
     >>> from py3dtiles.tileset import Tile, TileSet
     >>> from py3dtiles.tileset.content import Pnts
-    >>> from py3dtiles.tileset.content.feature_table import FeatureTableHeader, SemanticPoint
+    >>> from py3dtiles.tileset.content.pnts_feature_table import PntsFeatureTableHeader, SemanticPoint
     >>>
     >>> with laspy.open("tests/fixtures/with_srs_3950.las") as f:
     ...     las_data = f.read()
@@ -230,7 +230,7 @@ This basic example aims to show a set of methods to create, manipulate and write
     >>> indexes = np.random.choice(len(points), 100)
     >>> point_part = points[indexes]
     >>> positions = np.vstack((point_part.x, point_part.y, point_part.z)).T
-    >>> feature_table_header = FeatureTableHeader.from_semantic(
+    >>> feature_table_header = PntsFeatureTableHeader.from_semantic(
     ...     SemanticPoint.POSITION, None, None, nb_points = 100
     ... )
     >>> root_tile = Tile(refine_mode="REPLACE", content_uri=Path("root.pnts"))
@@ -249,7 +249,7 @@ This basic example aims to show a set of methods to create, manipulate and write
     >>> for start, end in splits:
     ...     point_part = points[start : end]
     ...     positions = np.vstack((point_part.x, point_part.y, point_part.z)).T
-    ...     feature_table_header = FeatureTableHeader.from_semantic(
+    ...     feature_table_header = PntsFeatureTableHeader.from_semantic(
     ...         SemanticPoint.POSITION, None, None, nb_points = len(point_part)
     ...     )
     ...     tile = Tile(content_uri=Path(f"{start}.pnts"))
@@ -287,8 +287,8 @@ Point Cloud
 Points Tile Format:
 https://docs.ogc.org/cs/22-025r4/22-025r4.html#toc29
 
-In the current implementation, the *Pnts* class only contains a *FeatureTable*
-(*FeatureTableHeader* and a *FeatureTableBody*, which contains features of type
+In the current implementation, the *Pnts* class only contains a *PntsFeatureTable*
+(*PntsFeatureTableHeader* and a *PntsFeatureTableBody*, which contains features of type
 *Feature*).
 
 **How to read a .pnts file**
@@ -320,7 +320,7 @@ In the current implementation, the *Pnts* class only contains a *FeatureTable*
     >>> # extract the feature table
     >>> feature_table = pnts.body.feature_table
     >>> feature_table
-    <py3dtiles.tileset.content.feature_table.FeatureTable object at 0x...>
+    <py3dtiles.tileset.content.pnts_feature_table.PntsFeatureTable object at 0x...>
     >>>
     >>> # display feature table header
     >>> feature_table.header.to_json()
@@ -346,7 +346,7 @@ corresponding data type.
     >>> import numpy as np
     >>>
     >>> from py3dtiles.tileset.content import Pnts
-    >>> from py3dtiles.tileset.content.feature_table import FeatureTableHeader, SemanticPoint
+    >>> from py3dtiles.tileset.content.pnts_feature_table import PntsFeatureTableHeader, SemanticPoint
     >>>
     >>> # create a position array of 2 points
     >>> positions = np.array([
@@ -355,7 +355,7 @@ corresponding data type.
     ... ], dtype=np.float32).flatten()
     >>>
     >>> # create the feature table header that defines the structure of pnts
-    >>> feature_table_header = FeatureTableHeader.from_semantic(SemanticPoint.POSITION, None, None, nb_points = 2)
+    >>> feature_table_header = PntsFeatureTableHeader.from_semantic(SemanticPoint.POSITION, None, None, nb_points = 2)
     >>>
     >>> # create the pnts
     >>> pnts = Pnts.from_features(feature_table_header, positions)

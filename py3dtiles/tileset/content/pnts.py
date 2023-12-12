@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 import struct
 
 import numpy as np
@@ -7,10 +8,10 @@ import numpy.typing as npt
 
 from py3dtiles.exceptions import InvalidPntsError
 from .batch_table import BatchTable
-from .feature_table import (
-    FeatureTable,
-    FeatureTableBody,
-    FeatureTableHeader,
+from .pnts_feature_table import (
+    PntsFeatureTable,
+    PntsFeatureTableBody,
+    PntsFeatureTableHeader,
     SemanticPoint,
 )
 from .tile_content import (
@@ -32,9 +33,7 @@ class Pnts(TileContent):
         Synchronizes headers with the Pnts body.
         """
         self.header.ft_json_byte_length = len(self.body.feature_table.header.to_array())
-        self.header.ft_bin_byte_length = sum(
-            len(array) for array in self.body.feature_table.body.to_array()
-        )
+        self.header.ft_bin_byte_length = len(self.body.feature_table.body.to_array())
         self.header.bt_json_byte_length = len(self.body.batch_table.header.to_array())
         self.header.bt_bin_byte_length = len(self.body.batch_table.body.to_array())
 
@@ -84,7 +83,7 @@ class Pnts(TileContent):
 
     @staticmethod
     def from_features(
-        feature_table_header: FeatureTableHeader,
+        feature_table_header: PntsFeatureTableHeader,
         position_array: npt.NDArray[np.float32 | np.uint8],
         color_array: npt.NDArray[np.uint8 | np.uint16] | None = None,
         normal_position: npt.NDArray[np.float32 | np.uint8] | None = None,
@@ -93,7 +92,7 @@ class Pnts(TileContent):
         Creates a Pnts from features defined by pd_type and cd_type.
         """
         pnts_body = PntsBody()
-        pnts_body.feature_table = FeatureTable.from_features(
+        pnts_body.feature_table = PntsFeatureTable.from_features(
             feature_table_header, position_array, color_array, normal_position
         )
 
@@ -156,14 +155,14 @@ class Pnts(TileContent):
 
         count = len(points) // point_size
 
-        ft = FeatureTable()
-        ft.header = FeatureTableHeader.from_semantic(
+        ft = PntsFeatureTable()
+        ft.header = PntsFeatureTableHeader.from_semantic(
             SemanticPoint.POSITION,
             SemanticPoint.RGB if include_rgb else None,
             None,
             count,
         )
-        ft.body = FeatureTableBody.from_array(ft.header, points)
+        ft.body = PntsFeatureTableBody.from_array(ft.header, points)
 
         bt = BatchTable()
         if include_classification:
@@ -184,6 +183,13 @@ class Pnts(TileContent):
         pnts.sync()
 
         return pnts
+
+    @staticmethod
+    def from_file(tile_path: Path) -> Pnts:
+        with tile_path.open("rb") as f:
+            data = f.read()
+            arr = np.frombuffer(data, dtype=np.uint8)
+            return Pnts.from_array(arr)
 
 
 class PntsHeader(TileContentHeader):
@@ -240,7 +246,7 @@ class PntsHeader(TileContentHeader):
 
 class PntsBody(TileContentBody):
     def __init__(self) -> None:
-        self.feature_table = FeatureTable()
+        self.feature_table: PntsFeatureTable = PntsFeatureTable()
         self.batch_table = BatchTable()
 
     def to_array(self) -> npt.NDArray[np.uint8]:
@@ -285,7 +291,7 @@ class PntsBody(TileContentBody):
         # build feature table
         feature_table_size = header.ft_json_byte_length + header.ft_bin_byte_length
         feature_table_array = array[:feature_table_size]
-        feature_table = FeatureTable.from_array(header, feature_table_array)
+        feature_table = PntsFeatureTable.from_array(header, feature_table_array)
 
         # build batch table
         batch_table_size = header.bt_json_byte_length + header.bt_bin_byte_length

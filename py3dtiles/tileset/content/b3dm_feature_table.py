@@ -7,10 +7,14 @@ import numpy as np
 import numpy.typing as npt
 
 from py3dtiles.exceptions import Invalid3dtilesError
-from py3dtiles.typing import BatchTableHeaderDataType
+from py3dtiles.tileset.content.feature_table import (
+    FeatureTable,
+    FeatureTableBody,
+    FeatureTableHeader,
+)
 
 if TYPE_CHECKING:
-    from py3dtiles.tileset.content import TileContentHeader
+    from .tile_content import TileContentHeader
 
 COMPONENT_TYPE_NUMPY_MAPPING = {
     "BYTE": np.int8,
@@ -49,8 +53,10 @@ ComponentNumpyType = Union[
 PropertyLiteralType = Literal["SCALAR", "VEC2", "VEC3", "VEC4"]
 
 
-class BatchTableHeader:
-    def __init__(self, data: BatchTableHeaderDataType | None = None) -> None:
+class B3dmFeatureTableHeader(FeatureTableHeader):
+    def __init__(
+        self, data: dict[str, list[Any] | dict[str, Any]] | None = None
+    ) -> None:
         if data is not None:
             self.data = data
         else:
@@ -61,12 +67,12 @@ class BatchTableHeader:
             return np.empty((0,), dtype=np.uint8)
 
         json_str = json.dumps(self.data, separators=(",", ":"))
-        if len(json_str) % 8 != 0:
-            json_str += " " * (8 - len(json_str) % 8)
+        if (len(json_str) + 28) % 8 != 0:
+            json_str += " " * (8 - (len(json_str) + 28) % 8)
         return np.frombuffer(json_str.encode("utf-8"), dtype=np.uint8)
 
 
-class BatchTableBody:
+class B3dmFeatureTableBody(FeatureTableBody):
     def __init__(self, data: list[npt.NDArray[ComponentNumpyType]] | None = None):
         if data is not None:
             self.data = data
@@ -86,21 +92,23 @@ class BatchTableBody:
             [data.view(np.uint8) for data in self.data], dtype=np.uint8
         )
 
-    @property
-    def nbytes(self) -> int:
-        return sum([data.nbytes for data in self.data])
 
-
-class BatchTable:
+class B3dmFeatureTable(FeatureTable[B3dmFeatureTableHeader, B3dmFeatureTableBody]):
     """
-    Only the JSON header has been implemented for now. According to the batch
+    Only the JSON header has been implemented for now. According to the feature
     table documentation, the binary body is useful for storing long arrays of
     data (better performances)
     """
 
     def __init__(self) -> None:
-        self.header = BatchTableHeader()
-        self.body = BatchTableBody()
+        self.header = B3dmFeatureTableHeader()
+        self.body = B3dmFeatureTableBody()
+
+    def get_batch_length(self) -> Any | int:
+        return self.header.data.get("BATCH_LENGTH", 0)
+
+    def set_batch_length(self, batch_length: Any) -> None:
+        self.header.data["BATCH_LENGTH"] = batch_length
 
     def add_property_as_json(self, property_name: str, array: list[Any]) -> None:
         self.header.data[property_name] = array
@@ -147,33 +155,34 @@ class BatchTable:
             raise ValueError(f"The property {property_name_to_fetch} is not found")
 
     def to_array(self) -> npt.NDArray[np.uint8]:
-        batch_table_header_array = self.header.to_array()
-        batch_table_body_array = self.body.to_array()
+        feature_table_header_array = self.header.to_array()
+        feature_table_body_array = self.body.to_array()
 
-        return np.concatenate((batch_table_header_array, batch_table_body_array))
+        return np.concatenate((feature_table_header_array, feature_table_body_array))
 
     @staticmethod
     def from_array(
         tile_header: TileContentHeader,
         array: npt.NDArray[np.uint8],
-        batch_len: int = 0,
-    ) -> BatchTable:
-        batch_table = BatchTable()
-        # separate batch table header
-        batch_table_header_length = tile_header.bt_json_byte_length
-        batch_table_body_array = array[batch_table_header_length:]
-        batch_table_header_array = array[0:batch_table_header_length]
+        feature_len: int = 0,
+    ) -> B3dmFeatureTable:
+        feature_table = B3dmFeatureTable()
+        # separate feature table header
+        feature_table_header_length = tile_header.ft_json_byte_length
+        feature_table_body_array = array[feature_table_header_length:]
+        feature_table_header_array = array[0:feature_table_header_length]
 
-        jsond = json.loads(batch_table_header_array.tobytes().decode("utf-8") or "{}")
-        batch_table.header.data = jsond
+        feature_table.header.data = json.loads(
+            feature_table_header_array.tobytes().decode("utf-8") or "{}"
+        )
 
         previous_byte_offset = 0
-        for property_definition in batch_table.header.data.values():
-            if isinstance(property_definition, list):
+        for property_definition in feature_table.header.data.values():
+            if not isinstance(property_definition, dict):
                 continue
 
             if previous_byte_offset != property_definition["byteOffset"]:
-                raise Invalid3dtilesError(
+                raise ValueError(
                     f"The byte offset is {property_definition['byteOffset']} but the byte offset computed is {previous_byte_offset}"
                 )
 
@@ -183,13 +192,13 @@ class BatchTable:
             end_byte_offset = property_definition["byteOffset"] + (
                 np.dtype(numpy_type).itemsize
                 * TYPE_LENGTH_MAPPING[property_definition["type"]]
-                * batch_len
+                * feature_len
             )
-            batch_table.body.data.append(
-                batch_table_body_array[
+            feature_table.body.data.append(
+                feature_table_body_array[
                     property_definition["byteOffset"] : end_byte_offset
                 ].view(numpy_type)
             )
             previous_byte_offset = end_byte_offset
 
-        return batch_table
+        return feature_table

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 import numpy.typing as npt
@@ -70,7 +70,7 @@ class TileContentHeader(ABC):
 
 class TileContentBody(ABC):
     batch_table: BatchTable
-    feature_table: FeatureTable
+    feature_table: FeatureTable[Any, Any]
 
     @abstractmethod
     def to_array(self) -> npt.NDArray[np.uint8]:

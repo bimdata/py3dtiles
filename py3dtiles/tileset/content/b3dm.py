@@ -6,6 +6,7 @@ import numpy as np
 import numpy.typing as npt
 
 from py3dtiles.exceptions import InvalidB3dmError
+from .b3dm_feature_table import B3dmFeatureTable
 from .batch_table import BatchTable
 from .gltf import GlTF
 from .tile_content import (
@@ -36,6 +37,12 @@ class B3dm(TileContent):
         self.header.bt_bin_byte_length = 0
         self.header.ft_json_byte_length = 0
         self.header.ft_bin_byte_length = 0
+
+        if self.body.feature_table is not None:
+            fth_arr = self.body.feature_table.to_array()
+
+            self.header.tile_byte_length += len(fth_arr)
+            self.header.ft_json_byte_length = len(fth_arr)
 
         if self.body.batch_table is not None:
             bth_arr = self.body.batch_table.to_array()
@@ -148,19 +155,22 @@ class B3dmHeader(TileContentHeader):
 class B3dmBody(TileContentBody):
     def __init__(self) -> None:
         self.batch_table = BatchTable()
+        self.feature_table: B3dmFeatureTable = B3dmFeatureTable()
         self.gltf = GlTF()
 
     def to_array(self) -> npt.NDArray[np.uint8]:
-        # TODO : export feature table, reminder, the glTF part must start on an 8-byte boundary.
+        if self.feature_table:
+            feature_table = self.feature_table.to_array()
+        else:
+            feature_table = np.array([], dtype=np.uint8)
+
         if self.batch_table:
             batch_table = self.batch_table.to_array()
         else:
             batch_table = np.array([], dtype=np.uint8)
 
         # The glTF part must start and end on an 8-byte boundary
-        gltf_array = self.gltf.to_array()
-
-        return np.concatenate((batch_table, gltf_array))
+        return np.concatenate((feature_table, batch_table, self.gltf.to_array()))
 
     @staticmethod
     def from_gltf(gltf: GlTF) -> B3dmBody:
@@ -188,9 +198,12 @@ class B3dmBody(TileContentBody):
         # build tile body with batch table
         b = B3dmBody()
         b.gltf = gltf
-        if b3dm_header.bt_json_byte_length > 0:
+        if ft_len > 0:
+            b.feature_table = B3dmFeatureTable.from_array(b3dm_header, array[:ft_len])
+        if bt_len > 0:
+            batch_len = b.feature_table.get_batch_length()
             b.batch_table = BatchTable.from_array(
-                b3dm_header, array[0 : b3dm_header.bt_json_byte_length]
+                b3dm_header, array[ft_len : ft_len + bt_len], batch_len
             )
 
         return b

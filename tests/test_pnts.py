@@ -4,13 +4,16 @@ import unittest
 import numpy as np
 from numpy.testing import assert_array_equal
 
-from py3dtiles.tileset.content import Pnts, PntsHeader, read_binary_tile_content
-from py3dtiles.tileset.content.feature_table import FeatureTableHeader, SemanticPoint
+from py3dtiles.tileset.content import Pnts, PntsHeader
+from py3dtiles.tileset.content.pnts_feature_table import (
+    PntsFeatureTableHeader,
+    SemanticPoint,
+)
 
 
 class TestTileContentReader(unittest.TestCase):
     def test_read(self) -> None:
-        tile = read_binary_tile_content(Path("tests/fixtures/pointCloudRGB.pnts"))
+        tile = Pnts.from_file(Path("tests/fixtures/pointCloudRGB.pnts"))
 
         self.assertEqual(tile.header.version, 1.0)
         self.assertEqual(tile.header.tile_byte_length, 15176)
@@ -31,7 +34,7 @@ class TestTileContentReader(unittest.TestCase):
 
 class TestTileBuilder(unittest.TestCase):
     def test_build_without_colors(self) -> None:
-        tread = read_binary_tile_content(Path("tests/fixtures/pointCloudRGB.pnts"))
+        tread = Pnts.from_file(Path("tests/fixtures/pointCloudRGB.pnts"))
         feature_0_position = tread.body.feature_table.get_feature_position_at(0)
 
         # create features
@@ -42,7 +45,7 @@ class TestTileBuilder(unittest.TestCase):
         position_array = np.array(positions).flatten()
 
         # create a tile
-        feature_table_header = FeatureTableHeader.from_semantic(
+        feature_table_header = PntsFeatureTableHeader.from_semantic(
             SemanticPoint.POSITION,
             None,
             None,
@@ -81,7 +84,7 @@ class TestTileBuilder(unittest.TestCase):
         assert_array_equal(feature_0_position, feature_table.get_feature_position_at(0))
 
     def test_build(self) -> None:
-        tread = read_binary_tile_content(Path("tests/fixtures/pointCloudRGB.pnts"))
+        tread = Pnts.from_file(Path("tests/fixtures/pointCloudRGB.pnts"))
 
         # create features
         positions = []
@@ -98,7 +101,7 @@ class TestTileBuilder(unittest.TestCase):
         color_array = np.array(colors).flatten()
 
         # create a tile
-        feature_table_header = FeatureTableHeader.from_semantic(
+        feature_table_header = PntsFeatureTableHeader.from_semantic(
             SemanticPoint.POSITION, SemanticPoint.RGB, None, len(positions)
         )
         t = Pnts.from_features(feature_table_header, position_array, color_array)
