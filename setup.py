@@ -33,6 +33,7 @@ doc_requirements = (
     "sphinx",
     "sphinx-multiversion",
     "sphinx_rtd_theme",
+    "myst-parser",
 )
 
 packaging_requirements = dev_requirements + ("build", "twine", "wheel")
