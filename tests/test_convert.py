@@ -3,7 +3,7 @@ import json
 import multiprocessing
 from pathlib import Path
 import shutil
-from typing import Generator
+from typing import Generator, Union
 from unittest.mock import patch
 
 from _pytest.python_api import RaisesContext
@@ -653,8 +653,9 @@ def test_convert_many_point_same_location(tmp_dir: Path) -> None:
     [(True, True), (False, True), (True, False), (False, False)],
 )
 def test_convert_rgb_classif(rgb_bool: bool, classif_bool: bool, tmp_dir: Path) -> None:
+    expected_raise: Union[nullcontext[None], RaisesContext[ValueError]]
     if not classif_bool:
-        expected_raise: RaisesContext[ValueError] | nullcontext[None] = raises(
+        expected_raise = raises(
             ValueError, match="The property Classification is not found"
         )
     else:
