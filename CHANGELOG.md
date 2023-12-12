@@ -2,6 +2,57 @@
 
 All notable changes to this project will be documented in this file.
 
+## v7.0.0 (2023-12-12)
+
+### Community change: Big news!
+
+**We welcome Lorenzo Marnat ([Liris](https://liris.cnrs.fr/)) as a new maintainer!** The Liris has contributed a lot to py3dtiles through their fork and the client application `py3dtilers` and Lorenzo is currently helping getting these improvements merged. This is a very important step forward developing our community and we're very glad to have him in the team.
+
+As a result, we have made it so that py3dtiles is less tied to Oslandia and more to its own community. We hope to make contributions and implications even easier and open to other entities:
+
+- **the repository has moved to its own organization**: https://gitlab.com/py3dtiles/py3dtiles and the main branch is now `main` instead of `master`. The existing issues and merge requests has been kept and the branch they point to has been updated. **Please update your git remotes**, especially because there is no redirection at the git level: we needed to recreate the py3dtiles on oslandia namespace to setup a redirection from the old pages.
+- **The main domain is now `https://py3dtiles.org`**. A redirection has been made, but we still advise everybody to update their bookmarks
+- We have a `GOVERNANCE.md` documentation that describes how the community will operate from now on.
+- and we now have a [chat room](https://matrix.to/#/#py3dtiles:matrix.org) on matrix.org!
+
+### BREAKING CHANGE
+
+- `FeatureTable*` has been renamed to `PntsFeatureTable*`
+- py3dtiles now requires numpy >= 1.24 to allow python 3.11 support (note: 3.12 support must wait for the next numba release)
+
+Big change in the way we deal with dependencies. With more and more file format supports added, the dependency tree is becoming bigger and bigger. To avoid cluttering client environments with dependencies for formats they don't need, we are now using the `extras_require` section for some formats. Here is the list of file formats and the command to use to get the corresponding dependencies:
+
+- postgresql support: `pip install py3dtiles[postgres]`
+- las/laz support: `pip install py3dtiles[las]` (note: laz support is still conditioned by the presence of laszip or lasrs, see installation documentation)
+- ply support: `pip install py3dtiles[ply]`
+
+The `.[all]` sections allows to get all these dependencies. The docker image contains everything.
+
+Csv and xyz support depends on the standard library, therefore they are always included.
+
+### Feat
+
+- add support for python 3.11
+- add featureTable and B3dmFeatureTable classes
+- upgrade numpy
+- support for csv files and classification data in the xyz_reader
+
+### Fix
+
+- **mypy**: make type declarations compatible with python3.8
+- **convert.py**: ensure the main process waits for all child to finish
+- align b3dm_feature_table to 8 bytes
+- Pnts from_file method to ensure TileContent is  PNTS
+- PNTS ft body to_array returns one array
+- **distance.py**: remove a numba warning
+- **docker**: create it on bullseye to have liblaszip8
+
+### Refactor
+
+- **convert.py**: change self.idle_clients type to set
+- reorder imports according to our isort config
+- rename PNTS FeatureTable classes
+
 ## v6.0.0 (2023-04-04)
 
 ### BREAKING CHANGE
