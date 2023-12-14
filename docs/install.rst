@@ -50,7 +50,7 @@ By default, no specific format dependencies are installed. You should either ins
     pip install py3dtiles[ply]
     # postgres
     pip install py3dtiles[postgres]
-    # everythin at once
+    # everything at once
     pip install py3dtiles[all]`
 
 
