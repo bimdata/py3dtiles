@@ -1,5 +1,7 @@
 # Docker
 
+This documentation is intented for developers and contributors. For installation option, please see [the installation documentation](../docs/install.rst).
+
 ## How to build the docker image
 
 You must run the following command in the root folder of the repository:
