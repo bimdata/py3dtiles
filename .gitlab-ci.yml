@@ -248,8 +248,10 @@ test-api-doc-examples:
 
 docker-build:
   stage: 🚀 deploy
-  tags:
-    - linux_vm
+  image: docker:24.0.7
+  services:
+    - name: docker:24.0.7-dind
+      alias: docker
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   script:
@@ -259,6 +261,7 @@ docker-build:
     # Sanity check: convert then check if there is the right amount of points in the tileset
     - docker run --rm
         --mount type=bind,source="$(pwd)"/data,target=/app/data/
+        --volume /etc/passwd:/etc/passwd:ro --volume /etc/group:/etc/group:ro --user $(id -u):$(id -g)
         $IMAGE_TAG convert simple.ply
     - docker run
         --rm
