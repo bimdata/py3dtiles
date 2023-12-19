@@ -12,7 +12,7 @@ NOTE: the CI does that automatically on each tag.
 
 ## How to use the docker image
 
-The docker image has a volume on `/app/data/` and the entrypoint is directly the command `py3dtiles`.
+The docker image has a volume on `/data/` and the entrypoint is directly the command `py3dtiles`.
 
 #### Examples
 
@@ -24,7 +24,7 @@ docker run -it --rm py3dtiles --help
 Convert a file into 3d tiles
 ```bash
 docker run -it --rm \
-    --mount type=bind,source="$(pwd)",target=/app/data/ \
+    --mount type=bind,source="$(pwd)",target=/data/ \
     --volume /etc/passwd:/etc/passwd:ro --volume /etc/group:/etc/group:ro --user $(id -u):$(id -g) \
     py3dtiles \
     convert <file>

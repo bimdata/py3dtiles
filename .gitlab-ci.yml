@@ -260,12 +260,12 @@ docker-build:
     - cp tests/fixtures/simple.ply data
     # Sanity check: convert then check if there is the right amount of points in the tileset
     - docker run --rm
-        --mount type=bind,source="$(pwd)"/data,target=/app/data/
+        --mount type=bind,source="$(pwd)"/data,target=/data/
         --volume /etc/passwd:/etc/passwd:ro --volume /etc/group:/etc/group:ro --user $(id -u):$(id -g)
         $IMAGE_TAG convert simple.ply
     - docker run
         --rm
-        --mount type=bind,source="$(pwd)"/data,target=/app/data/
+        --mount type=bind,source="$(pwd)"/data,target=/data/
         --entrypoint=python3
         $IMAGE_TAG
         -c "from py3dtiles.tileset.utils import number_of_points_in_tileset;from pathlib import Path;exit(number_of_points_in_tileset(Path('3dtiles/tileset.json')) != 22300);"
