@@ -255,7 +255,7 @@ docker-build:
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   script:
-    - docker build . -t $IMAGE_TAG -f docker/Dockerfile
+    - docker build . -t $IMAGE_TAG -t py3dtiles/py3dtiles:$CI_COMMIT_REF_SLUG -f docker/Dockerfile
     - mkdir data
     - cp tests/fixtures/simple.ply data
     # Sanity check: convert then check if there is the right amount of points in the tileset
@@ -270,8 +270,12 @@ docker-build:
         $IMAGE_TAG
         -c "from py3dtiles.tileset.utils import number_of_points_in_tileset;from pathlib import Path;exit(number_of_points_in_tileset(Path('3dtiles/tileset.json')) != 22300);"
     # push the image
+    # gitlab registry
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker push $IMAGE_TAG
+    # docker hub
+    - docker login -u py3dtilesteam -p $DOCKER_HUB_PASSWORD
+    - docker push py3dtiles/py3dtiles:$CI_COMMIT_REF_SLUG
   only:
     refs:
       - tags

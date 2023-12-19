@@ -2,10 +2,13 @@
 
 ## How to build the docker image
 
-You must run the following command in the root folder of the repository
+You must run the following command in the root folder of the repository:
 ```bash
-docker build . -t py3dtiles -f docker/Dockerfile
+docker build . -t py3dtiles/py3dtiles:v7.0.0 -t registry.gitlab.com/py3dtiles/py3dtiles:v7.0.0 -f docker/Dockerfile
 ```
+Then `docker push` the 2 tags. It will push on dockerhub.com and on registry.gitlab.com.
+
+NOTE: the CI does that automatically on each tag.
 
 ## How to use the docker image
 
