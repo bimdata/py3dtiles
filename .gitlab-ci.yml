@@ -3,6 +3,10 @@ stages:
   - 🤞 test
   - 🚀 deploy
 
+default:
+    tags:
+        - saas-linux-large-amd64
+
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
