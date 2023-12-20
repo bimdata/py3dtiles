@@ -13,6 +13,7 @@ migration guide for instance.
 - edit the version in [sonar-project.properties](sonar-project.properties) (field `sonar.projectVersion`)
 - create a merge request with these changes
 - once it is merged, create a tagged release on gitlab.
+- switch to the newly created tag
 - wait for the execution of pages that will update the documentation
 - publish on pypi:
 ```bash
@@ -25,7 +26,12 @@ twine check dist/py3dtiles-<version>*
 twine upload dist/py3dtiles-<version>*
 ```
 
-Check if the doc for the new version is published.
+What to check after the release:
+
+- the gitlab registry container
+- the docker hub page
+- the pypi page
+- py3dtiles.org and the new tag documentation
 
 ## Case: a python version is newly supported or dropped
 
