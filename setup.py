@@ -14,6 +14,7 @@ requirements = (
     "psutil",
     "pyproj",
     "pyzmq",
+    "pygltflib",
 )
 
 dev_requirements = (

@@ -4,12 +4,12 @@ import struct
 
 import numpy as np
 import numpy.typing as npt
+import pygltflib
 
 from py3dtiles.exceptions import InvalidB3dmError
 
 from .b3dm_feature_table import B3dmFeatureTable
 from .batch_table import BatchTable
-from .gltf import GlTF
 from .tile_content import TileContent, TileContentBody, TileContentHeader
 
 
@@ -26,7 +26,10 @@ class B3dm(TileContent):
         """
 
         # extract array
-        gltf_arr = self.body.gltf.to_array()
+        self.body.gltf.set_min_alignment(8)
+        gltf_arr = np.frombuffer(
+            b"".join(self.body.gltf.save_to_bytes()), dtype=np.uint8
+        )
 
         # sync the tile header with feature table contents
         self.header.tile_byte_length = len(gltf_arr) + B3dmHeader.BYTE_LENGTH
@@ -72,8 +75,27 @@ class B3dm(TileContent):
             print("Tile with no body")
 
     @staticmethod
+    def from_numpy_arrays(
+        points: npt.NDArray[np.float32],
+        triangles: npt.NDArray[np.uint8],
+        batch_table: BatchTable | None = None,
+        feature_table: B3dmFeatureTable | None = None,
+        normal: npt.NDArray[np.float32] | None = None,
+        transform: npt.NDArray[np.float32] | None = None,
+    ) -> B3dm:
+        b3dm_header = B3dmHeader()
+        b3dm_body = B3dmBody.from_numpy_arrays(points, triangles, normal, transform)
+        if batch_table is not None:
+            b3dm_body.batch_table = batch_table
+        if feature_table is not None:
+            b3dm_body.feature_table = feature_table
+        b3dm = B3dm(b3dm_header, b3dm_body)
+        b3dm.sync()
+        return b3dm
+
+    @staticmethod
     def from_gltf(
-        gltf: GlTF,
+        gltf: pygltflib.GLTF2,
         batch_table: BatchTable | None = None,
         feature_table: B3dmFeatureTable | None = None,
     ) -> B3dm:
@@ -93,7 +115,7 @@ class B3dm(TileContent):
     @staticmethod
     def from_array(array: npt.NDArray[np.uint8]) -> B3dm:
         # build tile header
-        h_arr = array[0 : B3dmHeader.BYTE_LENGTH]
+        h_arr = array[: B3dmHeader.BYTE_LENGTH]
         b3dm_header = B3dmHeader.from_array(h_arr)
 
         if b3dm_header.tile_byte_length != len(array):
@@ -103,7 +125,7 @@ class B3dm(TileContent):
             )
 
         # build tile body
-        b_arr = array[B3dmHeader.BYTE_LENGTH : b3dm_header.tile_byte_length]
+        b_arr = array[B3dmHeader.BYTE_LENGTH :]
         b3dm_body = B3dmBody.from_array(b3dm_header, b_arr)
 
         # build tile with header and body
@@ -159,7 +181,7 @@ class B3dmBody(TileContentBody):
     def __init__(self) -> None:
         self.batch_table = BatchTable()
         self.feature_table: B3dmFeatureTable = B3dmFeatureTable()
-        self.gltf = GlTF()
+        self.gltf = pygltflib.GLTF2()
 
     def to_array(self) -> npt.NDArray[np.uint8]:
         if self.feature_table:
@@ -173,10 +195,86 @@ class B3dmBody(TileContentBody):
             batch_table = np.array([], dtype=np.uint8)
 
         # The glTF part must start and end on an 8-byte boundary
-        return np.concatenate((feature_table, batch_table, self.gltf.to_array()))
+        return np.concatenate(
+            (
+                feature_table,
+                batch_table,
+                np.frombuffer(b"".join(self.gltf.save_to_bytes()), dtype=np.uint8),
+            )
+        )
 
     @staticmethod
-    def from_gltf(gltf: GlTF) -> B3dmBody:
+    def from_numpy_arrays(
+        points: npt.NDArray[np.float32],
+        triangles: npt.NDArray[np.uint8],
+        normals: npt.NDArray[np.float32] | None = None,
+        transform: npt.NDArray[np.float32] | None = None,
+    ) -> B3dmBody:
+        """Build the GlTF structure that corresponds to a triangulated mesh.
+
+        The mesh is represented as numpy arrays as follows:
+
+        - a 3D-point array;
+        - a triangle array, where points are identified by their positional ID in the 3D-point
+          array.
+
+        See https://gitlab.com/dodgyville/pygltflib/ (section "Create a mesh, convert to bytes,
+        convert back to mesh").
+
+        """
+        gltf_binary_blob = b""
+        gltf_accessors = []
+        gltf_buffer_views = []
+        byte_offset = 0
+
+        triangle_arrays: list[
+            npt.NDArray[np.uint8] | npt.NDArray[np.float32] | None
+        ] = [triangles, points, normals]
+        for array_idx, array in enumerate(triangle_arrays):
+            if array is None:
+                continue
+            (
+                array_blob,
+                additional_offset,
+                accessor,
+                buffer_view,
+            ) = prepare_gltf_component(
+                array_idx, array, byte_offset, triangle_indices=array_idx == 0
+            )
+            gltf_binary_blob += array_blob
+            byte_offset += additional_offset
+            gltf_accessors.append(accessor)
+            gltf_buffer_views.append(buffer_view)
+
+        node_matrix = list(np.identity(4).flatten("F"))
+        if transform is not None:
+            node_matrix = list(transform.flatten("F"))
+
+        gltf = pygltflib.GLTF2(
+            scene=0,
+            scenes=[pygltflib.Scene(nodes=[0])],
+            nodes=[pygltflib.Node(mesh=0, matrix=node_matrix)],
+            meshes=[
+                pygltflib.Mesh(
+                    primitives=[
+                        pygltflib.Primitive(
+                            attributes=pygltflib.Attributes(
+                                POSITION=1, NORMAL=None if normals is None else 2
+                            ),
+                            indices=0,
+                        )
+                    ]
+                )
+            ],
+            accessors=gltf_accessors,
+            bufferViews=gltf_buffer_views,
+            buffers=[pygltflib.Buffer(byteLength=byte_offset)],
+        )
+        gltf.set_binary_blob(gltf_binary_blob)
+        return B3dmBody.from_gltf(gltf)
+
+    @staticmethod
+    def from_gltf(gltf: pygltflib.GLTF2) -> B3dmBody:
         # build tile body
         b = B3dmBody()
         b.gltf = gltf
@@ -196,7 +294,7 @@ class B3dmBody(TileContentBody):
             b3dm_header.tile_byte_length - ft_len - bt_len - B3dmHeader.BYTE_LENGTH
         )
         gltf_arr = array[ft_len + bt_len : ft_len + bt_len + gltf_len]
-        gltf = GlTF.from_array(gltf_arr)
+        gltf = pygltflib.GLTF2.load_from_bytes(b"".join(gltf_arr))
 
         # build tile body with batch table
         b = B3dmBody()
@@ -210,3 +308,32 @@ class B3dmBody(TileContentBody):
             )
 
         return b
+
+
+def prepare_gltf_component(
+    array_idx: int,
+    array: npt.NDArray[np.uint8] | npt.NDArray[np.float32],
+    byte_offset: int,
+    triangle_indices: bool = False,
+) -> tuple[bytes, int, pygltflib.Accessor, pygltflib.BufferView]:
+    array_blob = array.flatten().tobytes()
+    additional_offset = len(array_blob)
+    component_type = pygltflib.UNSIGNED_BYTE if triangle_indices else pygltflib.FLOAT
+    accessor_type = pygltflib.SCALAR if triangle_indices else pygltflib.VEC3
+    BUFFER_INDEX = 0  # Everything is stored in the same buffer for sake of simplicity
+    buffer_view_target = (
+        pygltflib.ELEMENT_ARRAY_BUFFER if triangle_indices else pygltflib.ARRAY_BUFFER
+    )
+    accessor = pygltflib.Accessor(
+        bufferView=array_idx,
+        componentType=component_type,
+        count=array.size,
+        type=accessor_type,
+    )
+    buffer_view = pygltflib.BufferView(
+        buffer=BUFFER_INDEX,
+        byteOffset=byte_offset,
+        byteLength=additional_offset,
+        target=buffer_view_target,
+    )
+    return array_blob, additional_offset, accessor, buffer_view

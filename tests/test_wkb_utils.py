@@ -241,6 +241,22 @@ def test_triangle_soup_from_wkb(wkb_filename: str) -> None:
         wkb_utils.TriangleSoup.from_wkb_multipolygon(fobj.read())
 
 
+def test_triangle_soup_properties() -> None:
+    with open(DATA_DIRECTORY / "square.wkb", "rb") as fobj:
+        wkb = wkb_utils.TriangleSoup.from_wkb_multipolygon(fobj.read())
+    expected_triangles = np.array(
+        [[[0, 0, 0], [0, 10, 0], [10, 0, 0]], [[10, 10, 0], [10, 0, 0], [0, 10, 0]]],
+        dtype=np.float32,
+    )
+    np.testing.assert_array_equal(wkb.triangles[0], expected_triangles)
+    expected_vertices = np.array(
+        [[0, 0, 0], [0, 10, 0], [10, 0, 0], [10, 10, 0]], dtype=np.float32
+    )
+    np.testing.assert_array_equal(wkb.vertices, expected_vertices)
+    expected_indice_array = np.array([[0, 1, 2], [3, 2, 1]], dtype=np.uint8)
+    np.testing.assert_array_equal(wkb.triangle_indices, expected_indice_array)
+
+
 ################
 # benchmarking #
 ################
