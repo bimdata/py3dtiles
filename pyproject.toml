@@ -83,3 +83,46 @@ pack = [
 
 [project.scripts]
 py3dtiles = "py3dtiles.command_line:main"
+
+[tool.mypy]
+files = [
+    "py3dtiles/",
+    "tests/"
+]
+
+plugins = [
+    "numpy.typing.mypy_plugin",
+]
+
+strict = true
+
+[[tool.mypy.overrides]]
+module = [ # These 2 modules will be removed of py3dtiles
+    "py3dtiles.export",
+    "py3dtiles.tileset.content.gltf",
+]
+
+ignore_errors = true
+
+# TODO try to remove all these exceptions
+[[tool.mypy.overrides]]
+module = "py3dtiles.tilers.point.node.distance"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "py3dtiles.tilers.point.node.points_grid"
+warn_unused_ignores = false
+
+[[tool.mypy.overrides]]
+module = [
+    "earcut.earcut",
+    "laspy",
+    "lz4.*", # https://github.com/python-lz4/python-lz4/issues/223
+    "numba",
+    "plyfile",
+    "pygltflib",
+    "pyproj",
+    "pytest_benchmark.*",
+]
+
+ignore_missing_imports = true
