@@ -84,6 +84,40 @@ pack = [
 [project.scripts]
 py3dtiles = "py3dtiles.command_line:main"
 
+[tool.pytest.ini_options]
+addopts = """
+    --doctest-modules
+    --junitxml=junit/test-results.xml
+    --cov=py3dtiles
+    --cov-report=xml
+    --cov-report=html
+"""
+
+testpaths = "tests doc"
+
+[tool.coverage.run]
+branch = true
+include = [
+    "py3dtiles/*",
+]
+
+# The 3 lines below are used to get the coverage of the code executed inside a process (issue #126)
+# https://github.com/pytest-dev/pytest-cov/blob/master/CHANGELOG.rst#400-2022-09-28
+concurrency = ["multiprocessing"]
+parallel = true
+sigterm = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "if self.debug:",
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
+
+ignore_errors = true
+show_missing = true
+
 [tool.mypy]
 files = [
     "py3dtiles/",
