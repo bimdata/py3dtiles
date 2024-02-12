@@ -2,15 +2,13 @@ from __future__ import annotations
 
 import math
 import pickle
-from typing import TYPE_CHECKING
 
 import lz4.frame as gzip
+import numpy as np
+import numpy.typing as npt
 
-from py3dtiles.tilers.node.node import Node
+from py3dtiles.tilers.point.node.node import Node
 from py3dtiles.utils import split_aabb
-
-if TYPE_CHECKING:
-    from py3dtiles.utils import OctreeMetadata
 
 
 class NodeCatalog:
@@ -21,11 +19,15 @@ class NodeCatalog:
     """
 
     def __init__(
-        self, nodes: bytes, name: bytes, octree_metadata: OctreeMetadata
+        self,
+        nodes: bytes,
+        name: bytes,
+        root_aabb: npt.NDArray[np.float64],
+        root_spacing: float,
     ) -> None:
         self.nodes: dict[bytes, Node] = {}
-        self.root_aabb = octree_metadata.aabb
-        self.root_spacing = octree_metadata.spacing
+        self.root_aabb = root_aabb
+        self.root_spacing = root_spacing
         self.node_bytes: dict[bytes, bytes] = {}
         self._load_from_store(name, nodes)
 

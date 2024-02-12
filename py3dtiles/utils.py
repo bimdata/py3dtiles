@@ -3,16 +3,18 @@ from __future__ import annotations
 from enum import Enum
 from io import StringIO
 from pathlib import Path, PurePath
-from typing import TYPE_CHECKING, Callable, NamedTuple, TypeVar
+from typing import TYPE_CHECKING, Callable, TypeVar
 
 import numpy as np
 import numpy.typing as npt
 from pyproj import CRS
 
+from py3dtiles.reader import xyz_reader
+
 if TYPE_CHECKING:
     from typing_extensions import ParamSpec
 
-    from py3dtiles.tilers.node import Node
+    from py3dtiles.tilers.point.node import Node
 
 _T = TypeVar("_T", bound=npt.NBitBase)
 
@@ -33,28 +35,29 @@ def str_to_CRS(srs: str | CRS | None) -> CRS | None:
         return CRS(srs)
 
 
-class CommandType(Enum):
-    READ_FILE = b"read_file"
-    WRITE_PNTS = b"write_pnts"
-    PROCESS_JOBS = b"process_jobs"
-    SHUTDOWN = b"shutdown"
+READER_MAP = {
+    ".xyz": xyz_reader,
+    ".csv": xyz_reader,
+}
 
+try:
+    from py3dtiles.reader import las_reader
 
-class ResponseType(Enum):
-    REGISTER = b"register"
-    IDLE = b"idle"
-    HALTED = b"halted"
-    READ = b"read"
-    PROCESSED = b"processed"
-    PNTS_WRITTEN = b"pnts_written"
-    NEW_TASK = b"new_task"
-    ERROR = b"error"
+    READER_MAP[".las"] = las_reader
+    # then check for the presence of laz support
+    from importlib.util import find_spec
 
+    if find_spec("laszip") or find_spec("lazrs"):
+        READER_MAP[".laz"] = las_reader
+except ImportError:
+    pass
 
-class OctreeMetadata(NamedTuple):
-    aabb: npt.NDArray[np.float64]
-    spacing: float
-    scale: float
+try:
+    from py3dtiles.reader import ply_reader
+
+    READER_MAP[".ply"] = ply_reader
+except ImportError:
+    pass
 
 
 if TYPE_CHECKING:
@@ -150,7 +153,7 @@ def make_aabb_cubic(aabb: npt.NDArray[np.floating[_T]]) -> npt.NDArray[np.floati
     return aabb
 
 
-def make_aabb_valid(aabb: list[list[float]]) -> None:
+def make_aabb_valid(aabb: npt.NDArray[np.float64]) -> None:
     """
     Modify inplace the aabb so that no dimension is 0-sized
     """
@@ -164,7 +167,7 @@ def node_from_name(
     parent_aabb: npt.NDArray[np.floating[_T]],
     parent_spacing: float,
 ) -> Node:
-    from py3dtiles.tilers.node import Node
+    from py3dtiles.tilers.point.node import Node
 
     spacing = parent_spacing * 0.5
     aabb = split_aabb(parent_aabb, int(name[-1])) if len(name) > 0 else parent_aabb
