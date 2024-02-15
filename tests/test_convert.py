@@ -361,7 +361,7 @@ def test_convert_ply_with_color(tmp_dir: Path) -> None:
         DATA_DIRECTORY / "simple_with_16_bits_colors.ply",
         outfolder=tmp_dir,
         jobs=1,
-        overwrite=1,
+        overwrite=True,
     )
     assert Path(tmp_dir, "tileset.json").exists()
     assert Path(tmp_dir, "r.pnts").exists()
