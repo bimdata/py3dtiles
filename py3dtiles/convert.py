@@ -260,7 +260,6 @@ def convert(
     :param crs_out: CRS to convert the output with
     :param crs_in: Set a default input CRS
     :param force_crs_in: Force every input CRS to be `crs_in`, even if not null
-    :param fraction: Percentage of the pointcloud to process, between 0 and 100.
     :param benchmark: Print summary at the end of the process
     :param rgb: Export rgb attributes.
     :param classification: Export classification attribute.
@@ -299,7 +298,6 @@ class _Convert:
         crs_out: Optional[CRS] = None,
         crs_in: Optional[CRS] = None,
         force_crs_in: bool = False,
-        fraction: int = 100,
         benchmark: Optional[str] = None,
         rgb: bool = True,
         classification: bool = True,
@@ -315,7 +313,6 @@ class _Convert:
         :param crs_out: CRS to convert the output with
         :param crs_in: Set a default input CRS
         :param force_crs_in: Force every input CRS to be `crs_in`, even if not null
-        :param fraction: Percentage of the pointcloud to process, between 0 and 100.
         :param benchmark: Print summary at the end of the process
         :param rgb: Export rgb attributes.
         :param classification: Export classification attribute.
@@ -529,12 +526,6 @@ def _init_parser(
         "--srs_in", help="Override input SRS (numeric part of the EPSG code)", type=str
     )
     parser.add_argument(
-        "--fraction",
-        help="Percentage of the pointcloud to process.",
-        default=100,
-        type=int,
-    )
-    parser.add_argument(
         "--benchmark", help="Print summary at the end of the process", type=str
     )
     parser.add_argument(
@@ -564,7 +555,6 @@ def _main(args: argparse.Namespace) -> None:
             crs_out=str_to_CRS(args.srs_out),
             crs_in=str_to_CRS(args.srs_in),
             force_crs_in=args.force_srs_in,
-            fraction=args.fraction,
             benchmark=args.benchmark,
             rgb=not args.no_rgb,
             classification=args.classification,
