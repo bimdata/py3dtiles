@@ -234,8 +234,57 @@ class ZmqManager:
             p.join()
 
 
-def convert(*args, **kwargs) -> None:  # type: ignore [no-untyped-def] # todo use directly the _Convert class
-    converter = _Convert(*args, **kwargs)
+def convert(
+    files: Union[List[Union[str, Path]], str, Path],
+    outfolder: Union[str, Path] = "./3dtiles",
+    overwrite: bool = False,
+    jobs: int = CPU_COUNT,
+    cache_size: int = DEFAULT_CACHE_SIZE,
+    crs_out: Optional[CRS] = None,
+    crs_in: Optional[CRS] = None,
+    force_crs_in: bool = False,
+    benchmark: Optional[str] = None,
+    rgb: bool = True,
+    classification: bool = True,
+    color_scale: Optional[float] = None,
+    verbose: int = False,
+) -> None:
+    """
+    Convert the input dataset into 3dtiles. For the argument list and their effects, please see :py:class:`.Converter`.
+
+    :param files: Filenames to process. The file must use the .las, .laz, .xyz or .ply format.
+    :param outfolder: The folder where the resulting tileset will be written.
+    :param overwrite: Overwrite the ouput folder if it already exists.
+    :param jobs: The number of parallel jobs to start. Default to the number of cpu.
+    :param cache_size: Cache size in MB. Default to available memory / 10.
+    :param crs_out: CRS to convert the output with
+    :param crs_in: Set a default input CRS
+    :param force_crs_in: Force every input CRS to be `crs_in`, even if not null
+    :param fraction: Percentage of the pointcloud to process, between 0 and 100.
+    :param benchmark: Print summary at the end of the process
+    :param rgb: Export rgb attributes.
+    :param classification: Export classification attribute.
+    :param color_scale: Scale the color with the specified amount. Useful to lighten or darken black pointclouds with only intensity.
+
+    :raises SrsInMissingException: if py3dtiles couldn't find srs informations in input files and srs_in is not specified
+    :raises SrsInMixinException: if the input files have different CRS
+
+    """
+    converter = _Convert(
+        files,
+        outfolder=outfolder,
+        overwrite=overwrite,
+        jobs=jobs,
+        cache_size=cache_size,
+        crs_out=crs_out,
+        crs_in=crs_in,
+        force_crs_in=force_crs_in,
+        benchmark=benchmark,
+        rgb=rgb,
+        classification=classification,
+        color_scale=color_scale,
+        verbose=verbose,
+    )
     return converter.convert()
 
 

@@ -45,6 +45,10 @@ class Asset(RootProperty[AssetDictType]):
 
 
 class TileSet(RootProperty[TilesetDictType]):
+    """
+    This class represents the tileset in a 3DTiles dataset.
+    """
+
     def __init__(
         self,
         geometric_error: float = 500,

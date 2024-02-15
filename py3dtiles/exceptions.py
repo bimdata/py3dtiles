@@ -1,3 +1,8 @@
+"""
+This module contains all the exceptions that py3dtiles generates. They all derive from :py:class:`Py3dtilesException`.
+"""
+
+
 class Py3dtilesException(Exception):
     """
     All exceptions thrown by py3dtiles code derives this class.
