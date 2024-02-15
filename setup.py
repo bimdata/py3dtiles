@@ -32,6 +32,7 @@ dev_requirements = (
 doc_requirements = (
     "sphinx",
     "sphinx-multiversion",
+    "sphinxcontrib-apidoc",
     "sphinx_rtd_theme",
     "myst-parser",
 )

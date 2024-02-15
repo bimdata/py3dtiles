@@ -38,6 +38,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx_rtd_theme",
     "sphinx_multiversion",
+    "sphinxcontrib.apidoc",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -93,7 +94,16 @@ html_static_path = ["_static"]
 # defined by theme itself.  Builtin themes are using these templates by
 # default: ``['localtoc.html', 'relations.html', 'sourcelink.html',
 # 'searchbox.html']``.
-#
+
+# -- Options for sphinxcontrib.apidoc
+apidoc_module_dir = "../py3dtiles"
+apidoc_output_dir = "./api"
+apidoc_excluded_paths = ["tests"]
+apidoc_separate_modules = True
+apidoc_module_first = True
+apidoc_toc_file = False
+apidoc_extra_args = ["-d 3"]
+
 # -- Options for sphinx-multiversion
 
 # Whitelist pattern for tags (set to None to ignore all tags)
