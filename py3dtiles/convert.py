@@ -45,19 +45,19 @@ else:
 META_TILER_NAME = b"meta"
 
 
-def worker_target(
+def _worker_target(
     worker_tilers: Dict[bytes, TilerWorker[Any]],
     verbosity: int,
     uri: bytes,
 ) -> None:
-    return WorkerDispatcher(
+    return _WorkerDispatcher(
         worker_tilers,
         verbosity,
         uri,
     ).run()
 
 
-class WorkerDispatcher:
+class _WorkerDispatcher:
     """
     This class waits from jobs commands from the Zmq socket.
     """
@@ -134,7 +134,7 @@ class WorkerDispatcher:
 
 
 # Manager
-class ZmqManager:
+class _ZmqManager:
     """
     This class sends messages to the workers.
     We can also request general status.
@@ -165,7 +165,7 @@ class ZmqManager:
 
         self.processes = [
             Process(
-                target=worker_target,
+                target=_worker_target,
                 args=(worker_tilers, verbosity, self.uri),
             )
             for _ in range(number_of_jobs)
@@ -375,7 +375,7 @@ class _Convert:
             for tiler in self.tilers:
                 tiler.print_summary()
 
-        self.zmq_manager = ZmqManager(
+        self.zmq_manager = _ZmqManager(
             self.jobs,
             worker_tilers,
             self.verbose,
@@ -484,7 +484,7 @@ class _Convert:
         return at_least_one_job_ended
 
 
-def init_parser(
+def _init_parser(
     subparser: "argparse._SubParsersAction[Any]",
 ) -> argparse.ArgumentParser:
     parser: argparse.ArgumentParser = subparser.add_parser(
@@ -553,7 +553,7 @@ def init_parser(
     return parser
 
 
-def main(args: argparse.Namespace) -> None:
+def _main(args: argparse.Namespace) -> None:
     try:
         return convert(
             args.files,

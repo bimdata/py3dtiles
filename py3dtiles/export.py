@@ -337,7 +337,7 @@ def from_directory(directory, offset):
     wkbs_to_tileset(wkbs, None, transform)
 
 
-def init_parser(
+def _init_parser(
     subparser: "argparse._SubParsersAction[Any]",
 ) -> argparse.ArgumentParser:
     descr = "Generate a tileset from a set of geometries"
@@ -369,7 +369,7 @@ def init_parser(
     return parser
 
 
-def main(args: argparse.Namespace) -> None:
+def _main(args: argparse.Namespace) -> None:
     if args.D is not None:
         if args.t is None or args.c is None:
             print("Error: please define a table (-t) and column (-c)", file=sys.stderr)

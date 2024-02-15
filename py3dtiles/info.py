@@ -5,7 +5,7 @@ from typing import Any
 from py3dtiles.tileset.content import read_binary_tile_content
 
 
-def main(args: argparse.Namespace) -> None:
+def _main(args: argparse.Namespace) -> None:
     try:
         tile_content = read_binary_tile_content(args.file)
     except ValueError as e:
@@ -15,7 +15,7 @@ def main(args: argparse.Namespace) -> None:
     tile_content.print_info()
 
 
-def init_parser(
+def _init_parser(
     subparser: "argparse._SubParsersAction[Any]",
 ) -> argparse.ArgumentParser:
     # arg parse
