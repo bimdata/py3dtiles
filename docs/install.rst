@@ -37,6 +37,8 @@ If you want to run unit tests:
 
 Please read the section ":ref:`File formats support`" next.
 
+.. _File formats support:
+
 File formats support
 ~~~~~~~~~~~~~~~~~~~~
 

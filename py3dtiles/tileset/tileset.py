@@ -97,12 +97,10 @@ class TileSet(RootProperty[TilesetDictType]):
     def delete_on_disk(
         self, tileset_path: Path, delete_sub_tileset: bool = False
     ) -> None:
-        """
-        Deletes all files linked to the tileset. The uri of the tileset should be defined.
+        """Deletes all files linked to the tileset. The uri of the tileset should be defined.
 
         :param tileset_path: The path of the tileset
-        :param delete_sub_tileset: If True, all tilesets present as tile content will be removed as well as their content.
-        If False, the linked tilesets in tiles won't be removed.
+        :param delete_sub_tileset: If True, all tilesets present as tile content will be removed as well as their content. If False, the linked tilesets in tiles won't be removed.
         """
         tileset_path.unlink()
         self.root_tile.delete_on_disk(tileset_path.parent, delete_sub_tileset)

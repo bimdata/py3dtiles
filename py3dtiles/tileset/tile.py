@@ -107,12 +107,10 @@ class Tile(RootProperty[TileDictType]):
         return self.tile_content is not None
 
     def delete_on_disk(self, root_uri: Path, delete_sub_tileset: bool = False) -> None:
-        """
-        Deletes all files linked to the tile and its children. The uri of the folder where tileset is, should be defined.
+        """Deletes all files linked to the tile and its children. The uri of the folder where tileset is, should be defined.
 
-        :param root_uri: The folder where tileset is
-        :param delete_sub_tileset: If True, all tilesets present as tile content will be removed as well as their content.
-        If False, the linked tilesets in tiles won't be removed.
+        :param root_uri: The folder where tileset is.
+        :param delete_sub_tileset: If True, all tilesets present as tile content will be removed as well as their content. If False, the linked tilesets in tiles won't be removed.
         """
         for child in self.children:
             child.delete_on_disk(root_uri, delete_sub_tileset)
