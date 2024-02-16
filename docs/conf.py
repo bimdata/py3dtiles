@@ -216,3 +216,6 @@ intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
+
+# -- Options for sphinx.ext.autosectionlabel ----------------------------------
+autosectionlabel_prefix_document = True
