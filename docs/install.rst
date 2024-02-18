@@ -53,7 +53,7 @@ By default, no specific format dependencies are installed. You should either ins
     # postgres
     pip install py3dtiles[postgres]
     # everything at once
-    pip install py3dtiles[all]`
+    pip install py3dtiles[postgres,ply,las]
 
 
 To support laz files you need an external library and a laz backend for

@@ -84,7 +84,7 @@ The code of py3dtiles is formatted by [black](https://github.com/ambv/black).
 
 ### Type annotations
 
-Typing annotations are verified with [mypy](https://mypy.readthedocs.io/en/stable/). The whole configuration can be found in the `mypy.ini` file. Generic types have been written (to be reused) in the `py3dtiles/typing.py`.
+Typing annotations are verified with [mypy](https://mypy.readthedocs.io/en/stable/) in strict mode. Generic types have been written (to be reused) in the `py3dtiles/typing.py`.
 
 It is strongly discouraged to ignore an error (with the comment `type: ignore`) because it degrades the efficiency of typing. However, if you need to add one, you should specify the ignored error like this:: `# type: ignore [arg-type]` and explain the reason in a comment for future reference.
 

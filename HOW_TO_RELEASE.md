@@ -36,10 +36,10 @@ What to check after the release:
 ## Case: a python version is newly supported or dropped
 
 Update the following files:
-- [setup.py](setup.py)
-  - modify `python_requires`
+- [pyproject.toml](pyproject.toml)
+  - modify `requires-python`
   - add or remove the python version in `classifiers` list
-- [Dockerfile](Dockerfile)
+- [Dockerfile](docker%2FDockerfile)
   - check if the version of python is still supported by py3dtiles
   - if the python version in the Dockerfile is changed, regenerate [requirements.txt](requirements.txt). Be careful not to add unnecessary packages
 - [sonar-project.properties](sonar-project.properties)

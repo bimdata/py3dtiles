@@ -25,7 +25,7 @@ COPY docker/requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt && pip cache purge
 
 # Copy necessary files
-COPY setup.py setup.py
+COPY pyproject.toml pyproject.toml
 COPY py3dtiles py3dtiles
 COPY README.rst README.rst
 # install py3dtiles
