@@ -12,10 +12,10 @@ def main() -> None:
 
     # init subparsers
     command_parsers = [
-        convert.init_parser(sub_parsers),
-        info.init_parser(sub_parsers),
-        merger.init_parser(sub_parsers),
-        export.init_parser(sub_parsers),
+        convert._init_parser(sub_parsers),
+        info._init_parser(sub_parsers),
+        merger._init_parser(sub_parsers),
+        export._init_parser(sub_parsers),
     ]
     # add the verbose argument for all sub-parsers so that it is after the command.
     for command_parser in command_parsers:
@@ -24,13 +24,13 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "convert":
-        convert.main(args)
+        convert._main(args)
     elif args.command == "info":
-        info.main(args)
+        info._main(args)
     elif args.command == "merge":
-        merger.main(args)
+        merger._main(args)
     elif args.command == "export":
-        export.main(args)
+        export._main(args)
     else:
         parser.print_help()
 

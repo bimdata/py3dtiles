@@ -107,8 +107,7 @@ def run(
       - 4 columns mean XYZI
       - 6 columns mean XYZRGB
       - 7 columns mean XYZIRGB
-      - 8 columns mean XYZIRGB followed by classification data.
-        Classification data must be integers only.
+      - 8 columns mean XYZIRGB followed by classification data. Classification data must be integers only.
       - all columns after the 8th column will be ignored.
 
     NOTE: we assume RGB are 8 bits components.

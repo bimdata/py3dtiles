@@ -38,6 +38,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx_rtd_theme",
     "sphinx_multiversion",
+    "sphinxcontrib.apidoc",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -93,11 +94,20 @@ html_static_path = ["_static"]
 # defined by theme itself.  Builtin themes are using these templates by
 # default: ``['localtoc.html', 'relations.html', 'sourcelink.html',
 # 'searchbox.html']``.
-#
+
+# -- Options for sphinxcontrib.apidoc
+apidoc_module_dir = "../py3dtiles"
+apidoc_output_dir = "./api"
+apidoc_excluded_paths = ["tests"]
+apidoc_separate_modules = True
+apidoc_module_first = True
+apidoc_toc_file = False
+apidoc_extra_args = ["-d 3"]
+
 # -- Options for sphinx-multiversion
 
 # Whitelist pattern for tags (set to None to ignore all tags)
-smv_tag_whitelist = r"^.*$"
+smv_tag_whitelist = r"^v(\d+\.)?(\d+\.)?(\*|\d+)$"
 
 # Whitelist pattern for branches (set to None to ignore all branches)
 smv_branch_whitelist = r"^main$"
@@ -107,7 +117,7 @@ smv_branch_whitelist = r"^main$"
 smv_remote_whitelist = r"^upstream|origin$"
 
 # Pattern for released versions
-smv_released_pattern = r"^tags/.*$"
+smv_released_pattern = r"^tags/^v(\d+\.)?(\d+\.)?(\*|\d+)$"
 
 # Format for versioned output directories inside the build directory
 smv_outputdir_format = "{ref.name}"
@@ -206,3 +216,6 @@ intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
+
+# -- Options for sphinx.ext.autosectionlabel ----------------------------------
+autosectionlabel_prefix_document = True

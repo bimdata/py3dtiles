@@ -99,23 +99,23 @@ class GlTF:
         uri: str | None = None,
         texture_uri: str | None = None,
     ) -> GlTF:
-        """
+        """Build a GlTF structure from a list of binary arrays
+
         Parameters
         ----------
         arrays : array of dictionaries
             Each dictionary has the data for one geometry
             arrays['position']: binary array of vertex positions
             arrays['normal']: binary array of vertex normals
-            arrays['uv']: binary array of vertex texture coordinates
-                          (Not implemented yet)
+            arrays['uv']: binary array of vertex texture coordinates (Not implemented yet)
             arrays['bbox']: geometry bounding box (numpy.array)
-
         transform : numpy.array
             World coordinates transformation flattend matrix
 
         Returns
         -------
         gltf : GlTF
+
         """
 
         gltf = GlTF()

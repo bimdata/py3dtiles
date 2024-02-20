@@ -307,7 +307,7 @@ def merge_from_files(
     tileset.write_to_directory(output_tileset_path)
 
 
-def init_parser(
+def _init_parser(
     subparser: "argparse._SubParsersAction[Any]",
 ) -> argparse.ArgumentParser:
     parser: argparse.ArgumentParser = subparser.add_parser(
@@ -327,7 +327,7 @@ def init_parser(
     return parser
 
 
-def main(args: argparse.Namespace) -> None:
+def _main(args: argparse.Namespace) -> None:
     return merge_from_files(
         [Path(tileset_file) for tileset_file in args.tilesets],
         Path(args.output_tileset),
