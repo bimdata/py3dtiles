@@ -128,7 +128,7 @@ class Tile(RootProperty[TileDictType]):
             if delete_sub_tileset:
                 self.get_or_fetch_content(root_uri).delete_on_disk(tile_content_path)  # type: ignore
         else:
-            tile_content_path.unlink()
+            tile_content_path.unlink(missing_ok=True)
 
     def set_refine_mode(self, mode: RefineType) -> None:
         if mode != "ADD" and mode != "REPLACE":
