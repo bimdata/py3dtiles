@@ -6,14 +6,13 @@ from pathlib import Path
 import numpy as np
 
 from py3dtiles.tilers.b3dm.wkb_utils import TriangleSoup
-from py3dtiles.tileset.content import B3dm, GlTF, read_binary_tile_content
+from py3dtiles.tileset.content import B3dm, B3dmHeader, GlTF, read_binary_tile_content
+from py3dtiles.tileset.content.b3dm_feature_table import B3dmFeatureTable
 
 
 class TestTileContentReader(unittest.TestCase):
     def test_read(self) -> None:
-        tile_content = read_binary_tile_content(
-            Path("tests/fixtures/dragon_low.b3dm")
-        )  # TODO re-export b3dm once feature table is added
+        tile_content = read_binary_tile_content(Path("tests/fixtures/dragon_low.b3dm"))
         if not isinstance(tile_content, B3dm):
             raise ValueError(
                 f"The file 'tests/fixtures/buildings.b3dm' is a b3dm, not a {type(tile_content)}"
@@ -31,9 +30,7 @@ class TestTileContentReader(unittest.TestCase):
         self.assertDictEqual(gltf_header, tile_content.body.gltf.header)
 
     def test_read_and_write(self) -> None:
-        tile_content = read_binary_tile_content(
-            Path("tests/fixtures/buildings.b3dm")
-        )  # TODO re-export b3dm once feature table is added
+        tile_content = read_binary_tile_content(Path("tests/fixtures/buildings.b3dm"))
         if not isinstance(tile_content, B3dm):
             raise ValueError(
                 f"The file 'tests/fixtures/buildings.b3dm' is a b3dm, not a {type(tile_content)}"
@@ -83,22 +80,31 @@ class TestTileContentBuilder(unittest.TestCase):
         # translation : 1842015.125, 5177109.25, 247.87364196777344
         transform = transform.flatten("F")
         gltf = GlTF.from_binary_arrays(arrays, transform)
-        t = B3dm.from_gltf(gltf)
+
+        feature_table = B3dmFeatureTable()
+        feature_table.set_batch_length(1)
+
+        t = B3dm.from_gltf(gltf, feature_table=feature_table)
 
         # get an array
         t.to_array()
         self.assertEqual(t.header.version, 1.0)
 
         # Test the tile byte length
-        self.assertEqual(t.header.tile_byte_length, 2956)
-        # self.assertEqual(t.header.tile_byte_length % 8, 0)  # tile bytes must be 8-byte aligned  # TODO enable these tests when feature table is added in b3dm
+        self.assertEqual(t.header.tile_byte_length, 2976)
+        self.assertEqual(
+            t.header.tile_byte_length % 8, 0
+        )  # tile bytes must be 8-byte aligned
 
         # Test the feature table byte lengths
-        # json_feature_table_end = B3dmHeader.BYTE_LENGTH + t.header.ft_json_byte_length  # TODO enable these tests when feature table is added in b3dm
-        # self.assertEqual(json_feature_table_end % 8, 0)
-        self.assertEqual(t.header.ft_json_byte_length, 0)
-        # bin_feature_table_end = json_feature_table_end + t.header.ft_bin_byte_length  # TODO enable these tests when feature table is added in b3dm
-        # self.assertEqual(bin_feature_table_end % 8, 0)
+        json_feature_table_end = B3dmHeader.BYTE_LENGTH + t.header.ft_json_byte_length
+        self.assertEqual(json_feature_table_end % 8, 0)
+
+        # This 20 corresponds to the length of the JSON feature table ("{'BATCH_LENGTH': 1}") + the padding to align on 8-bytes
+        self.assertEqual(t.header.ft_json_byte_length, 20)
+
+        bin_feature_table_end = json_feature_table_end + t.header.ft_bin_byte_length
+        self.assertEqual(bin_feature_table_end % 8, 0)
         self.assertEqual(t.header.ft_bin_byte_length, 0)
 
         # Test the batch table byte lengths
@@ -106,8 +112,14 @@ class TestTileContentBuilder(unittest.TestCase):
         self.assertEqual(t.header.bt_bin_byte_length, 0)
 
         # Test the gltf byte length
-        # gltf_start_bounding = bin_feature_table_end + t.header.bt_json_byte_length + t.header.bt_bin_byte_length  # TODO enable these tests when feature table is added in b3dm
-        # self.assertEqual(gltf_start_bounding % 8, 0)  # the gltf part must be 8-byte aligned
+        gltf_start_bounding = (
+            bin_feature_table_end
+            + t.header.bt_json_byte_length
+            + t.header.bt_bin_byte_length
+        )
+        self.assertEqual(
+            gltf_start_bounding % 8, 0
+        )  # the gltf part must be 8-byte aligned
         self.assertEqual(
             t.body.gltf.to_array().nbytes % 8, 0
         )  # gltf bytes must be 8-byte aligned

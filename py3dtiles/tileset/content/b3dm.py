@@ -72,11 +72,17 @@ class B3dm(TileContent):
             print("Tile with no body")
 
     @staticmethod
-    def from_gltf(gltf: GlTF, batch_table: BatchTable | None = None) -> B3dm:
+    def from_gltf(
+        gltf: GlTF,
+        batch_table: BatchTable | None = None,
+        feature_table: B3dmFeatureTable | None = None,
+    ) -> B3dm:
         b3dm_body = B3dmBody()
         b3dm_body.gltf = gltf
         if batch_table is not None:
             b3dm_body.batch_table = batch_table
+        if feature_table is not None:
+            b3dm_body.feature_table = feature_table
 
         b3dm_header = B3dmHeader()
         b3dm = B3dm(b3dm_header, b3dm_body)
