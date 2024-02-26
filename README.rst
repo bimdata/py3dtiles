@@ -155,3 +155,11 @@ License
 #######
 
 Py3dtiles is distributed under the Apache 2 Licence.
+
+Thanks
+######
+
+The following entities have funded py3dtiles:
+
+- [Oslandia](https://oslandia.com/)
+- [Liris](https://liris.cnrs.fr/)
