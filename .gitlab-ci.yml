@@ -310,7 +310,8 @@ pages:
     - git fetch
     - sphinx-multiversion docs public
     - cp -rv docs/index_redirect.html public/index.html
-    - current_version="$(git tag --list | tail -n1)"
+    # NOTE the grep must reflect the smv_tag_whitelist and smv_released_pattern in docs/conf.py
+    - current_version="$(git tag --list | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+$" | tail -n1)"
     - sed -i "s/VERSION/$current_version/g" public/index.html
   artifacts:
     paths:
