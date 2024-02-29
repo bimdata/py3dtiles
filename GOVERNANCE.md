@@ -236,9 +236,9 @@ Funding the project allow organizations to assign manpower to the items of the r
 
 **Committers**
 
-- Augustin Trancart
-- Lorenzo Marnat
-- Raphaël Delhomme
+- Augustin Trancart (Oslandia)
+- Lorenzo Marnat (Liris)
+- Raphaël Delhome (Oslandia)
 
 **PSC**
 
