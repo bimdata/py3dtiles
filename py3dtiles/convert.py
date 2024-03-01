@@ -116,10 +116,9 @@ class _WorkerDispatcher:
                 self.skt.send_multipart([WorkerMessageType.IDLE.value])
             except Exception as e:
                 traceback.print_exc()
-                # usually first arg is the explaining string.
-                # let's assume it is always in our context
+                error_message = f"{e.__class__.__module__}.{e.__class__.__name__}: {e}"
                 self.skt.send_multipart(
-                    [WorkerMessageType.ERROR.value, e.args[0].encode()]
+                    [WorkerMessageType.ERROR.value, error_message.encode()]
                 )
                 # we still print it for stacktraces
 
