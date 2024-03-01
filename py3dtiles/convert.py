@@ -45,19 +45,7 @@ else:
 META_TILER_NAME = b"meta"
 
 
-def _worker_target(
-    worker_tilers: Dict[bytes, TilerWorker[Any]],
-    verbosity: int,
-    uri: bytes,
-) -> None:
-    return _WorkerDispatcher(
-        worker_tilers,
-        verbosity,
-        uri,
-    ).run()
-
-
-class _WorkerDispatcher:
+class _WorkerDispatcher(Process):
     """
     This class waits from jobs commands from the Zmq socket.
     """
@@ -70,6 +58,7 @@ class _WorkerDispatcher:
         verbosity: int,
         uri: bytes,
     ) -> None:
+        super().__init__()
         self.worker_tilers = worker_tilers
         self.verbosity = verbosity
         self.uri = uri
@@ -163,10 +152,7 @@ class _ZmqManager:
             )
 
         self.processes = [
-            Process(
-                target=_worker_target,
-                args=(worker_tilers, verbosity, self.uri),
-            )
+            _WorkerDispatcher(worker_tilers, verbosity, self.uri)
             for _ in range(number_of_jobs)
         ]
         for p in self.processes:
