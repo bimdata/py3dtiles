@@ -414,7 +414,7 @@ class _Convert:
                     print("Writing 3dtiles")
 
                 tiler.write_tileset()
-                shutil.rmtree(self.working_dir / str(tiler.name))
+                shutil.rmtree(self.working_dir / str(tiler.name), ignore_errors=True)
 
                 if self.verbose >= 1:
                     print(f"Tiler {tiler.name!r} done")
