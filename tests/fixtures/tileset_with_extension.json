@@ -33,64 +33,14 @@
         },
         "geometricError": 500,
         "refine": "ADD",
+        "content": {
+            "uri": "./tile_with_extension.b3dm"
+        },
         "extensions": {
             "Test": {
                 "id": "IDT00"
             }
-        },
-        "children": [
-            {
-                "boundingVolume": {
-                    "box": [
-                        0,
-                        0,
-                        0,
-                        3.5625,
-                        0,
-                        0,
-                        0,
-                        1.75,
-                        0,
-                        0,
-                        0,
-                        0.82977294921875
-                    ],
-                    "extensions": {
-                        "Test": {
-                            "id": "IDBB01"
-                        }
-                    }
-                },
-                "geometricError": 1,
-                "refine": "REPLACE",
-                "content": {
-                    "uri": "./buildings.b3dm"
-                },
-                "transform": [
-                    1,
-                    0,
-                    0,
-                    0,
-                    0,
-                    1,
-                    0,
-                    0,
-                    0,
-                    0,
-                    1,
-                    0,
-                    1842737.312,
-                    5175777.75,
-                    194.72,
-                    1
-                ],
-                "extensions": {
-                    "Test": {
-                        "id": "IDT01"
-                    }
-                }
-            }
-        ]
+        }
     },
     "extensions": {
         "Test": {

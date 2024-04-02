@@ -167,8 +167,16 @@ class BatchTable:
         jsond = json.loads(batch_table_header_array.tobytes().decode("utf-8") or "{}")
         batch_table.header.data = jsond
 
+        # parse binary attributes
         previous_byte_offset = 0
-        for property_definition in batch_table.header.data.values():
+        for bt_property in batch_table.header.data:
+            # ignore extensions
+            if bt_property == "extensions" or bt_property == "extras":
+                continue
+
+            property_definition = batch_table.header.data[bt_property]
+
+            # ignore JSON attributes
             if isinstance(property_definition, list):
                 continue
 
