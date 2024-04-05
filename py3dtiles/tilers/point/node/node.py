@@ -14,7 +14,12 @@ from py3dtiles.tilers.point.pnts import MIN_POINT_SIZE
 from py3dtiles.tilers.point.pnts.pnts_writer import points_to_pnts_file
 from py3dtiles.tileset.content import read_binary_tile_content
 from py3dtiles.tileset.content.pnts_feature_table import SemanticPoint
-from py3dtiles.typing import BoundingVolumeBoxDictType, ContentType, TileDictType
+from py3dtiles.typing import (
+    BoundingVolumeBoxDictType,
+    ContentType,
+    TileDictType,
+    TilesetDictType,
+)
 from py3dtiles.utils import (
     SubdivisionType,
     aabb_size_to_subdivision_type,
@@ -514,11 +519,11 @@ class Node:
 def split_tileset(
     tile_dict: TileDictType, split_name: str, folder: Path
 ) -> TileDictType:
-    tileset = {
+    tile_dict["refine"] = "ADD"
+    tileset: TilesetDictType = {
         "asset": {
             "version": "1.0",
         },
-        "refine": "ADD",
         "geometricError": tile_dict["geometricError"],
         "root": tile_dict,
     }
