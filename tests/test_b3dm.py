@@ -61,6 +61,27 @@ class TestTileContentReader(unittest.TestCase):
         tile_content.save_as(path_name)
         self.assertTrue(cmp("tests/fixtures/buildings.b3dm", path_name))
 
+    def test_str(self) -> None:
+        tile_content = read_binary_tile_content(Path("tests/fixtures/buildings.b3dm"))
+        expected_string_components = [
+            "------ Tile header ------",
+            "magic: b'b3dm'",
+            "version: 1",
+            "tile_byte_length: 6312",
+            "json_feature_table_length: 20",
+            "bin_feature_table_length: 0",
+            "json_batch_table_length: 64",
+            "bin_batch_table_length: 0",
+            "------ Tile body ------",
+            "feature_table_batch_length: 2",
+            "gltf_magic: b'glTF'",
+            "gltf_version: 2.0",
+            "gltf_length: 6184",
+        ]
+        string_components = str(tile_content).split("\n")
+        for expected_line, line in zip(expected_string_components, string_components):
+            assert expected_line == line
+
 
 class TestTileContentBuilder(unittest.TestCase):
     def test_build(self) -> None:

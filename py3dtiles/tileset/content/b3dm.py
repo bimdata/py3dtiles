@@ -50,30 +50,6 @@ class B3dm(TileContent):
             self.header.tile_byte_length += len(bth_arr)
             self.header.bt_json_byte_length = len(bth_arr)
 
-    def print_info(self) -> None:
-        if self.header:
-            th = self.header
-            print("Tile Header")
-            print("-----------")
-            print("Magic Value: ", th.magic_value)
-            print("Version: ", th.version)
-            print("Tile byte length: ", th.tile_byte_length)
-            print("Feature table json byte length: ", th.ft_json_byte_length)
-            print("Feature table bin byte length: ", th.ft_bin_byte_length)
-            print("Batch table json byte length: ", th.bt_json_byte_length)
-            print("Batch table bin byte length: ", th.bt_bin_byte_length)
-        else:
-            print("Tile with no header")
-
-        if self.body:
-            gltf_header = self.body.gltf.header
-            print("")
-            print("glTF Header")
-            print("-----------")
-            print(gltf_header)
-        else:
-            print("Tile with no body")
-
     @staticmethod
     def from_numpy_arrays(
         points: npt.NDArray[np.float32],
@@ -182,6 +158,15 @@ class B3dmBody(TileContentBody):
         self.batch_table = BatchTable()
         self.feature_table: B3dmFeatureTable = B3dmFeatureTable()
         self.gltf = pygltflib.GLTF2()
+
+    def __str__(self) -> str:
+        infos = {
+            "feature_table_batch_length": self.feature_table.get_batch_length(),
+            "gltf_magic": b"glTF",
+            "gltf_version": self.gltf.asset.version,
+            "gltf_length": len(b"".join(self.gltf.save_to_bytes())),
+        }
+        return "\n".join(f"{key}: {value}" for key, value in infos.items())
 
     def to_array(self) -> npt.NDArray[np.uint8]:
         if self.feature_table:

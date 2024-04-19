@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 from numpy.testing import assert_array_equal
 
-from py3dtiles.tileset.content import Pnts, PntsHeader
+from py3dtiles.tileset.content import Pnts, PntsHeader, read_binary_tile_content
 from py3dtiles.tileset.content.pnts_feature_table import (
     PntsFeatureTableHeader,
     SemanticPoint,
@@ -30,6 +30,33 @@ class TestTileContentReader(unittest.TestCase):
             np.array([44, 243, 209], dtype=np.uint8),
             pt_color,
         )
+
+    def test_str(self) -> None:
+        tile_content = read_binary_tile_content(
+            Path("tests/fixtures/pointCloudRGB.pnts")
+        )
+        expected_string_components = [
+            "------ Tile header ------",
+            "magic: b'pnts'",
+            "version: 1",
+            "tile_byte_length: 15176",
+            "json_feature_table_length: 148",
+            "bin_feature_table_length: 15000",
+            "json_batch_table_length: 0",
+            "bin_batch_table_length: 0",
+            "------ Tile body ------",
+            "feature_table_header: {'"
+            "POINTS_LENGTH': 1000"
+            ", 'RTC_CENTER': [1215012.8828876738, -4736313.051199594, 4081605.22126042]"
+            ", 'POSITION': {'byteOffset': 0}, 'RGB': {'byteOffset': 12000}}",
+            "points_length: 1000",
+            "first_point_position: [ 2.19396     4.489685   -0.17107764]",
+            "first_point_color: [ 44 243 209]",
+            "first_point_normal: None",
+        ]
+        string_components = str(tile_content).split("\n")
+        for expected_line, line in zip(expected_string_components, string_components):
+            assert expected_line == line
 
 
 class TestTileBuilder(unittest.TestCase):

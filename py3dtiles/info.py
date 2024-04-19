@@ -12,7 +12,7 @@ def _main(args: argparse.Namespace) -> None:
         print(f"Error when reading the file {args.file}")
         raise e
 
-    tile_content.print_info()
+    print(f"=== Tile content: ===\n{tile_content}\n=====================")
 
 
 def _init_parser(
