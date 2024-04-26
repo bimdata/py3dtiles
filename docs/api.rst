@@ -427,7 +427,7 @@ user responsibility to check the input WKB format before using the `py3dtiles` A
     >>> from py3dtiles.tileset.content import B3dm
     >>>
     >>> # load a wkb file (ISO WKB format only)
-    >>> wkb = open('tests/fixtures/building.wkb', 'rb').read()
+    >>> wkb = open('tests/fixtures/building/building.wkb', 'rb').read()
     >>>
     >>> # define the geometry's bounding box
     >>> box = [[-8.75, -7.36, -2.05], [8.80, 7.30, 2.05]]

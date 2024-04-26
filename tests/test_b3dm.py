@@ -85,7 +85,7 @@ class TestTileContentReader(unittest.TestCase):
 
 class TestTileContentBuilder(unittest.TestCase):
     def test_build(self) -> None:
-        with open("tests/fixtures/building.wkb", "rb") as f:
+        with open("tests/fixtures/building/building.wkb", "rb") as f:
             wkb = f.read()
         ts = TriangleSoup.from_wkb_multipolygon(wkb)
 
@@ -182,9 +182,6 @@ class TestTexturedTileBuilder(unittest.TestCase):
             wkbuv = f.read()
         ts = TriangleSoup.from_wkb_multipolygon(wkb, [wkbuv])
 
-        # gltf = GlTF.from_binary_arrays(
-        #     arrays, transform, texture_uri="squaretexture.jpg"
-        # )
         t = B3dm.from_numpy_arrays(
             ts.vertices,
             ts.triangle_indices,
@@ -209,7 +206,7 @@ class TestTexturedTileBuilder(unittest.TestCase):
         documentation.
 
         """
-        with open("tests/fixtures/building.wkb", "rb") as f:
+        with open("tests/fixtures/building/building.wkb", "rb") as f:
             wkb = f.read()
         ts = TriangleSoup.from_wkb_multipolygon(wkb)
         t = B3dm.from_numpy_arrays(
