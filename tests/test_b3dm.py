@@ -23,19 +23,8 @@ class TestTileContentReader(unittest.TestCase):
         expected_batch_table_header_len = 64
         expected_batch_table_body_len = 0
         expected_gltf_header_len = 12  # magic + version + length
-        expected_gltf_json_chunk_len = 1212
+        expected_gltf_json_chunk_len = 1228
         expected_gltf_bin_chunk_len = 4976
-        self.assertEqual(
-            tile_content.header.tile_byte_length,
-            expected_tile_header_len
-            + expected_feature_table_header_len
-            + expected_feature_table_body_len
-            + expected_batch_table_header_len
-            + expected_batch_table_body_len
-            + expected_gltf_header_len
-            + expected_gltf_json_chunk_len
-            + expected_gltf_bin_chunk_len,
-        )
         self.assertEqual(
             tile_content.header.ft_json_byte_length, expected_feature_table_header_len
         )
@@ -47,6 +36,17 @@ class TestTileContentReader(unittest.TestCase):
         )
         self.assertEqual(
             tile_content.header.bt_bin_byte_length, expected_batch_table_body_len
+        )
+        self.assertEqual(
+            tile_content.header.tile_byte_length,
+            expected_tile_header_len
+            + expected_feature_table_header_len
+            + expected_feature_table_body_len
+            + expected_batch_table_header_len
+            + expected_batch_table_body_len
+            + expected_gltf_header_len
+            + expected_gltf_json_chunk_len
+            + expected_gltf_bin_chunk_len,
         )
         self.assertDictEqual(
             tile_content.body.batch_table.header.data,
@@ -67,7 +67,7 @@ class TestTileContentReader(unittest.TestCase):
             "------ Tile header ------",
             "magic: b'b3dm'",
             "version: 1",
-            "tile_byte_length: 6312",
+            "tile_byte_length: 6328",
             "json_feature_table_length: 20",
             "bin_feature_table_length: 0",
             "json_batch_table_length: 64",
@@ -76,7 +76,7 @@ class TestTileContentReader(unittest.TestCase):
             "feature_table_batch_length: 2",
             "gltf_magic: b'glTF'",
             "gltf_version: 2.0",
-            "gltf_length: 6184",
+            "gltf_length: 6200",
         ]
         string_components = str(tile_content).split("\n")
         for expected_line, line in zip(expected_string_components, string_components):
