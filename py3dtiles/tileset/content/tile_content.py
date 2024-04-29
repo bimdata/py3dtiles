@@ -30,9 +30,14 @@ class TileContent(ABC):
         with path.open("bw") as f:
             f.write(bytes(tile_arr))
 
-    @abstractmethod
-    def print_info(self) -> None:
-        ...
+    def __str__(self) -> str:
+        return (
+            "------ Tile header ------\n"
+            + (str(self.header) if self.header is not None else "")
+            + "\n"
+            + "------ Tile body ------\n"
+            + (str(self.body) if self.body is not None else "")
+        )
 
     @abstractmethod
     def sync(self) -> None:
@@ -58,6 +63,18 @@ class TileContentHeader(ABC):
         self.bt_bin_byte_length = 0
         self.bt_length = 0  # number of models in the batch
 
+    def __str__(self) -> str:
+        infos = {
+            "magic": self.magic_value,
+            "version": self.version,
+            "tile_byte_length": self.tile_byte_length,
+            "json_feature_table_length": self.ft_json_byte_length,
+            "bin_feature_table_length": self.ft_bin_byte_length,
+            "json_batch_table_length": self.bt_json_byte_length,
+            "bin_batch_table_length": self.bt_bin_byte_length,
+        }
+        return "\n".join(f"{key}: {value}" for key, value in infos.items())
+
     @staticmethod
     @abstractmethod
     def from_array(array: npt.NDArray[np.uint8]) -> TileContentHeader:
@@ -71,6 +88,10 @@ class TileContentHeader(ABC):
 class TileContentBody(ABC):
     batch_table: BatchTable
     feature_table: FeatureTable[Any, Any]
+
+    @abstractmethod
+    def __str__(self) -> str:
+        ...
 
     @abstractmethod
     def to_array(self) -> npt.NDArray[np.uint8]:

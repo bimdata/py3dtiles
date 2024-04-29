@@ -382,7 +382,7 @@ https://docs.ogc.org/cs/22-025r4/22-025r4.html#toc27
     >>>
     >>> from py3dtiles.tileset.content import B3dm, read_binary_tile_content
     >>>
-    >>> filename = Path('tests/fixtures/dragon_low.b3dm')
+    >>> filename = Path('tests/fixtures/buildings.b3dm')
     >>>
     >>> # read the file
     >>> b3dm = read_binary_tile_content(filename)
@@ -398,16 +398,16 @@ https://docs.ogc.org/cs/22-025r4/22-025r4.html#toc27
     >>> b3dm_header.magic_value
     b'b3dm'
     >>> b3dm_header.tile_byte_length
-    47246
+    6312
     >>>
     >>> # extract the glTF
     >>> gltf = b3dm.body.gltf
     >>> gltf
-    <py3dtiles.tileset.content.gltf.GlTF object at 0x...>
+    GLTF2(extensions={}, extras={}, accessors=[Accessor(extensions={}, extras={}, bufferView=0, byteOffset=0, componentType=5126, normalized=False, count=177, type='VEC3', sparse=None, max=[14.71875, 12.5, 10.149993896484375], min=[-20.03125, -16.0, -9.850006103515625], name=None), Accessor(extensions={}, extras={}, bufferView=1, byteOffset=0, componentType=5126, normalized=False, count=177, type='VEC3', sparse=None, max=[1, 1, 1], min=[-1, -1, -1], name=None), Accessor(extensions={}, extras={}, bufferView=2, byteOffset=0, componentType=5126, normalized=False, count=177, type='SCALAR', sparse=None, max=[2], min=[0], name=None)], animations=[], asset=Asset(extensions={}, extras={}, generator='py3dtiles', copyright=None, version='2.0', minVersion=None), bufferViews=[BufferView(extensions={}, extras={}, buffer=0, byteOffset=0, byteLength=2124, byteStride=None, target=34962, name=None), BufferView(extensions={}, extras={}, buffer=0, byteOffset=2128, byteLength=2124, byteStride=None, target=34962, name=None), BufferView(extensions={}, extras={}, buffer=0, byteOffset=4256, byteLength=708, byteStride=None, target=34962, name=None)], buffers=[Buffer(extensions={}, extras={}, uri=None, byteLength=4968)], cameras=[], extensionsUsed=[], extensionsRequired=[], images=[], materials=[Material(extensions={}, extras={}, pbrMetallicRoughness=PbrMetallicRoughness(extensions={}, extras={}, baseColorFactor=[1.0, 1.0, 1.0, 1.0], metallicFactor=0.0, roughnessFactor=0.0, baseColorTexture=None, metallicRoughnessTexture=None), normalTexture=None, occlusionTexture=None, emissiveFactor=[0.0, 0.0, 0.0], emissiveTexture=None, alphaMode='OPAQUE', alphaCutoff=0.5, doubleSided=False, name='Material0')], meshes=[Mesh(extensions={}, extras={}, primitives=[Primitive(extensions={}, extras={}, attributes=Attributes(POSITION=0, NORMAL=1, TANGENT=None, TEXCOORD_0=None, TEXCOORD_1=None, COLOR_0=None, JOINTS_0=None, WEIGHTS_0=None, _BATCHID=2), indices=None, mode=4, material=0, targets=[])], weights=[], name=None)], nodes=[Node(extensions={}, extras={}, mesh=0, skin=None, rotation=None, translation=None, scale=None, children=[], matrix=[1.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], camera=None, name=None)], samplers=[], scene=0, scenes=[Scene(extensions={}, extras={}, name=None, nodes=[0])], skins=[], textures=[])
     >>>
     >>> # display gltf header's asset field
-    >>> gltf.header['asset']
-    {'generator': 'OBJ2GLTF', 'premultipliedAlpha': True, 'profile': {'api': 'WebGL', 'version': '1.0'}, 'version': '1.0'}
+    >>> gltf.asset
+    Asset(extensions={}, extras={}, generator='py3dtiles', copyright=None, version='2.0', minVersion=None)
 
 **How to write a .b3dm file**
 
@@ -424,10 +424,10 @@ user responsibility to check the input WKB format before using the `py3dtiles` A
     >>> import numpy as np
     >>>
     >>> from py3dtiles.tilers.b3dm.wkb_utils import TriangleSoup
-    >>> from py3dtiles.tileset.content import B3dm, GlTF
+    >>> from py3dtiles.tileset.content import B3dm
     >>>
     >>> # load a wkb file (ISO WKB format only)
-    >>> wkb = open('tests/fixtures/building.wkb', 'rb').read()
+    >>> wkb = open('tests/fixtures/building/building.wkb', 'rb').read()
     >>>
     >>> # define the geometry's bounding box
     >>> box = [[-8.75, -7.36, -2.05], [8.80, 7.30, 2.05]]
@@ -438,24 +438,22 @@ user responsibility to check the input WKB format before using the `py3dtiles` A
     ...             [0, 1, 0, 5177109.25],
     ...             [0, 0, 1, 247.87364196777344],
     ...             [0, 0, 0, 1]], dtype=float)
-    >>> transform = transform.flatten('F')
     >>>
     >>> # use the TriangleSoup helper class to transform the wkb into arrays
-    >>> # of points and normals
+    >>> # of points and triangles
     >>> ts = TriangleSoup.from_wkb_multipolygon(wkb)
     >>> positions = ts.get_position_array()
     >>> normals = ts.get_normal_array()
-    >>> # generate the glTF part from the binary arrays.
-    >>> # notice that from_binary_arrays accepts array of geometries
-    >>> # for batching purposes.
-    >>> geometry = { 'position': positions, 'normal': normals, 'bbox': box }
-    >>> gltf = GlTF.from_binary_arrays([geometry], transform)
-    >>>
-    >>> # create a b3dm directly from the glTF.
-    >>> b3dm = B3dm.from_gltf(gltf)
-    >>>
+    >>> # Create a b3dm directly from the arrays of geometries.
+    >>> # It stores the data in GlTF format in the tile body.
+    >>> tile_content = B3dm.from_numpy_arrays(
+    ...     ts.vertices,
+    ...     ts.triangle_indices,
+    ...     normal=ts.compute_normals(),
+    ...     transform=transform,
+    ... )
     >>> # to save our tile content as a .b3dm file
-    >>> b3dm.save_as(Path("mymodel.b3dm"))
+    >>> tile_content.save_as(Path("mymodel.b3dm"))
 
 Tiler tools
 -----------

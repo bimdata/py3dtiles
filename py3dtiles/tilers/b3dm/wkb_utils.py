@@ -20,6 +20,22 @@ class TriangleSoup:
     def __init__(self) -> None:
         self.triangles: list[PolygonAsTriangleType] = []
 
+    @property
+    def vertices(self) -> npt.NDArray[np.float32]:
+        """Extract the unique vertices that compose the triangle set."""
+        return np.unique(np.concatenate(self.triangles[0]), axis=0)
+
+    @property
+    def triangle_indices(self) -> npt.NDArray[np.uint8]:
+        """Express the triangles as triplets of vertex indices."""
+        flattened_triangles = np.concatenate(self.triangles[0])
+        indices = np.full(flattened_triangles.shape[0], dtype=np.uint8, fill_value=-1)
+        for vertex_idx in range(self.vertices.shape[0]):
+            indices[
+                np.all(flattened_triangles == self.vertices[vertex_idx], axis=1)
+            ] = vertex_idx
+        return indices.reshape(-1, 3)
+
     @staticmethod
     def from_wkb_multipolygon(
         wkb: bytes, associated_data: list[bytes] | None = None
@@ -66,15 +82,23 @@ class TriangleSoup:
         """
         Returns a binary array of vertex data
         """
-
         vertex_triangles = self.triangles[1 + index]
         vertex_array = vertex_attribute_to_array(vertex_triangles)
         return b"".join([vertex.tobytes() for vertex in vertex_array])
+
+    def get_data(self, index: int) -> npt.NDArray[np.float32]:
+        vertex_triangles = self.triangles[1 + index]
+        return np.array(vertex_attribute_to_array(vertex_triangles))
 
     def get_normal_array(self) -> bytes:
         """
         Returns a binary array of vertex normals
         """
+        vertex_array = list(self.compute_normals())
+        return b"".join([vertex.tobytes() for vertex in vertex_array])
+
+    def compute_normals(self) -> npt.NDArray[np.float32]:
+        """Compute vertex normals and returns them as a numpy array."""
         normals: list[CoordinateType] = []
         for t in self.triangles[0]:
             U = t[1] - t[0]
@@ -85,9 +109,7 @@ class TriangleSoup:
                 normals.append(np.array([0, 0, 1], dtype=np.float32))
             else:
                 normals.append(N / norm)
-
-        vertex_array = face_attribute_to_array(normals)
-        return b"".join([vertex.tobytes() for vertex in vertex_array])
+        return np.array(face_attribute_to_array(normals))
 
     def get_bbox(self) -> list[npt.NDArray[np.float32]]:
         """

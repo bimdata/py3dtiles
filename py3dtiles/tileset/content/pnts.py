@@ -42,42 +42,6 @@ class Pnts(TileContent):
             + self.header.bt_bin_byte_length
         )
 
-    def print_info(self) -> None:
-        if self.header:
-            th = self.header
-            print("Tile Header")
-            print("-----------")
-            print("Magic Value: ", th.magic_value)
-            print("Version: ", th.version)
-            print("Tile byte length: ", th.tile_byte_length)
-            print("Feature table json byte length: ", th.ft_json_byte_length)
-            print("Feature table bin byte length: ", th.ft_bin_byte_length)
-        else:
-            print("Tile with no header")
-
-        if self.body:
-            fth = self.body.feature_table.header
-            print("")
-            print("Feature Table Header")
-            print("--------------------")
-            print(fth.to_json())
-
-            # first point data
-            if fth.points_length > 0:
-                print("")
-                print("First point")
-                print("-----------")
-                (
-                    feature_position,
-                    feature_color,
-                    feature_normal,
-                ) = self.body.feature_table.get_feature_at(0)
-                print(f"Position: {feature_position}")
-                print(f"Color: {feature_color}")
-                print(f"Normal: {feature_normal}")
-        else:
-            print("Tile with no body")
-
     @staticmethod
     def from_features(
         feature_table_header: PntsFeatureTableHeader,
@@ -245,6 +209,22 @@ class PntsBody(TileContentBody):
     def __init__(self) -> None:
         self.feature_table: PntsFeatureTable = PntsFeatureTable()
         self.batch_table = BatchTable()
+
+    def __str__(self) -> str:
+        infos = {
+            "feature_table_header": self.feature_table.header.to_json(),
+            "points_length": self.feature_table.header.points_length,
+        }
+        if self.feature_table.header.points_length > 0:
+            (
+                feature_position,
+                feature_color,
+                feature_normal,
+            ) = self.feature_table.get_feature_at(0)
+            infos["first_point_position"] = feature_position
+            infos["first_point_color"] = feature_color
+            infos["first_point_normal"] = feature_normal
+        return "\n".join(f"{key}: {value}" for key, value in infos.items())
 
     def to_array(self) -> npt.NDArray[np.uint8]:
         """
