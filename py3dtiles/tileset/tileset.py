@@ -52,15 +52,15 @@ class TileSet(RootProperty[TilesetDictType]):
     def __init__(
         self,
         geometric_error: float = 500,
-        root_uri: Path | None = None,
     ) -> None:
         super().__init__()
         self.asset = Asset(version="1.0")
         self.geometric_error: GeometricErrorType = geometric_error
         self.root_tile = Tile()
-        self.root_uri = root_uri
         self.extensions_used: set[str] = set()
         self.extensions_required: set[str] = set()
+        # root_uri is used when we build a tileset in-memory from an existing tileset and want to download tiles later for instance
+        self.root_uri: Path | None = None
 
     @classmethod
     def from_dict(cls, tileset_dict: TilesetDictType) -> Self:
