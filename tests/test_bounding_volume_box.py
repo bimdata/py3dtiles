@@ -1,8 +1,9 @@
+import math
 import unittest
 from typing import List
 
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 from py3dtiles.tileset import BoundingVolumeBox
 
@@ -138,12 +139,12 @@ class TestBoundingVolumeBox(unittest.TestCase):
         bounding_volume_box = TestBoundingVolumeBox.build_box_sample()
 
         # Assert box hasn't change after transformation with identity matrix
-        transformer = np.identity(4).reshape(-1)
+        transformer = np.identity(4)
         bounding_volume_box.transform(transformer)
         assert_array_equal(bounding_volume_box._box, DUMMY_MATRIX)  # type: ignore [arg-type]
 
         # Assert box is translated by [10, 10, 10] on X,Y, Z axis
-        transformer[12:15] = 10
+        transformer[:, 3] = 10
         bounding_volume_box.transform(transformer)
         # fmt: off
         expected_result = [
@@ -154,17 +155,94 @@ class TestBoundingVolumeBox(unittest.TestCase):
         # fmt: on
         assert_array_equal(bounding_volume_box._box, expected_result)  # type: ignore [arg-type]
 
-        # Assert box is reversed
-        transformer = -np.identity(4).reshape(-1)
-        bounding_volume_box.transform(transformer)
+        # 90° rotation on z axis
+        theta = math.pi / 2
+        c, s = np.cos(theta), np.sin(theta)
         # fmt: off
-        expected_result = [
-            -11, -12, -13, -4,
-            -5, -6, -7, -8,
-            -9, -10, -11, -12,
-        ]
+        transformer = np.array(
+            ((c, -s, 0, 0),
+             (s, c, 0, 0),
+             (0, 0, 1, 0),
+             (0, 0, 0, 1))
+        )
         # fmt: on
-        assert_array_equal(bounding_volume_box._box, expected_result)  # type: ignore [arg-type]
+        bounding_volume_box = BoundingVolumeBox()
+        bounding_volume_box.set_from_list([0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3])
+        bounding_volume_box.transform(transformer)
+        assert bounding_volume_box._box is not None
+        # fmt: off
+        assert_array_almost_equal(
+            bounding_volume_box._box,
+            [
+                # same center
+                0, 0, 0,
+                # x,y half axis inverted
+                0, 1, 0,
+                -2, 0, 0,
+                # same z half axis
+                0, 0, 3,
+            ],
+        )
+        # fmt: on
+
+        # 45° rotation y axis
+        theta = math.pi / 4
+        c, s = np.cos(theta), np.sin(theta)
+        transformer = np.array(
+            # fmt: off
+            ((c, 0, -s, 0),
+             (0, 1, 0, 0),
+             (s, 0, c, 0),
+             (0, 0, 0, 1))
+            # fmt: on
+        )
+        bounding_volume_box = BoundingVolumeBox()
+        bounding_volume_box.set_from_list([0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3])
+        bounding_volume_box.transform(transformer)
+        assert bounding_volume_box._box is not None
+        assert_array_almost_equal(
+            bounding_volume_box._box,
+            # fmt: off
+            [
+                # same center
+                0, 0, 0,
+                # x axis
+                c, 0, s,
+                # y unchanged
+                0, 2, 0,
+                -3 * c, 0, 3 * s,
+            ],
+            # fmt: on
+        )
+
+        # -30° deg rotation on x axis
+        theta = -math.pi / 3
+        c, s = np.cos(theta), np.sin(theta)
+        # fmt: off
+        transformer = np.array(
+            ((1, 0, 0, 0),
+             (0, c, -s, 0),
+             (0, s, c, 0),
+             (0, 0, 0, 1))
+        )
+        # fmt: on
+        bounding_volume_box = BoundingVolumeBox()
+        bounding_volume_box.set_from_list([0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3])
+        bounding_volume_box.transform(transformer)
+        assert bounding_volume_box._box is not None
+        assert_array_almost_equal(
+            bounding_volume_box._box,
+            # fmt: off
+            [
+                # same center
+                0, 0, 0,
+                # x axis unchanged,
+                1, 0, 0,
+                0, 2 * c, 2 * s,
+                0, -3 * s, 3 * c,
+            ],
+            # fmt: on
+        )
 
     def test_get_corners(self) -> None:
         bounding_volume_box = BoundingVolumeBox()
