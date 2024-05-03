@@ -67,7 +67,7 @@ class Tile(RootProperty[TileDictType]):
             tile.set_refine_mode(tile_dict["refine"])
 
         if "transform" in tile_dict:
-            tile.transform = np.array(tile_dict["transform"]).reshape((4, 4))
+            tile.transform = np.array(tile_dict["transform"]).reshape((4, 4), order="F")
 
         if "children" in tile_dict:
             for child in tile_dict["children"]:
@@ -245,10 +245,8 @@ class Tile(RootProperty[TileDictType]):
 
         dict_data = self.add_root_properties_to_dict(dict_data)
 
-        if (
-            self.transform is not None and self.transform is not DEFAULT_TRANSFORMATION
-        ):  # if transform has not the same id
-            dict_data["transform"] = list(self.transform.flatten())
+        if not np.array_equal(self.transform, DEFAULT_TRANSFORMATION):
+            dict_data["transform"] = self.transform.flatten("F").tolist()
 
         if self.children:
             # The children list exists indeed (for technical reasons) yet it
