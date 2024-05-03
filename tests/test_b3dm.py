@@ -1,3 +1,4 @@
+import struct
 import unittest
 from filecmp import cmp
 from pathlib import Path
@@ -23,8 +24,44 @@ class TestTileContentReader(unittest.TestCase):
         expected_batch_table_header_len = 64
         expected_batch_table_body_len = 0
         expected_gltf_header_len = 12  # magic + version + length
-        expected_gltf_json_chunk_len = 1212
-        expected_gltf_bin_chunk_len = 4976
+        expected_gltf_chunk_len = 8  # chunk length + chunk magic (JSON/BIN)
+        expected_gltf_json_chunk_len = 1220
+        expected_gltf_bin_chunk_len = 4968
+        # Test feature table length
+        self.assertEqual(
+            tile_content.header.ft_json_byte_length, expected_feature_table_header_len
+        )
+        self.assertEqual(
+            tile_content.header.ft_bin_byte_length, expected_feature_table_body_len
+        )
+        # Test batch table length
+        self.assertEqual(
+            tile_content.header.bt_json_byte_length, expected_batch_table_header_len
+        )
+        self.assertEqual(
+            tile_content.header.bt_bin_byte_length, expected_batch_table_body_len
+        )
+        # Test gltf length
+        (
+            _,
+            _,
+            length,
+            json_blob_length,
+            _,
+            json_blob,
+            bin_blob_length,
+            _,
+            bin_blob,
+        ) = tile_content.body.gltf.save_to_bytes()
+        self.assertEqual(
+            struct.unpack("<I", json_blob_length)[0], expected_gltf_json_chunk_len
+        )
+        self.assertEqual(len(json_blob), expected_gltf_json_chunk_len)
+        self.assertEqual(
+            struct.unpack("<I", bin_blob_length)[0], expected_gltf_bin_chunk_len
+        )
+        self.assertEqual(len(bin_blob), expected_gltf_bin_chunk_len)
+        # Test total length
         self.assertEqual(
             tile_content.header.tile_byte_length,
             expected_tile_header_len
@@ -33,28 +70,18 @@ class TestTileContentReader(unittest.TestCase):
             + expected_batch_table_header_len
             + expected_batch_table_body_len
             + expected_gltf_header_len
+            + expected_gltf_chunk_len
             + expected_gltf_json_chunk_len
+            + expected_gltf_chunk_len
             + expected_gltf_bin_chunk_len,
-        )
-        self.assertEqual(
-            tile_content.header.ft_json_byte_length, expected_feature_table_header_len
-        )
-        self.assertEqual(
-            tile_content.header.ft_bin_byte_length, expected_feature_table_body_len
-        )
-        self.assertEqual(
-            tile_content.header.bt_json_byte_length, expected_batch_table_header_len
-        )
-        self.assertEqual(
-            tile_content.header.bt_bin_byte_length, expected_batch_table_body_len
         )
         self.assertDictEqual(
             tile_content.body.batch_table.header.data,
             {"id": ["BATIMENT0000000240853073", "BATIMENT0000000240853157"]},
         )
         self.assertEqual(tile_content.body.feature_table.get_batch_length(), 2)
-        # self.assertEqual(len(b"".join(tile_content.body.gltf.save_to_bytes())), 6040)
         self.assertEqual(tile_content.body.gltf.asset.version, "2.0")
+        self.assertEqual(len(b"".join(tile_content.body.gltf.save_to_bytes())), 6216)
 
         path_name = Path("tests/output_tests/buildings.b3dm")
         path_name.parent.mkdir(parents=True, exist_ok=True)
@@ -67,7 +94,7 @@ class TestTileContentReader(unittest.TestCase):
             "------ Tile header ------",
             "magic: b'b3dm'",
             "version: 1",
-            "tile_byte_length: 6312",
+            "tile_byte_length: 6328",
             "json_feature_table_length: 20",
             "bin_feature_table_length: 0",
             "json_batch_table_length: 64",
@@ -76,7 +103,9 @@ class TestTileContentReader(unittest.TestCase):
             "feature_table_batch_length: 2",
             "gltf_magic: b'glTF'",
             "gltf_version: 2.0",
-            "gltf_length: 6184",
+            "gltf_length: 6216",
+            "gltf_json_chunk_length: 1220",
+            "gltf_bin_chunk_length: 4968",
         ]
         string_components = str(tile_content).split("\n")
         for expected_line, line in zip(expected_string_components, string_components):
@@ -120,14 +149,38 @@ class TestTileContentBuilder(unittest.TestCase):
         expected_batch_table_header_len = 0
         expected_batch_table_body_len = 0
         expected_gltf_header_len = 12  # magic + version + length
-        expected_gltf_json_chunk_len = 860
-        expected_gltf_bin_chunk_len = 1112
+        expected_gltf_chunk_len = 8  # chunk length + chunk magic (JSON/BIN)
+        expected_gltf_json_chunk_len = 852
+        expected_gltf_bin_chunk_len = 1104
+        # Test feature table length
         self.assertEqual(
             t.header.ft_json_byte_length, expected_feature_table_header_len
         )
         self.assertEqual(t.header.ft_bin_byte_length, expected_feature_table_body_len)
+        # Test batch table length
         self.assertEqual(t.header.bt_json_byte_length, expected_batch_table_header_len)
         self.assertEqual(t.header.bt_bin_byte_length, expected_batch_table_body_len)
+        # Test gltf length
+        (
+            _,
+            _,
+            length,
+            json_blob_length,
+            _,
+            json_blob,
+            bin_blob_length,
+            _,
+            bin_blob,
+        ) = t.body.gltf.save_to_bytes()
+        self.assertEqual(
+            struct.unpack("<I", json_blob_length)[0], expected_gltf_json_chunk_len
+        )
+        self.assertEqual(len(json_blob), expected_gltf_json_chunk_len)
+        self.assertEqual(
+            struct.unpack("<I", bin_blob_length)[0], expected_gltf_bin_chunk_len
+        )
+        self.assertEqual(len(bin_blob), expected_gltf_bin_chunk_len)
+        # Test total length
         self.assertEqual(
             t.header.tile_byte_length,
             expected_tile_header_len
@@ -136,7 +189,9 @@ class TestTileContentBuilder(unittest.TestCase):
             + expected_batch_table_header_len
             + expected_batch_table_body_len
             + expected_gltf_header_len
+            + expected_gltf_chunk_len
             + expected_gltf_json_chunk_len
+            + expected_gltf_chunk_len
             + expected_gltf_bin_chunk_len,
         )
         self.assertEqual(

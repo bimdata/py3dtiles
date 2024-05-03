@@ -103,9 +103,10 @@ class B3dm(TileContent):
         # build tile body
         b_arr = array[B3dmHeader.BYTE_LENGTH :]
         b3dm_body = B3dmBody.from_array(b3dm_header, b_arr)
+        b3dm = B3dm(b3dm_header, b3dm_body)
+        b3dm.sync()
 
-        # build tile with header and body
-        return B3dm(b3dm_header, b3dm_body)
+        return b3dm
 
 
 class B3dmHeader(TileContentHeader):
@@ -160,11 +161,14 @@ class B3dmBody(TileContentBody):
         self.gltf = pygltflib.GLTF2()
 
     def __str__(self) -> str:
+        gltf_byte_components = self.gltf.save_to_bytes()
         infos = {
             "feature_table_batch_length": self.feature_table.get_batch_length(),
-            "gltf_magic": b"glTF",
+            "gltf_magic": pygltflib.MAGIC,
             "gltf_version": self.gltf.asset.version,
-            "gltf_length": len(b"".join(self.gltf.save_to_bytes())),
+            "gltf_length": len(b"".join(gltf_byte_components)),
+            "gltf_json_chunk_length": len(gltf_byte_components[5]),
+            "gltf_bin_chunk_length": len(gltf_byte_components[-1]),
         }
         return "\n".join(f"{key}: {value}" for key, value in infos.items())
 
