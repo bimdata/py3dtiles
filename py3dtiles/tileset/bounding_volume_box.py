@@ -25,6 +25,7 @@ class BoundingVolumeBox(BoundingVolume[BoundingVolumeBoxDictType]):
     """
     A box bounding volume as defined in the 3DTiles specifications i.e. an
     array of 12 numbers that define an oriented bounding box:
+
     - The first three elements define the x, y, and z values for the
     center of the box.
     - The next three elements (with indices 3, 4, and 5) define the x axis
@@ -51,12 +52,41 @@ class BoundingVolumeBox(BoundingVolume[BoundingVolumeBoxDictType]):
 
     @classmethod
     def from_dict(cls, bounding_volume_box_dict: BoundingVolumeBoxDictType) -> Self:
+        """
+        Construct a BoundingVolumeBox from a dict following the structure of a 3dtiles bounding volume
+        """
         bounding_volume_box = cls()
         bounding_volume_box.set_from_list(bounding_volume_box_dict["box"])
 
         bounding_volume_box.set_properties_from_dict(bounding_volume_box_dict)
 
         return bounding_volume_box
+
+    @classmethod
+    def from_points(cls, points: list[npt.NDArray[np.float64]]) -> BoundingVolumeBox:
+        """
+        Construct a bounding box enclosing all the points.
+
+        Internally call `set_from_points`.
+
+        :return: a new instance of BoundingVolumeBox
+        """
+        result = cls()
+        result.set_from_points(points)
+        return result
+
+    @classmethod
+    def from_list(cls, box_list: npt.ArrayLike) -> BoundingVolumeBox:
+        """
+        Construct a bounding box enclosing all the points.
+
+        Internally call `set_from_points`.
+
+        :return: a new instance of BoundingVolumeBox
+        """
+        result = cls()
+        result.set_from_list(box_list)
+        return result
 
     def get_center(self) -> npt.NDArray[np.float64]:
         if self._box is None:
@@ -109,7 +139,13 @@ class BoundingVolumeBox(BoundingVolume[BoundingVolumeBoxDictType]):
         return True
 
     def set_from_list(self, box_list: npt.ArrayLike) -> None:
-        box = np.array(box_list, dtype=float)
+        """
+        Set the box from a list of coordinates closely matching the 3Dtiles spec.
+
+        :param box_list: An array of 12 numbers that define an oriented bounding box. The first three elements define the x, y, and z values for the center of the box. The next three elements (with indices 3, 4, and 5) define the x axis direction and half-length. The next three elements (indices 6, 7, and 8) define the y axis direction and half-length. The last three elements (indices 9, 10, and 11) define the z axis direction and half-length.
+
+        """
+        box = np.array(box_list, dtype=np.float64)
 
         valid, reason = BoundingVolumeBox.is_valid(box)
         if not valid:
@@ -117,6 +153,11 @@ class BoundingVolumeBox(BoundingVolume[BoundingVolumeBoxDictType]):
         self._box = box
 
     def set_from_points(self, points: list[npt.NDArray[np.float64]]) -> None:
+        """
+        Make the current box only include a list of points. Note: the box limits are replaced, not extended.
+
+        :param points: An array of points
+        """
         box = BoundingVolumeBox.get_box_array_from_point(points)
 
         valid, reason = BoundingVolumeBox.is_valid(box)
@@ -126,6 +167,8 @@ class BoundingVolumeBox(BoundingVolume[BoundingVolumeBoxDictType]):
 
     def set_from_mins_maxs(self, mins_maxs: npt.NDArray[np.float64]) -> None:
         """
+        Set the box from a min and a max.
+
         :param mins_maxs: the array [x_min, y_min, z_min, x_max, y_max, z_max]
                           that is the boundaries of the box along each
                           coordinate axis
@@ -171,6 +214,7 @@ class BoundingVolumeBox(BoundingVolume[BoundingVolumeBoxDictType]):
         together with the added bounding volume. Again (refer above to the
         class definition) the computed fitting bounding volume is generically
         not the smallest one (due to its alignment with the coordinate axis).
+
         :param other: another box bounding volume to be added with this one
         """
         if not isinstance(other, BoundingVolumeBox):

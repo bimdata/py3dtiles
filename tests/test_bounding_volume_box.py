@@ -26,6 +26,11 @@ class TestBoundingVolumeBox(unittest.TestCase):
         bounding_volume_box = BoundingVolumeBox()
         self.assertIs(bounding_volume_box._box, None)
 
+    def test_from_list(self) -> None:
+        bounding_volume_box = BoundingVolumeBox.from_list(DUMMY_MATRIX)
+        box = bounding_volume_box._box
+        assert_array_equal(box, np.array(DUMMY_MATRIX))  # type: ignore [arg-type]
+
     def test_set_from_list(self) -> None:
         bounding_volume_box = BoundingVolumeBox()
         bounding_volume_box.set_from_list(DUMMY_MATRIX)
@@ -60,8 +65,36 @@ class TestBoundingVolumeBox(unittest.TestCase):
             bounding_volume_box.set_from_list(DUMMY_MATRIX[:-1] + [[1]])
         self.assertIs(bounding_volume_box._box, None)
 
+    def test_from_points(self) -> None:
+        bounding_volume_box = BoundingVolumeBox.from_points(
+            [np.array([1, 0, 0]), np.array([2, 0, 0])]
+        )
+        assert bounding_volume_box._box is not None
+        assert_array_equal(
+            bounding_volume_box._box, np.array([1.5, 0, 0, 0.5, 0, 0, 0, 0, 0, 0, 0, 0])
+        )
+
     def test_set_from_points(self) -> None:
-        pass
+        bounding_volume_box = BoundingVolumeBox()
+        bounding_volume_box.set_from_points([np.array([1, 0, 0]), np.array([2, 0, 0])])
+        assert bounding_volume_box._box is not None
+        assert_array_equal(
+            bounding_volume_box._box, np.array([1.5, 0, 0, 0.5, 0, 0, 0, 0, 0, 0, 0, 0])
+        )
+
+        bounding_volume_box = BoundingVolumeBox()
+        bounding_volume_box.set_from_points(
+            [
+                np.array([1, 0, 0]),
+                np.array([2, 0, 0]),
+                np.array([1, 1, 1]),
+                np.array([2, 0, -1]),
+            ]
+        )
+        assert bounding_volume_box._box is not None
+        assert_array_equal(
+            bounding_volume_box._box, [1.5, 0.5, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0, 1]
+        )
 
     def test_set_from_invalid_points(self) -> None:
         # what if I give only one point ?

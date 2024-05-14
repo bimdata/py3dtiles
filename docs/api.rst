@@ -152,8 +152,7 @@ There are 3 types of bounding volume:
     >>> y_half_axis = [3, 3, 3]
     >>> z_half_axis = [1, 0, 0]
     >>>
-    >>> bounding_box = BoundingVolumeBox()
-    >>> bounding_box.set_from_list([*center, *x_half_axis, *y_half_axis, *z_half_axis])
+    >>> bounding_box = BoundingVolumeBox.from_list([*center, *x_half_axis, *y_half_axis, *z_half_axis])
     >>> bounding_box.to_dict()
     {'box': [0.0, 0.0, 0.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 1.0, 0.0, 0.0]}
     >>>
@@ -235,8 +234,7 @@ This basic example aims to show a set of methods to create, manipulate and write
     ... )
     >>> root_tile = Tile(refine_mode="REPLACE", content_uri=Path("root.pnts"))
     >>> root_tile.tile_content = Pnts.from_features(feature_table_header, positions.flatten())
-    >>> root_tile.bounding_volume = BoundingVolumeBox()
-    >>> root_tile.bounding_volume.set_from_points(positions)
+    >>> root_tile.bounding_volume = BoundingVolumeBox.from_points(positions)
     >>>
     >>> # Split the points in 4 parts
     >>> split_len = len(points) // 4
@@ -254,8 +252,7 @@ This basic example aims to show a set of methods to create, manipulate and write
     ...     )
     ...     tile = Tile(content_uri=Path(f"{start}.pnts"))
     ...     tile.tile_content = Pnts.from_features(feature_table_header, positions.flatten())
-    ...     tile.bounding_volume = BoundingVolumeBox()
-    ...     tile.bounding_volume.set_from_points(positions)
+    ...     tile.bounding_volume = BoundingVolumeBox.from_points(positions)
     ...     root_tile.add_child(tile)
     >>>
     >>> # Create the tileset
