@@ -9,16 +9,19 @@ import os
 import sys
 import traceback
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import numpy.typing as npt
-import psycopg2
 
 from py3dtiles.constants import EXIT_CODES
 from py3dtiles.tilers.b3dm.wkb_utils import TriangleSoup
 from py3dtiles.tileset.content import B3dm
 from py3dtiles.tileset.content.batch_table import BatchTable
+
+if TYPE_CHECKING:
+    # we dynamically import it below, but we need it for static analysis
+    import psycopg2
 
 
 class BoundingBox:
