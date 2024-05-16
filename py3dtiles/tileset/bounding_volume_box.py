@@ -112,12 +112,12 @@ class BoundingVolumeBox(BoundingVolume[BoundingVolumeBoxDictType]):
         if self._box is None:
             raise AttributeError("Bounding Volume Box is not defined.")
 
-        transform = transform.flatten()
+        assert transform.shape == (4, 4)
 
         # FIXME: the following code only uses the first three coordinates
         # of the transformation matrix (and basically ignores the fourth
         # column of transform). This looks like some kind of mistake...
-        rotation = np.array([transform[0:3], transform[4:7], transform[8:11]])
+        rotation = np.array([transform[0][0:3], transform[1][0:3], transform[2][0:3]])
 
         center = self._box[0:3]
         x_half_axis = self._box[3:6]
@@ -132,7 +132,7 @@ class BoundingVolumeBox(BoundingVolume[BoundingVolumeBoxDictType]):
         self._box = np.concatenate(
             (new_center, new_x_half_axis, new_y_half_axis, new_z_half_axis)
         )
-        offset = transform[12:15]
+        offset = transform[:, 3][0:3]
         self.translate(offset)
 
     def is_box(self) -> bool:
