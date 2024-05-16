@@ -246,6 +246,33 @@ test-api-doc-examples:
       - tags
       - main
 
+test-cli:
+  stage: 🤞 test
+  image:
+    name: python:3.10-slim
+  cache:
+    - paths:
+      - ${PIP_CACHE_DIR}
+  before_script:
+    - pip install .
+  script:
+    # this is very useful to test if the optional imports are correctly guarded for instance
+    - py3dtiles --help
+    # should complete without errors, as there are only python deps
+    - py3dtiles convert --out test1 ./tests/fixtures/simple.xyz
+    # las
+    - pip install .[las]
+    - py3dtiles convert --out test2 ./tests/fixtures/with_srs_3857.las
+    # ply
+    - pip install .[ply]
+    - py3dtiles convert --out test3 ./tests/fixtures/simple.ply
+  only:
+    refs:
+      - merge_requests
+      - develop
+      - tags
+      - main
+
 docker-build:
   stage: 🚀 deploy
   image: docker:24.0.7
