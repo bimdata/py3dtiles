@@ -163,7 +163,7 @@ test:
 windows-test:
   stage: 🤞 test
   tags:
-    - windows
+    -  saas-windows-medium-amd64
   before_script:
     - Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
     - choco install -y python --version=3.9.5
