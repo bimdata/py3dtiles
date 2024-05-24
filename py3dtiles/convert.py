@@ -27,7 +27,7 @@ from py3dtiles.tilers.base_tiler import Tiler
 from py3dtiles.tilers.base_tiler.message_type import ManagerMessage, WorkerMessageType
 from py3dtiles.tilers.base_tiler.tiler_worker import TilerWorker
 from py3dtiles.tilers.point.point_tiler import PointTiler
-from py3dtiles.utils import str_to_CRS
+from py3dtiles.utils import mkdir_or_raise, str_to_CRS
 
 TOTAL_MEMORY_MB = int(psutil.virtual_memory().total / (1024 * 1024))
 DEFAULT_CACHE_SIZE = int(TOTAL_MEMORY_MB / 10)
@@ -324,11 +324,7 @@ class _Convert:
         """
         # create folder
         self.out_folder = Path(outfolder)
-        if self.out_folder.is_dir():
-            if overwrite:
-                shutil.rmtree(self.out_folder, ignore_errors=True)
-            else:
-                raise FileExistsError(f"Folder '{self.out_folder}' already exists")
+        mkdir_or_raise(self.out_folder, overwrite=overwrite)
 
         self.tilers = [
             PointTiler(
@@ -349,7 +345,6 @@ class _Convert:
         self.verbose = verbose
         self.benchmark = benchmark
 
-        self.out_folder.mkdir()
         self.working_dir = self.out_folder / "tmp"
         self.working_dir.mkdir(parents=True)
 

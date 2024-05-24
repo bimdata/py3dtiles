@@ -1,10 +1,11 @@
 import json
 import multiprocessing
+import os
 import shutil
 from contextlib import nullcontext
 from pathlib import Path
 from time import sleep
-from typing import Generator, Union
+from typing import Union
 from unittest.mock import patch
 
 import laspy
@@ -13,7 +14,7 @@ import plyfile
 from _pytest.python_api import RaisesContext
 from numpy.testing import assert_array_equal
 from pyproj import CRS
-from pytest import fixture, mark, raises
+from pytest import mark, raises
 
 from py3dtiles.convert import convert
 from py3dtiles.exceptions import SrsInMissingException, SrsInMixinException
@@ -22,12 +23,6 @@ from py3dtiles.tileset import TileSet, number_of_points_in_tileset
 from py3dtiles.tileset.content import Pnts
 
 DATA_DIRECTORY = Path(__file__).parent / "fixtures"
-
-
-@fixture()
-def tmp_dir() -> Generator[Path, None, None]:
-    yield Path("tmp/")
-    shutil.rmtree("tmp/", ignore_errors=True)
 
 
 def test_convert(tmp_dir: Path) -> None:
@@ -617,31 +612,62 @@ def test_convert_las_exception_in_run(tmp_dir: Path) -> None:
 
 
 def test_convert_export_folder_already_exists(tmp_dir: Path) -> None:
-    tmp_dir.mkdir()
     assert not (tmp_dir / "tileset.json").exists()
+    assert len(os.listdir(tmp_dir)) == 0
 
-    with raises(FileExistsError, match=f"Folder '{tmp_dir}' already exists"):
+    # folder is empty, ok
+    convert(
+        DATA_DIRECTORY / "simple.xyz",
+        outfolder=tmp_dir,
+        jobs=1,
+    )
+
+    shutil.rmtree(tmp_dir)
+    # folder will be created
+    convert(
+        DATA_DIRECTORY / "simple.xyz",
+        outfolder=tmp_dir,
+        jobs=1,
+    )
+    assert tmp_dir.exists()
+    assert (tmp_dir / "tileset.json").exists()
+
+    # now, subsequent conversion will fail
+    with raises(
+        FileExistsError, match=f"Folder '{tmp_dir}' already exists and is not empty."
+    ):
         convert(
-            DATA_DIRECTORY / "with_srs_3857.las",
+            DATA_DIRECTORY / "simple.xyz",
             outfolder=tmp_dir,
-            crs_out=CRS.from_epsg(4978),
             jobs=1,
         )
 
+    # but overwriting works
     convert(
-        DATA_DIRECTORY / "with_srs_3857.las",
+        DATA_DIRECTORY / "simple.xyz",
         outfolder=tmp_dir,
         overwrite=True,
-        crs_out=CRS.from_epsg(4978),
         jobs=1,
     )
 
     assert (tmp_dir / "tileset.json").exists()
 
+    # finally, one file in folder is enough to bail
+    shutil.rmtree(tmp_dir)
+    tmp_dir.touch()
+    with raises(
+        FileExistsError,
+        match=f"'{tmp_dir}' already exists and is a file. Not deleting it.",
+    ):
+        convert(
+            DATA_DIRECTORY / "simple.xyz",
+            outfolder=tmp_dir,
+            jobs=1,
+        )
+    tmp_dir.unlink()
+
 
 def test_convert_many_point_same_location(tmp_dir: Path) -> None:
-    tmp_dir.mkdir()
-
     # This is how the file has been generated.
     xyz_path = tmp_dir / "pc_with_many_points_at_same_location.xyz"
     xyz_data = np.concatenate(
