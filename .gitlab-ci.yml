@@ -204,19 +204,22 @@ windows-test:
     # Convert the 2 las files
     - py3dtiles convert ../laz/1843_5175.laz --out tilesets/1
     - py3dtiles convert ../laz/1845_5173.laz --out tilesets/2
-    # Validate the first one
-    - npx ts-node src/main.ts --tilesetsDirectory tilesets/1 | tee validator-output.txt
-    - grep \"numErrors\"\:\ 0 validator-output.txt | wc -l | grep 4
-    - grep \"numWarnings\"\:\ 0 validator-output.txt | wc -l | grep 4
-    # Validate the second one to be sure the 2 las are valid
-    - npx ts-node src/main.ts --tilesetsDirectory tilesets/2 | tee validator-output.txt
-    - grep \"numErrors\"\:\ 0 validator-output.txt | wc -l | grep 1
-    - grep \"numWarnings\"\:\ 0 validator-output.txt | wc -l | grep 1
-    # Merge the 2 tilesets and validate the result
+    # merge them
     - py3dtiles merge tilesets/1/tileset.json tilesets/2/tileset.json --output-tileset tilesets/tileset.json
-    - npx ts-node src/main.ts --tilesetsDirectory tilesets | tee validator-output.txt
-    - grep \"numErrors\"\:\ 0 validator-output.txt | wc -l | grep 6
-    - grep \"numWarnings\"\:\ 0 validator-output.txt | wc -l | grep 6
+    # Validate all the tilesets
+    - npx ts-node src/main.ts --writeReports --tilesetsDirectory tilesets
+    # no errors
+    - |
+      for file in $(find ~/workspace/py3dtiles_clean/tilesets -name "tileset*\.report\.json"); do
+        echo "Report for $file:"
+        cat "$file"
+        [ $(jq '.numErrors' "$file") = '0' ]
+      done
+    # no warnings
+    - |
+      for file in $(find ~/workspace/py3dtiles_clean/tilesets -name "tileset*\.report\.json"); do
+        [ $(jq '.numWarnings' "$file") = '0' ]
+      done
   # we depend on external data that are not always available
   allow_failure: true
   only:
