@@ -113,7 +113,7 @@ def test_merge_with_pnts_content_with_memory_tilesets(
     for tile_child in merged_tileset.root_tile.get_all_children():
         assert tile_child.content_uri is None
 
-    assert merged_tileset.geometric_error == 1720.2413811239976
+    assert merged_tileset.geometric_error == 1720.2520618394917
     assert merged_tileset.root_tile.geometric_error == 137.61986044319053
 
     # check if the bounding boxes are consistent
@@ -226,7 +226,7 @@ def test_merge_with_pnts_content_with_file_tilesets(
     ):
         assert result.content_uri == expected.relative_to(merged_tileset_path.parent)
 
-    assert merged_tileset.geometric_error == 1720.2413811239976
+    assert merged_tileset.geometric_error == 1720.2520618394917
     assert merged_tileset.root_tile.geometric_error == 137.61986044319053
 
     # check if the bounding boxes are consistent

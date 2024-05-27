@@ -1,5 +1,4 @@
 import concurrent.futures
-import json
 import pickle
 import struct
 import time
@@ -17,6 +16,7 @@ from py3dtiles.exceptions import (
 )
 from py3dtiles.tilers.base_tiler import Tiler
 from py3dtiles.tileset.content import read_binary_tile_content
+from py3dtiles.tileset.tileset import TileSet
 from py3dtiles.utils import (
     READER_MAP,
     compute_spacing,
@@ -527,40 +527,31 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
         )
 
         pool_executor = concurrent.futures.ProcessPoolExecutor()
-        root_tileset = node_from_name(
-            b"", self.root_aabb, self.root_spacing
-        ).to_tileset(self.out_folder, self.root_scale, None, 0, pool_executor)
+        root_tile = node_from_name(b"", self.root_aabb, self.root_spacing).to_tileset(
+            self.out_folder, self.root_scale, None, 0, pool_executor
+        )
         pool_executor.shutdown()
 
-        if root_tileset is None:
+        if root_tile is None:
             raise RuntimeError(
                 "root_tileset cannot be None here. This is likely a tiler bug."
             )
 
-        root_tileset["transform"] = transform.T.reshape(16).tolist()
-        root_tileset[
-            "refine"
-        ] = "REPLACE"  # The root tile is in the "REPLACE" refine mode
-        if "children" in root_tileset:
-            # And children with the "ADD" refine mode
-            # No need to set this property in their children, they will take the parent value if it is not present
-            for child in root_tileset["children"]:
-                child["refine"] = "ADD"
+        root_tile.transform = transform.reshape(16, order="F")
+        root_tile.set_refine_mode(
+            "REPLACE"
+        )  # The root tile is in the "REPLACE" refine mode
+        # And children with the "ADD" refine mode
+        # No need to set this property in their children, they will take the parent value if it is not present
+        for child in root_tile.children:
+            child.set_refine_mode("ADD")
 
         geometric_error = (
             np.linalg.norm(self.root_aabb[1] - self.root_aabb[0]) / self.root_scale[0]
         )
-        tileset = {
-            "asset": {
-                "version": "1.0",
-            },
-            "geometricError": geometric_error,
-            "root": root_tileset,
-        }
-
-        tileset_path = self.out_folder / "tileset.json"
-        with tileset_path.open("w") as f:
-            f.write(json.dumps(tileset))
+        tileset = TileSet(geometric_error=geometric_error)
+        tileset.root_tile = root_tile
+        tileset.write_as_json(self.out_folder / "tileset.json")
 
     def benchmark(self, benchmark_id: str, startup: float) -> None:
         print(

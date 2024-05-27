@@ -12,7 +12,7 @@ import laspy
 import numpy as np
 import plyfile
 from _pytest.python_api import RaisesContext
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 from pyproj import CRS
 from pytest import mark, raises
 
@@ -34,7 +34,7 @@ def test_convert(tmp_dir: Path) -> None:
     with tileset_path.open() as f:
         tileset = json.load(f)
 
-    expecting_box = [5.0, 5.0, 0.8593, 5.0, 0, 0, 0, 5.0, 0, 0, 0, 0.8593]
+    expecting_box = [5.0, 5.0, 0.8832, 5.0, 0, 0, 0, 5.0, 0, 0, 0, 0.8832]
     box = [round(value, 4) for value in tileset["root"]["boundingVolume"]["box"]]
     assert box == expecting_box
 
@@ -173,7 +173,41 @@ def test_convert_with_srs(tmp_dir: Path) -> None:
     with tileset_path.open() as f:
         tileset = json.load(f)
 
-    expecting_box = [5.1633, 5.1834, 0.1731, 5.1631, 0, 0, 0, 5.1834, 0, 0, 0, 0.1867]
+    assert_array_almost_equal(
+        tileset["root"]["transform"],
+        [
+            99.67987521469695,
+            -7.9951492419151196,
+            0.008110606960175354,
+            0.0,
+            4.123612711579332,
+            51.49818036951855,
+            85.6208691665381,
+            0.0,
+            -6.849693087091023,
+            -85.34644109292454,
+            51.66301092062502,
+            0.0,
+            -436496.4274249223,
+            -5438698.662382579,
+            3292223.375579676,
+            1.0,
+        ],
+    )
+    expecting_box = [
+        5.1686,
+        5.1834,
+        0.1646,
+        5.1684,
+        0.0,
+        0.0,
+        0.0,
+        5.1834,
+        0.0,
+        0.0,
+        0.0,
+        0.1952,
+    ]
     box = [round(value, 4) for value in tileset["root"]["boundingVolume"]["box"]]
     assert box == expecting_box
 
@@ -300,7 +334,20 @@ def test_convert_ply(tmp_dir: Path) -> None:
     with tileset_path.open() as f:
         tileset = json.load(f)
 
-    expecting_box = [4.5437, 5.5984, 1.2002, 4.5437, 0, 0, 0, 5.5984, 0, 0, 0, 1.1681]
+    expecting_box = [
+        4.5437,
+        5.5984,
+        1.1842,
+        4.5437,
+        0.0,
+        0.0,
+        0.0,
+        5.5984,
+        0.0,
+        0.0,
+        0.0,
+        1.1842,
+    ]
     box = [round(value, 4) for value in tileset["root"]["boundingVolume"]["box"]]
     assert box == expecting_box
 
@@ -516,18 +563,18 @@ def test_convert_mix_las_xyz(tmp_dir: Path) -> None:
         tileset = json.load(f)
 
     expecting_box = [
-        3416.2871,
-        5508.4194,
-        -20921.0391,
-        44316.4531,
-        0,
-        0,
-        0,
-        14853.5332,
-        0,
-        0,
-        0,
-        1582.79,
+        3415.9824,
+        5513.0671,
+        -20917.9692,
+        44316.7617,
+        0.0,
+        0.0,
+        0.0,
+        14858.1809,
+        0.0,
+        0.0,
+        0.0,
+        1585.8657,
     ]
     box = [round(value, 4) for value in tileset["root"]["boundingVolume"]["box"]]
     assert box == expecting_box
