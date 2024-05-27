@@ -657,7 +657,7 @@ def test_convert_export_folder_already_exists(tmp_dir: Path) -> None:
     tmp_dir.touch()
     with raises(
         FileExistsError,
-        match=f"'{tmp_dir}' already exists and is a file. Not deleting it.",
+        match=f"'{tmp_dir}' already exists and is not a directory. Not deleting it.",
     ):
         convert(
             DATA_DIRECTORY / "simple.xyz",

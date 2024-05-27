@@ -53,7 +53,7 @@ def test_mkdir_or_raise(tmp_dir: Path) -> None:
 
     with raises(
         FileExistsError,
-        match=f"'{tmp_dir}' already exists and is a file. Not deleting it.",
+        match=f"'{tmp_dir}' already exists and is not a directory. Not deleting it.",
     ):
         mkdir_or_raise(tmp_dir)
     tmp_dir.unlink()
