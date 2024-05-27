@@ -1,0 +1,162 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "py3dtiles"
+authors = [
+    {name = "The Py3DTiles team", email = "contact@oslandia.com"},
+]
+description = "Python module for 3D tiles format"
+readme = "README.rst"
+license = {text = "Apache-2.0"}
+
+classifiers=[
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+
+dynamic = ["version"]
+
+requires-python = ">=3.8,<3.12"
+
+dependencies = [
+    "cython",
+    "earcut==1.1.5",
+    "lz4",
+    "numba",
+    "numpy>=1.24.0,<2.0.0",
+    "psutil",
+    "pyproj",
+    "pyzmq",
+    "pygltflib",
+]
+
+[project.urls]
+Homepage = "https://py3dtiles.org"
+Documentation = "https://py3dtiles.org"
+Repository = "https://gitlab.com/py3dtiles/py3dtiles"
+Issues = "https://gitlab.com/py3dtiles/py3dtiles/-/issues"
+Changelog = "https://gitlab.com/py3dtiles/py3dtiles/-/blob/main/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+include = ["py3dtiles*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "py3dtiles.__version__"}
+
+[project.optional-dependencies]
+postgres = ["psycopg2-binary"]
+las = ["laspy>=2.0,<3.0"]
+ply = ["plyfile"]
+
+dev = [
+    "line_profiler",
+    "pre-commit",
+    "pytest",
+    "pytest-benchmark",
+    "pytest-cov",
+    "mypy",
+    "typing_extensions",
+    "types_psutil",
+    "types_psycopg2",
+]
+
+doc = [
+    "sphinx",
+    "sphinx-multiversion",
+    "sphinxcontrib-apidoc",
+    "sphinx_rtd_theme",
+    "myst-parser",
+]
+
+pack = [
+    "commitizen",
+    "build",
+    "twine",
+    "wheel",
+]
+
+[project.scripts]
+py3dtiles = "py3dtiles.command_line:main"
+
+[tool.pytest.ini_options]
+addopts = """
+    --doctest-modules
+    --junitxml=junit/test-results.xml
+    --cov=py3dtiles
+    --cov-report=xml
+    --cov-report=html
+"""
+
+testpaths = "tests doc"
+
+[tool.coverage.run]
+branch = true
+include = [
+    "py3dtiles/*",
+]
+
+# The 3 lines below are used to get the coverage of the code executed inside a process (issue #126)
+# https://github.com/pytest-dev/pytest-cov/blob/master/CHANGELOG.rst#400-2022-09-28
+concurrency = ["multiprocessing"]
+parallel = true
+sigterm = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "if self.debug:",
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
+
+ignore_errors = true
+show_missing = true
+
+[tool.mypy]
+files = [
+    "py3dtiles/",
+    "tests/"
+]
+
+plugins = [
+    "numpy.typing.mypy_plugin",
+]
+
+strict = true
+
+[[tool.mypy.overrides]]
+module = [ # These 2 modules will be removed of py3dtiles
+    "py3dtiles.export",
+    "py3dtiles.tileset.content.gltf",
+]
+
+ignore_errors = true
+
+# TODO try to remove all these exceptions
+[[tool.mypy.overrides]]
+module = "py3dtiles.tilers.point.node.distance"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "py3dtiles.tilers.point.node.points_grid"
+warn_unused_ignores = false
+
+[[tool.mypy.overrides]]
+module = [
+    "earcut.earcut",
+    "laspy",
+    "lz4.*", # https://github.com/python-lz4/python-lz4/issues/223
+    "numba",
+    "plyfile",
+    "pygltflib",
+    "pyproj",
+    "pytest_benchmark.*",
+]
+
+ignore_missing_imports = true

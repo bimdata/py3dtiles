@@ -133,7 +133,7 @@ test:
       - ${PIP_CACHE_DIR}
   before_script:
     - pip install -U pip setuptools
-    - pip install .[all,dev]
+    - pip install .[postgres,ply,las,dev]
   script:
     - pytest
     # TODO move that in unit tests
@@ -169,7 +169,7 @@ windows-test:
     - choco install -y python --version=3.9.5
     - RefreshEnv
     - python -m pip install --upgrade pip setuptools wheel
-    - python -m pip install .[all,dev]
+    - python -m pip install .[postgres,ply,las,dev]
   script:
     - pytest
     - py3dtiles info tests/fixtures/pointCloudRGB.pnts
@@ -239,7 +239,7 @@ test-api-doc-examples:
     - paths:
       - ${PIP_CACHE_DIR}
   before_script:
-    - pip install .[all]
+    - pip install .[postgres,ply,las,doc]
   script:
     - python tests/test_code_examples.py
   only:
