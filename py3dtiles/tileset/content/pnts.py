@@ -45,7 +45,7 @@ class Pnts(TileContent):
     @staticmethod
     def from_features(
         feature_table_header: PntsFeatureTableHeader,
-        position_array: npt.NDArray[np.float32 | np.uint8],
+        position_array: npt.NDArray[np.float32 | np.uint16],
         color_array: npt.NDArray[np.uint8 | np.uint16] | None = None,
         normal_position: npt.NDArray[np.float32 | np.uint8] | None = None,
     ) -> Pnts:
