@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 from enum import Enum
 from io import StringIO
 from pathlib import Path, PurePath
@@ -173,3 +174,35 @@ def node_from_name(
     aabb = split_aabb(parent_aabb, int(name[-1])) if len(name) > 0 else parent_aabb
     # let's build a new Node
     return Node(name, aabb.astype(np.float64), spacing)
+
+
+def mkdir_or_raise(folder: Path, overwrite: bool = False) -> None:
+    """
+    Create a folder if it can (it doesn't exist or is empty).
+
+    If folder is a file or is not empty, raise a `FileExistsError`.
+
+    If overwrite is True, delete a possibly existing folder. Never delete anything if it is not a folder.
+
+    :param folder: Path object representing the needed folder
+    :param overwrite: Whether this method can brutally remove existing non-empty folder. **Warning** this is ***destructive*** and the equivalent of `rm -rf folder`, you have been warn.
+    :raises FileExistsError: when `folder` is actually a file or a non-empty folder.
+    """
+    if folder.exists():
+        if folder.is_dir():
+            if overwrite:
+                shutil.rmtree(folder, ignore_errors=True)
+                folder.mkdir()
+            else:
+                # check that folder is empty
+                it = folder.iterdir()
+                if any(it):
+                    raise FileExistsError(
+                        f"Folder '{folder}' already exists and is not empty."
+                    )
+        else:
+            raise FileExistsError(
+                f"'{folder}' already exists and is not a directory. Not deleting it."
+            )
+    else:
+        folder.mkdir()
