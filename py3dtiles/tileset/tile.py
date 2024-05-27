@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import numpy as np
 import numpy.typing as npt
@@ -20,6 +20,8 @@ if TYPE_CHECKING:
 
 DEFAULT_TRANSFORMATION = np.identity(4, dtype=np.float64)
 DEFAULT_TRANSFORMATION.setflags(write=False)
+
+T = TypeVar("T", bound=np.generic)
 
 
 class Tile(RootProperty[TileDictType]):
@@ -185,6 +187,38 @@ class Tile(RootProperty[TileDictType]):
         # The information that depends on (is defined by) the children
         # nodes is limited to be bounding volume.
         self.bounding_volume.sync_with_children(self)
+
+    def transform_coords(self, coords: npt.NDArray[T]) -> npt.NDArray[T]:
+        """
+        Transform coordinates according to this tile transformation property.
+
+        NOTE: this only applies the current tile transformation, not the transformation of ancestors
+        """
+        assert coords.ndim == 2
+        assert coords.shape[1] == 3
+        new_coords = np.zeros(coords.shape, dtype=coords.dtype)
+
+        for (i, coord) in enumerate(coords):
+            new_coords[i] = self.transform_coord(coord)
+        return new_coords
+
+    def transform_coord(self, coord: npt.NDArray[T]) -> npt.NDArray[T]:
+        """
+        Transform one coordinate according to this tile transformation property.
+
+        NOTE: this only applies the current tile transformation, not the transformation of ancestors
+        """
+        [x, y, z] = coord
+        # code inspired from three.js
+        e = self.transform.flatten(order="F")
+
+        w = 1 / (e[3] * x + e[7] * y + e[11] * z + e[15])
+
+        x = (e[0] * x + e[4] * y + e[8] * z + e[12]) * w
+        y = (e[1] * x + e[5] * y + e[9] * z + e[13]) * w
+        z = (e[2] * x + e[6] * y + e[10] * z + e[14]) * w
+
+        return np.array([x, y, z])
 
     def write_content(self, root_uri: Path | None) -> None:
         """
