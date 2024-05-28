@@ -115,7 +115,9 @@ def run(
                 classification = np.zeros((len(points.x), 1), dtype=np.uint8)
 
             if "intensity" in f.header.point_format.dimension_names:
-                intensity = np.array(points["intensity"], dtype=np.uint8).reshape(-1, 1)
+                intensity = np.array(points["intensity"] / 256, dtype=np.uint8).reshape(
+                    -1, 1
+                )
             else:
                 intensity = np.zeros((len(points.x), 1), dtype=np.uint8)
 
