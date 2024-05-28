@@ -249,6 +249,9 @@ class PntsBody(TileContentBody):
             infos["first_point_position"] = feature_position
             infos["first_point_color"] = feature_color
             infos["first_point_normal"] = feature_normal
+        infos["batch_table_header"] = self.batch_table.header.data
+        for f in self.batch_table.header.data.keys():
+            infos[f"- first point {f}"] = self.batch_table.get_binary_property(f)[0]
         return "\n".join(f"{key}: {value}" for key, value in infos.items())
 
     def to_array(self) -> npt.NDArray[np.uint8]:
