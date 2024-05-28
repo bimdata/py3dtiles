@@ -264,7 +264,7 @@ def convert(
     :param benchmark: Print summary at the end of the process
     :param rgb: Export rgb attributes.
     :param classification: Export classification attribute.
-    :param intensity: Export intensity attribute.
+    :param intensity: Export intensity attributes. This support is currently limited to unsigned 8 bits integer for ply files, and to integers for xyz files.
     :param color_scale: Scale the color with the specified amount. Useful to lighten or darken black pointclouds with only intensity.
 
     :raises SrsInMissingException: if py3dtiles couldn't find srs informations in input files and srs_in is not specified
@@ -536,7 +536,9 @@ def _init_parser(
         "--classification", help="Export classification attributes", action="store_true"
     )
     parser.add_argument(
-        "--intensity", help="Export intensity attributes", action="store_true"
+        "--intensity",
+        help="Export intensity attributes. This support is currently limited to unsigned 8 bits integer for ply files, and to integers for xyz files.",
+        action="store_true",
     )
     parser.add_argument("--color_scale", help="Force color scale", type=float)
     parser.add_argument(

@@ -7,6 +7,7 @@ import numpy.typing as npt
 from plyfile import PlyData, PlyElement
 from pyproj import Transformer
 
+from py3dtiles.exceptions import FormatSupportMissingException
 from py3dtiles.typing import (
     MetadataReaderType,
     OffsetScaleType,
@@ -129,6 +130,10 @@ def run(
             classification = np.zeros((coords.shape[0], 1), dtype=np.uint8)
 
         if "intensity" in ply_vertices:
+            if ply_vertices["intensity"].dtype != np.uint8:
+                raise FormatSupportMissingException(
+                    "At the moment, only intensity in uint8 format is supported for ply files"
+                )
             intensity = np.array(
                 ply_vertices["intensity"].reshape(-1, 1), dtype=np.uint8
             )
