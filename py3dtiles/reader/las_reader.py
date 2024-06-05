@@ -21,8 +21,8 @@ def get_metadata(path: Path, color_scale=None, fraction: int = 100) -> dict:
 
         # read the first points red channel
         if not color_scale:
-            if 'red' in f.header.point_format.dimension_names:
-                points = next(f.chunk_iterator(10_000))['red']
+            if "red" in f.header.point_format.dimension_names:
+                points = next(f.chunk_iterator(10_000))["red"]
                 if np.max(points) > 255:
                     color_scale = 1.0 / 255
             else:
@@ -35,18 +35,18 @@ def get_metadata(path: Path, color_scale=None, fraction: int = 100) -> dict:
         for p in portions:
             pointcloud_file_portions += [(filename, p)]
 
-        output = subprocess.check_output(['pdal', 'info', '--summary', filename])
-        summary = json.loads(output)['summary']
-        if 'srs' in summary:
-            srs_in = summary['srs'].get('proj4')
+        output = subprocess.check_output(["pdal", "info", "--summary", filename])
+        summary = json.loads(output)["summary"]
+        if "srs" in summary:
+            srs_in = summary["srs"].get("proj4")
 
     return {
-        'portions': pointcloud_file_portions,
-        'aabb': np.array([f.header.mins, f.header.maxs]),
-        'color_scale': color_scale,
-        'srs_in': srs_in,
-        'point_count': point_count,
-        'avg_min': np.array(f.header.mins)
+        "portions": pointcloud_file_portions,
+        "aabb": np.array([f.header.mins, f.header.maxs]),
+        "color_scale": color_scale,
+        "srs_in": srs_in,
+        "point_count": point_count,
+        "avg_min": np.array(f.header.mins),
     }
 
 
@@ -56,7 +56,6 @@ def run(filename: str, offset_scale, portion, queue, transformer):
     """
     try:
         with laspy.open(filename) as f:
-
             point_count = portion[1] - portion[0]
 
             step = min(point_count, max(point_count // 10, 100_000))
@@ -93,14 +92,14 @@ def run(filename: str, offset_scale, portion, queue, transformer):
                 # Read colors
 
                 # todo: attributes
-                if 'red' in f.header.point_format.dimension_names:
-                    red = points['red']
-                    green = points['green']
-                    blue = points['blue']
+                if "red" in f.header.point_format.dimension_names:
+                    red = points["red"]
+                    green = points["green"]
+                    blue = points["blue"]
                 else:
-                    red = points['intensity']
-                    green = points['intensity']
-                    blue = points['intensity']
+                    red = points["intensity"]
+                    green = points["intensity"]
+                    blue = points["intensity"]
 
                 if not color_scale:
                     red = red.astype(np.uint8)
@@ -113,16 +112,52 @@ def run(filename: str, offset_scale, portion, queue, transformer):
 
                 colors = np.vstack((red, green, blue)).transpose()
 
+                #             queue.send_multipart(
+                #                 [
+                #                     ResponseType.NEW_TASK.value,
+                #                     b'',
+                #                     pickle.dumps({'xyz': coords, 'rgb': colors}),
+                #                     struct.pack('>I', len(coords))
+                #                 ], copy=False)
+
+                #         queue.send_multipart([ResponseType.READ.value])
+
+                # except Exception as e:
+                #     print(f'Exception while reading points from las file {filename}')
+                #     raise e
+
+                # -------------------- BIMDATA ------------------------
+
+                """
+                L'idée ici sera de récupérer non pas un seule données mais l'ensemble des données non standard
+                Il pourra donc en avoir aucune / une ou plusieurs
+                la librairie laspy permet d'identifier facilement ces champs 
+                ===> Il sera probablement nécéssaire de récupérer également le type de données / le nombre (VEC3-4-SCALAR...)
+                """
+
+                dip = points["dip"].astype(np.uint8)
+                dip = np.vstack((dip, dip, dip)).transpose()
+
                 queue.send_multipart(
                     [
                         ResponseType.NEW_TASK.value,
-                        b'',
-                        pickle.dumps({'xyz': coords, 'rgb': colors}),
-                        struct.pack('>I', len(coords))
-                    ], copy=False)
+                        b"",
+                        pickle.dumps(
+                            {
+                                "xyz": coords,
+                                "rgb": colors,
+                                "dip": dip,
+                            }
+                        ),
+                        struct.pack(">I", len(coords)),
+                    ],
+                    copy=False,
+                )
 
             queue.send_multipart([ResponseType.READ.value])
 
     except Exception as e:
-        print(f'Exception while reading points from las file {filename}')
+        print(f"Exception while reading points from las file {filename}")
         raise e
+
+        # -------------------- BIMDATA ------------------------
