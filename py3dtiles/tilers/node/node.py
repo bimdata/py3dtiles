@@ -43,6 +43,9 @@ class DummyNode:
 class Node:
     """docstring for Node"""
 
+    # BIMDATA -- rajout de pending_dip
+    # Leslot nous empêche d'utiliser les objects du dessous (en rajoutant des variables supplémentaires non définies ici)
+    # Amliorer cette approche pour un truc plus générique
     __slots__ = (
         "name",
         "aabb",
@@ -52,12 +55,14 @@ class Node:
         "spacing",
         "pending_xyz",
         "pending_rgb",
+        "pending_dip",
         "children",
         "grid",
         "points",
         "dirty",
     )
 
+    # BIMDATA - Ajout de la variaible pending_dip pour récupérer l'information sur le champ "dip"
     def __init__(self, name: bytes, aabb: np.ndarray, spacing: float) -> None:
         super().__init__()
         self.name = name
@@ -70,6 +75,7 @@ class Node:
         self.spacing = spacing
         self.pending_xyz: list[npt.NDArray] = []
         self.pending_rgb: list[npt.NDArray] = []
+        self.pending_dip: list[npt.NDArray] = []
         self.children: list[bytes] | None = None
         self.grid = Grid(self)
         self.points: list[tuple[npt.NDArray, npt.NDArray]] = []
@@ -94,24 +100,29 @@ class Node:
         else:
             self.points = sub_pickle["points"]
 
+    # BIMDATA - Ajout de l'input DIP
     def insert(
         self,
         node_catalog: NodeCatalog,
         scale: float,
         xyz: npt.NDArray,
         rgb: npt.NDArray,
+        dip: npt.NDArray,
         make_empty_node: bool = False,
     ):
         if make_empty_node:
+            # BIMDATA - ajout de la variaile pending_dip
             self.children = []
             self.pending_xyz += [xyz]
             self.pending_rgb += [rgb]
+            self.pending_dip += [dip]
             return
 
         # fastpath
         if self.children is None:
-            self.points.append((xyz, rgb))
-            count = sum([xyz.shape[0] for xyz, rgb in self.points])
+            #  BIMDATA - Ajout de l'input DIP dans les deux lignes ci dessous
+            self.points.append((xyz, rgb, dip))
+            count = sum([xyz.shape[0] for xyz, rgb, dip in self.points])
             # stop subdividing if spacing is 1mm
             if count >= 20000 and self.spacing > 0.001 * scale:
                 self._split(node_catalog, scale)
@@ -120,8 +131,9 @@ class Node:
             return True
 
         # grid based insertion
-        reminder_xyz, reminder_rgb, needs_balance = self.grid.insert(
-            self.aabb[0], self.inv_aabb_size, xyz, rgb
+        # BIMDATA - Ajout de l'input DIP
+        reminder_xyz, reminder_rgb, reminder_dip, needs_balance = self.grid.insert(
+            self.aabb[0], self.inv_aabb_size, xyz, rgb, dip
         )
 
         if needs_balance:
@@ -131,8 +143,10 @@ class Node:
         self.dirty = self.dirty or (len(reminder_xyz) != len(xyz))
 
         if len(reminder_xyz) > 0:
+            #  BIMDATA - Ajout de l'input DIP
             self.pending_xyz += [reminder_xyz]
             self.pending_rgb += [reminder_rgb]
+            self.pending_dip += [reminder_dip]
 
     def needs_balance(self) -> bool:
         if self.children is not None:
@@ -140,19 +154,23 @@ class Node:
         return False
 
     def flush_pending_points(self, catalog: NodeCatalog, scale: float) -> None:
-        for name, xyz, rgb in self._get_pending_points():
-            catalog.get_node(name).insert(catalog, scale, xyz, rgb)
+        #  BIMDATA - Ajout de pending_dip
+        for name, xyz, rgb, dip in self._get_pending_points():
+            catalog.get_node(name).insert(catalog, scale, xyz, rgb, dip)
         self.pending_xyz = []
         self.pending_rgb = []
+        self.pending_dip = []
 
     def dump_pending_points(self) -> list[tuple[bytes, bytes, int]]:
+        #  BIMDATA - Ajout de pending_dip
         result = [
-            (name, pickle.dumps({"xyz": xyz, "rgb": rgb}), len(xyz))
-            for name, xyz, rgb in self._get_pending_points()
+            (name, pickle.dumps({"xyz": xyz, "rgb": rgb, "dip": dip}), len(xyz))
+            for name, xyz, rgb, dip in self._get_pending_points()
         ]
 
         self.pending_xyz = []
         self.pending_rgb = []
+        self.pending_dip = []
         return result
 
     def get_pending_points_count(self) -> int:
@@ -162,8 +180,10 @@ class Node:
         if not self.pending_xyz:
             return
 
+        # BIMDATA Ajout de pending_dip_arr
         pending_xyz_arr = np.concatenate(self.pending_xyz)
         pending_rgb_arr = np.concatenate(self.pending_rgb)
+        pending_dip_arr = np.concatenate(self.pending_dip)
         t = aabb_size_to_subdivision_type(self.aabb_size)
         if t == SubdivisionType.QUADTREE:
             indices = xyz_to_child_index(
@@ -193,19 +213,22 @@ class Node:
             mask = np.where(indices - child == 0)
             xyz = pending_xyz_arr[mask]
             if len(xyz) > 0:
-                yield name, xyz, pending_rgb_arr[mask]
+                # BIMDATA - ajout de pending_dip_arr
+                yield name, xyz, pending_rgb_arr[mask], pending_dip_arr[mask]
 
     def _split(self, node_catalog: NodeCatalog, scale: float) -> None:
         self.children = []
-        for xyz, rgb in self.points:
-            self.insert(node_catalog, scale, xyz, rgb)
+        # BIMDATA - ajout de la variaible dip
+        for xyz, rgb, dip in self.points:
+            self.insert(node_catalog, scale, xyz, rgb, dip)
         self.points = []
 
     def get_point_count(
         self, node_catalog: NodeCatalog, max_depth: int, depth: int = 0
     ) -> int:
         if self.children is None:
-            return sum([xyz.shape[0] for xyz, rgb in self.points])
+            # BIMDATA - ajout de la variaible dip
+            return sum([xyz.shape[0] for xyz, rgb, dip in self.points])
         else:
             count = self.grid.get_point_count()
             if depth < max_depth:
@@ -221,14 +244,17 @@ class Node:
     ) -> np.ndarray:  # todo remove staticmethod
         if data.children is None:
             points = data.points
+            # BIMDATA - ajout de la variaible dip
             xyz = (
-                np.concatenate(tuple([xyz for xyz, rgb in points]))
+                np.concatenate(tuple([xyz for xyz, rgb, dip in points]))
                 .view(np.uint8)
                 .ravel()
             )
             if include_rgb:
-                rgb = np.concatenate(tuple([rgb for xyz, rgb in points])).ravel()
-                result = np.concatenate((xyz, rgb))
+                # BIMDATA - ajout de la variaible dip
+                rgb = np.concatenate(tuple([rgb for xyz, rgb, dip in points])).ravel()
+                dip = np.concatenate(tuple([dip for xyz, rgb, dip in points])).ravel()
+                result = np.concatenate((xyz, rgb, dip))
                 return result
             else:
                 return xyz
