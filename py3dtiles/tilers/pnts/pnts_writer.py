@@ -8,22 +8,39 @@ import numpy as np
 
 import py3dtiles
 from py3dtiles.tileset.content import PntsBody, PntsHeader
-from py3dtiles.tileset.feature_table import FeatureTable, FeatureTableBody, FeatureTableHeader
+from py3dtiles.tileset.feature_table import (
+    FeatureTable,
+    FeatureTableBody,
+    FeatureTableHeader,
+)
 from py3dtiles.tileset.tile_content import TileContent
 from py3dtiles.utils import node_name_to_path, ResponseType
 
 
-def points_to_pnts(name, points, out_folder: Path, include_rgb) -> Tuple[int, Union[Path, None]]:
-    count = int(len(points) / (3 * 4 + (3 if include_rgb else 0)))
+def points_to_pnts(
+    name, points, out_folder: Path, include_rgb
+) -> Tuple[int, Union[Path, None]]:
+    # BIMDATA - add 3 bescause dip is uint8, uint8,uint8
+    count = int(len(points) / (3 * 4 + 3 + 3))
 
     if count == 0:
         return 0, None
 
-    pdt = np.dtype([('X', '<f4'), ('Y', '<f4'), ('Z', '<f4')])
-    cdt = np.dtype([('Red', 'u1'), ('Green', 'u1'), ('Blue', 'u1')]) if include_rgb else None
+    pdt = np.dtype([("X", "<f4"), ("Y", "<f4"), ("Z", "<f4")])
+    cdt = (
+        np.dtype([("Red", "u1"), ("Green", "u1"), ("Blue", "u1")])
+        if include_rgb
+        else None
+    )
+
+    # BIMDATA - Rajout des données dtype de dip : elle sont totalement arbitraire ici
+
+    dip_cdt = np.dtype([("One", "u1"), ("Two", "u1"), ("Three", "u1")])
 
     ft = FeatureTable()
-    ft.header = FeatureTableHeader.from_dtype(pdt, cdt, count)
+    # BIMDATA - Rajout des données dip
+    # Voir pour les extraire en amonts
+    ft.header = FeatureTableHeader.from_dtype(pdt, cdt, dip_cdt, count)
     ft.body = FeatureTableBody.from_array(ft.header, points)
 
     body = PntsBody()
@@ -34,7 +51,7 @@ def points_to_pnts(name, points, out_folder: Path, include_rgb) -> Tuple[int, Un
     tile.header = PntsHeader()
     tile.header.sync(body)
 
-    node_path = node_name_to_path(out_folder, name, '.pnts')
+    node_path = node_name_to_path(out_folder, name, ".pnts")
 
     if node_path.exists():
         raise FileExistsError(f"{node_path} already written")
@@ -59,4 +76,6 @@ def run(sender, data, node_name, folder: Path, write_rgb):
             node = py3dtiles.tilers.node.DummyNode(pickle.loads(root[name]))
             total += node_to_pnts(name, node, folder, write_rgb)[0]
 
-        sender.send_multipart([ResponseType.PNTS_WRITTEN.value, struct.pack('>I', total), node_name])
+        sender.send_multipart(
+            [ResponseType.PNTS_WRITTEN.value, struct.pack(">I", total), node_name]
+        )
