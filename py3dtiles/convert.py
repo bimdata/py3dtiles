@@ -804,6 +804,9 @@ class _Convert:
         self.state.number_of_writing_jobs += 1
 
     def send_points_to_process(self, now):
+        # BIMDATA : on pourra check ici si les données ont bien le dip, ou non ...
+        # vers la fin, mettre un asset 'dip' in pickle.loads(tasks[0])
+
         potentials = sorted(
             # a key (=task) can be in node_to_process and processing_nodes if the node isn't completely processed
             [
@@ -906,8 +909,20 @@ class _Convert:
                 else:
                     rgb = np.zeros(xyz.shape, dtype=np.uint8)
 
+                # BIMDATA : besoin d'un traitement spécifique pour formatter les données additionelle
+                dip = tile_content.body.feature_table.body.dips_arr.reshape(
+                    (fth.points_length, 3)
+                )
+
+                # Bimdata - ajout d'un input supplémentaire sur cette méthode
+                # Voir pour dynamiser cette partie dans le cadre de non données supplémentaire / de donnés multiples
                 root_node.grid.insert(
-                    self.root_aabb[0].astype(np.float32), inv_aabb_size, xyz.copy(), rgb
+                    self.root_aabb[0].astype(np.float32),
+                    inv_aabb_size,
+                    xyz.copy(),
+                    rgb,
+                    dip,
+                    None,
                 )
 
         pnts_writer.node_to_pnts(b"", root_node, self.out_folder, self.rgb)
