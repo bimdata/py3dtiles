@@ -57,10 +57,14 @@ class B3dm(TileContent):
         batch_table: BatchTable | None = None,
         feature_table: B3dmFeatureTable | None = None,
         normal: npt.NDArray[np.float32] | None = None,
+        uvs: npt.NDArray[np.float32] | None = None,
         transform: npt.NDArray[np.float32] | None = None,
+        texture_uri: str | None = None,
     ) -> B3dm:
         b3dm_header = B3dmHeader()
-        b3dm_body = B3dmBody.from_numpy_arrays(points, triangles, normal, transform)
+        b3dm_body = B3dmBody.from_numpy_arrays(
+            points, triangles, normal, uvs, transform, texture_uri
+        )
         if batch_table is not None:
             b3dm_body.batch_table = batch_table
         if feature_table is not None:
@@ -197,7 +201,9 @@ class B3dmBody(TileContentBody):
         points: npt.NDArray[np.float32],
         triangles: npt.NDArray[np.uint8],
         normals: npt.NDArray[np.float32] | None = None,
+        uvs: npt.NDArray[np.float32] | None = None,
         transform: npt.NDArray[np.float32] | None = None,
+        texture_uri: str | None = None,
     ) -> B3dmBody:
         """Build the GlTF structure that corresponds to a triangulated mesh.
 
@@ -218,8 +224,9 @@ class B3dmBody(TileContentBody):
 
         triangle_arrays: list[
             npt.NDArray[np.uint8] | npt.NDArray[np.float32] | None
-        ] = [triangles, points, normals]
-        for array_idx, array in enumerate(triangle_arrays):
+        ] = [triangles, points, normals, uvs]
+        array_idx = 0
+        for array in triangle_arrays:
             if array is None:
                 continue
             (
@@ -234,10 +241,23 @@ class B3dmBody(TileContentBody):
             byte_offset += additional_offset
             gltf_accessors.append(accessor)
             gltf_buffer_views.append(buffer_view)
+            array_idx += 1
 
         node_matrix = list(np.identity(4).flatten("F"))
         if transform is not None:
             node_matrix = list(transform.flatten("F"))
+
+        counter = 1
+        position_index = counter
+        counter += 1
+        normal_index = None
+        if normals is not None:
+            normal_index = counter
+            counter += 1
+        uvs_index = None
+        if uvs is not None:
+            uvs_index = counter
+            counter += 1
 
         gltf = pygltflib.GLTF2(
             scene=0,
@@ -248,9 +268,12 @@ class B3dmBody(TileContentBody):
                     primitives=[
                         pygltflib.Primitive(
                             attributes=pygltflib.Attributes(
-                                POSITION=1, NORMAL=None if normals is None else 2
+                                POSITION=position_index,
+                                NORMAL=normal_index,
+                                TEXCOORD_0=uvs_index,
                             ),
                             indices=0,
+                            material=0,
                         )
                     ]
                 )
@@ -259,6 +282,26 @@ class B3dmBody(TileContentBody):
             bufferViews=gltf_buffer_views,
             buffers=[pygltflib.Buffer(byteLength=byte_offset)],
         )
+        base_color_texture = None if uvs is None else pygltflib.TextureInfo(index=0)
+        gltf.materials.append(
+            pygltflib.Material(
+                pbrMetallicRoughness=pygltflib.PbrMetallicRoughness(
+                    baseColorTexture=base_color_texture
+                )
+            )
+        ),
+        if uvs is not None:
+            gltf.textures.append(pygltflib.Texture(sampler=0, source=0))
+            gltf.samplers.append(
+                pygltflib.Sampler(
+                    magFilter=pygltflib.LINEAR,
+                    minFilter=pygltflib.LINEAR_MIPMAP_LINEAR,
+                    wrapS=pygltflib.REPEAT,
+                    wrapT=pygltflib.REPEAT,
+                )
+            )
+        if texture_uri is not None:
+            gltf.images.append(pygltflib.Image(uri=texture_uri))
         gltf.set_binary_blob(gltf_binary_blob)
         return B3dmBody.from_gltf(gltf)
 
@@ -308,7 +351,10 @@ def prepare_gltf_component(
     array_blob = array.flatten().tobytes()
     additional_offset = len(array_blob)
     component_type = pygltflib.UNSIGNED_BYTE if triangle_indices else pygltflib.FLOAT
-    accessor_type = pygltflib.SCALAR if triangle_indices else pygltflib.VEC3
+    if triangle_indices:
+        accessor_type = pygltflib.SCALAR
+    else:
+        accessor_type = pygltflib.VEC2 if array[0].size == 2 else pygltflib.VEC3
     BUFFER_INDEX = 0  # Everything is stored in the same buffer for sake of simplicity
     buffer_view_target = (
         pygltflib.ELEMENT_ARRAY_BUFFER if triangle_indices else pygltflib.ARRAY_BUFFER
@@ -316,7 +362,7 @@ def prepare_gltf_component(
     accessor = pygltflib.Accessor(
         bufferView=array_idx,
         componentType=component_type,
-        count=array.size,
+        count=array.size if triangle_indices else len(array),
         type=accessor_type,
     )
     buffer_view = pygltflib.BufferView(
