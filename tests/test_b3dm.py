@@ -270,6 +270,40 @@ class TestTexturedTileBuilder(unittest.TestCase):
 
         # t.save_as("/tmp/py3dtiles_test_build_1.b3dm")
 
+    def test_build_batchids(self) -> None:
+        with open("tests/fixtures/square.wkb", "rb") as f:
+            wkb = f.read()
+        ts = TriangleSoup.from_wkb_multipolygon(wkb)
+        ft = B3dmFeatureTable()
+        ft.set_batch_length(2)
+
+        t = B3dm.from_numpy_arrays(
+            ts.vertices,
+            ts.triangle_indices,
+            feature_table=ft,
+            normal=np.array(
+                [
+                    [0.0, 0.0, -1.0],
+                    [0.0, 0.0, -1.0],
+                    [0.0, 0.0, -1.0],
+                    [-0.0, -0.0, -1.0],
+                    [-0.0, -0.0, -1.0],
+                    [-0.0, -0.0, -1.0],
+                ],
+                dtype=np.float32,
+            ),
+            batchids=np.array([0, 0, 0, 1, 1, 1], dtype=np.uint32),
+        )
+
+        # get an array
+        t.to_array()
+        self.assertEqual(t.header.version, 1.0)
+        self.assertEqual(t.header.tile_byte_length, 1480)
+        self.assertEqual(t.header.ft_json_byte_length, 20)
+        self.assertEqual(t.header.ft_bin_byte_length, 0)
+        self.assertEqual(t.header.bt_json_byte_length, 0)
+        self.assertEqual(t.header.bt_bin_byte_length, 0)
+
     def test_build_and_read_gltf_content(self) -> None:
         """See "Create a mesh, convert to bytes, convert back to mesh" section from
         https://gitlab.com/dodgyville/pygltflib/. This test is an adaptation of the pygltflib
