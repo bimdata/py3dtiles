@@ -85,6 +85,7 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
         force_crs_in: bool,
         rgb: bool,
         classification: bool,
+        intensity: bool,
         color_scale: Optional[float],
         cache_size: int,
         verbosity: int,
@@ -97,6 +98,7 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
 
         self.rgb = rgb
         self.classification = classification
+        self.intensity = intensity
         self.color_scale = color_scale
 
         self.crs_in = crs_in
@@ -151,6 +153,7 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
             self.rgb,
             self.color_scale,
             self.classification,
+            self.intensity,
             self.verbosity,
         )
 
@@ -510,12 +513,23 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
                     )
                 else:
                     classification = np.zeros((fth.points_length, 1), dtype=np.uint8)
+
+                if self.intensity:
+                    intensity = (
+                        (tile_content.body.batch_table.get_binary_property("Intensity"))
+                        .astype(np.uint8)
+                        .reshape(-1, 1)
+                    )
+                else:
+                    intensity = np.zeros((fth.points_length, 1), dtype=np.uint8)
+
                 root_node.grid.insert(
                     self.root_aabb[0].astype(np.float32),
                     inv_aabb_size,
                     xyz.copy(),
                     rgb,
                     classification,
+                    intensity,
                 )
 
         pnts_writer.node_to_pnts(
@@ -524,6 +538,7 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
             self.out_folder,
             self.rgb,
             self.classification,
+            self.intensity,
         )
 
         pool_executor = concurrent.futures.ProcessPoolExecutor()

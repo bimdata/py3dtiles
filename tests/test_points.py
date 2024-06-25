@@ -15,6 +15,7 @@ to_insert = np.array([[0.25, 0.25, 0.25]], dtype=np.float32)
 xyz2 = np.array([0.6, 0.6, 0.6], dtype=np.float32)
 rgb = np.zeros((1, 3), dtype=np.uint8)
 classification = np.zeros((1, 1), dtype=np.uint8)
+intensity = np.zeros((1, 1), dtype=np.uint8)
 sample_points = np.array(
     [[x / 30, x / 30, x / 30] for x in range(30)], dtype=np.float32
 )
@@ -33,29 +34,37 @@ def grid(node: Node) -> Grid:
 
 def test_grid_insert(grid: Grid, node: Node) -> None:
     assert (
-        grid.insert(node.aabb[0], node.inv_aabb_size, to_insert, rgb, classification)[
-            0
-        ].shape[0]
+        grid.insert(
+            node.aabb[0], node.inv_aabb_size, to_insert, rgb, classification, intensity
+        )[0].shape[0]
         == 0
     )
     assert (
-        grid.insert(node.aabb[0], node.inv_aabb_size, to_insert, rgb, classification)[
-            0
-        ].shape[0]
+        grid.insert(
+            node.aabb[0], node.inv_aabb_size, to_insert, rgb, classification, intensity
+        )[0].shape[0]
         == 1
     )
 
 
 def test_grid_insert_perf(grid: Grid, node: Node, benchmark: BenchmarkFixture) -> None:
     benchmark(
-        grid.insert, node.aabb[0], node.inv_aabb_size, to_insert, rgb, classification
+        grid.insert,
+        node.aabb[0],
+        node.inv_aabb_size,
+        to_insert,
+        rgb,
+        classification,
+        intensity,
     )
 
 
 def test_grid_getpoints(grid: Grid, node: Node) -> None:
-    grid.insert(node.aabb[0], node.inv_aabb_size, to_insert, rgb, classification)
-    points = grid.get_points(True, True)
-    ref = np.hstack([to_insert.view(np.uint8), rgb, classification])[0]
+    grid.insert(
+        node.aabb[0], node.inv_aabb_size, to_insert, rgb, classification, intensity
+    )
+    points = grid.get_points(True, True, True)
+    ref = np.hstack([to_insert.view(np.uint8), rgb, classification, intensity])[0]
     assert_array_equal(points, ref)
 
 
@@ -63,19 +72,23 @@ def test_grid_getpoints_perf(
     grid: Grid, node: Node, benchmark: BenchmarkFixture
 ) -> None:
     assert (
-        grid.insert(node.aabb[0], node.inv_aabb_size, to_insert, rgb, classification)[
-            0
-        ].shape[0]
+        grid.insert(
+            node.aabb[0], node.inv_aabb_size, to_insert, rgb, classification, intensity
+        )[0].shape[0]
         == 0
     )
-    benchmark(grid.get_points, True, True)
+    benchmark(grid.get_points, True, True, True)
 
 
 def test_grid_get_point_count(grid: Grid, node: Node) -> None:
-    grid.insert(node.aabb[0], node.inv_aabb_size, to_insert, rgb, classification)
-    assert len(grid.get_points(False, False)) == 1 * (3 * 4)
-    grid.insert(node.aabb[0], node.inv_aabb_size, to_insert, rgb, classification)
-    assert len(grid.get_points(False, False)) == 1 * (3 * 4)
+    grid.insert(
+        node.aabb[0], node.inv_aabb_size, to_insert, rgb, classification, intensity
+    )
+    assert len(grid.get_points(False, False, False)) == 1 * (3 * 4) * 1
+    grid.insert(
+        node.aabb[0], node.inv_aabb_size, to_insert, rgb, classification, intensity
+    )
+    assert len(grid.get_points(False, False, False)) == 1 * (3 * 4) * 1
 
 
 def test_is_point_far_enough() -> None:

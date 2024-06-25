@@ -246,6 +246,7 @@ def convert(
     benchmark: Optional[str] = None,
     rgb: bool = True,
     classification: bool = True,
+    intensity: bool = True,
     color_scale: Optional[float] = None,
     verbose: int = False,
 ) -> None:
@@ -263,6 +264,7 @@ def convert(
     :param benchmark: Print summary at the end of the process
     :param rgb: Export rgb attributes.
     :param classification: Export classification attribute.
+    :param intensity: Export intensity attributes. This support is currently limited to unsigned 8 bits integer for ply files, and to integers for xyz files.
     :param color_scale: Scale the color with the specified amount. Useful to lighten or darken black pointclouds with only intensity.
 
     :raises SrsInMissingException: if py3dtiles couldn't find srs informations in input files and srs_in is not specified
@@ -281,6 +283,7 @@ def convert(
         benchmark=benchmark,
         rgb=rgb,
         classification=classification,
+        intensity=intensity,
         color_scale=color_scale,
         verbose=verbose,
     )
@@ -301,6 +304,7 @@ class _Convert:
         benchmark: Optional[str] = None,
         rgb: bool = True,
         classification: bool = True,
+        intensity: bool = True,
         color_scale: Optional[float] = None,
         verbose: int = False,
     ) -> None:
@@ -316,6 +320,7 @@ class _Convert:
         :param benchmark: Print summary at the end of the process
         :param rgb: Export rgb attributes.
         :param classification: Export classification attribute.
+        :param intensity: Export intensity attribute.
         :param color_scale: Scale the color with the specified amount. Useful to lighten or darken black pointclouds with only intensity.
 
         :raises SrsInMissingException: if py3dtiles couldn't find srs informations in input files and srs_in is not specified
@@ -334,6 +339,7 @@ class _Convert:
                 force_crs_in,
                 rgb,
                 classification,
+                intensity,
                 color_scale,
                 cache_size,
                 verbose,
@@ -529,6 +535,11 @@ def _init_parser(
     parser.add_argument(
         "--classification", help="Export classification attributes", action="store_true"
     )
+    parser.add_argument(
+        "--intensity",
+        help="Export intensity attributes. This support is currently limited to unsigned 8 bits integer for ply files, and to integers for xyz files.",
+        action="store_true",
+    )
     parser.add_argument("--color_scale", help="Force color scale", type=float)
     parser.add_argument(
         "--force-srs-in",
@@ -553,6 +564,7 @@ def _main(args: argparse.Namespace) -> None:
             benchmark=args.benchmark,
             rgb=not args.no_rgb,
             classification=args.classification,
+            intensity=args.intensity,
             color_scale=args.color_scale,
             verbose=args.verbose,
         )

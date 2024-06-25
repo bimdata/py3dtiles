@@ -21,17 +21,23 @@ def _insert(
     cells_xyz: List[npt.NDArray[np.float32]],
     cells_rgb: List[npt.NDArray[np.uint8]],
     cells_classification: List[npt.NDArray[np.uint8]],
+    cells_intensity: List[npt.NDArray[np.uint8]],
     aabmin: npt.NDArray[np.float32],
     inv_aabb_size: npt.NDArray[np.float32],
     cell_count: npt.NDArray[np.int32],
     xyz: npt.NDArray[np.float32],
     rgb: npt.NDArray[np.uint8],
     classification: npt.NDArray[np.uint8],
+    intensity: npt.NDArray[np.uint8],
     spacing: float,
     shift: int,
     force: bool = False,
 ) -> tuple[
-    npt.NDArray[np.float32], npt.NDArray[np.uint8], npt.NDArray[np.uint8], bool
+    npt.NDArray[np.float32],
+    npt.NDArray[np.uint8],
+    npt.NDArray[np.uint8],
+    npt.NDArray[np.uint8],
+    bool,
 ] | None:
     keys = xyz_to_key(xyz, cell_count, aabmin, inv_aabb_size, shift)
 
@@ -44,6 +50,7 @@ def _insert(
             cells_classification[k] = np.concatenate(
                 (cells_classification[k], classification[idx])
             )
+            cells_intensity[k] = np.concatenate((cells_intensity[k], intensity[idx]))
         return None
     else:
         notinserted = np.full(len(xyz), False)
@@ -60,6 +67,9 @@ def _insert(
                 cells_classification[k] = np.concatenate(
                     (cells_classification[k], classification[i].reshape(1, 1))
                 )
+                cells_intensity[k] = np.concatenate(
+                    (cells_intensity[k], intensity[i].reshape(1, 1))
+                )
                 if cell_count[0] < 8:
                     needs_balance = needs_balance or cells_xyz[k].shape[0] > 200000
             else:
@@ -69,6 +79,7 @@ def _insert(
             xyz[notinserted],
             rgb[notinserted],
             classification[notinserted],
+            intensity[notinserted],
             needs_balance,
         )
 
@@ -81,6 +92,7 @@ class Grid:
         "cells_xyz",
         "cells_rgb",
         "cells_classification",
+        "cells_intensity",
         "spacing",
     )
 
@@ -93,10 +105,12 @@ class Grid:
         self.cells_xyz = List()
         self.cells_rgb = List()
         self.cells_classification = List()
+        self.cells_intensity = List()
         for _ in range(self.max_key_value):
             self.cells_xyz.append(np.zeros((0, 3), dtype=np.float32))
             self.cells_rgb.append(np.zeros((0, 3), dtype=np.uint8))
             self.cells_classification.append(np.zeros((0, 1), dtype=np.uint8))
+            self.cells_intensity.append(np.zeros((0, 1), dtype=np.uint8))
 
     def __getstate__(self) -> dict[str, Any]:
         return {
@@ -105,6 +119,7 @@ class Grid:
             "cells_xyz": list(self.cells_xyz),
             "cells_rgb": list(self.cells_rgb),
             "cells_classification": list(self.cells_classification),
+            "cells_intensity": list(self.cells_intensity),
         }
 
     def __setstate__(self, state: dict[str, Any]) -> None:
@@ -113,6 +128,7 @@ class Grid:
         self.cells_xyz = List(state["cells_xyz"])
         self.cells_rgb = List(state["cells_rgb"])
         self.cells_classification = List(state["cells_classification"])
+        self.cells_intensity = List(state["cells_intensity"])
 
     @property
     def max_key_value(self) -> int:
@@ -128,20 +144,27 @@ class Grid:
         xyz: npt.NDArray[np.float32],
         rgb: npt.NDArray[np.uint8],
         classification: npt.NDArray[np.uint8],
+        intensity: npt.NDArray[np.uint8],
         force: bool = False,
     ) -> tuple[
-        npt.NDArray[np.float32], npt.NDArray[np.uint8], npt.NDArray[np.uint8], bool
+        npt.NDArray[np.float32],
+        npt.NDArray[np.uint8],
+        npt.NDArray[np.uint8],
+        npt.NDArray[np.uint8],
+        bool,
     ]:
         return _insert(  # type: ignore [no-any-return]
             self.cells_xyz,
             self.cells_rgb,
             self.cells_classification,
+            self.cells_intensity,
             aabmin,
             inv_aabb_size,
             self.cell_count,
             xyz,
             rgb,
             classification,
+            intensity,
             self.spacing,
             int(self.cell_count[0] - 1).bit_length(),
             force,
@@ -174,35 +197,47 @@ class Grid:
         old_cells_xyz = self.cells_xyz
         old_cells_rgb = self.cells_rgb
         old_cells_classification = self.cells_classification
+        old_cells_intensity = self.cells_intensity
         self.cells_xyz = List()
         self.cells_rgb = List()
         self.cells_classification = List()
+        self.cells_intensity = List()
         for _ in range(self.max_key_value):
             self.cells_xyz.append(np.zeros((0, 3), dtype=np.float32))
             self.cells_rgb.append(np.zeros((0, 3), dtype=np.uint8))
             self.cells_classification.append(np.zeros((0, 1), dtype=np.uint8))
+            self.cells_intensity.append(np.zeros((0, 1), dtype=np.uint8))
 
-        for cellxyz, cellrgb, cellclassification in zip(
-            old_cells_xyz, old_cells_rgb, old_cells_classification
+        for cellxyz, cellrgb, cellclassification, cellintensity in zip(
+            old_cells_xyz, old_cells_rgb, old_cells_classification, old_cells_intensity
         ):
             self.insert(
-                aabmin, inv_aabb_size, cellxyz, cellrgb, cellclassification, True
+                aabmin,
+                inv_aabb_size,
+                cellxyz,
+                cellrgb,
+                cellclassification,
+                cellintensity,
+                True,
             )
 
     def get_points(
-        self, include_rgb: bool, include_classification: bool
+        self, include_rgb: bool, include_classification: bool, include_intensity: bool
     ) -> npt.NDArray[np.uint8]:
         xyz = []
         rgb = []
         classification = []
+        intensity = []
         for i in range(len(self.cells_xyz)):
             xyz.append(self.cells_xyz[i].view(np.uint8).ravel())
             if include_rgb:
                 rgb.append(self.cells_rgb[i].ravel())
             if include_classification:
                 classification.append(self.cells_classification[i].ravel())
+            if include_intensity:
+                intensity.append(self.cells_intensity[i].ravel())
 
-        return np.concatenate((*xyz, *rgb, *classification))
+        return np.concatenate((*xyz, *rgb, *classification, *intensity))
 
     def get_point_count(self) -> int:
         pt = 0

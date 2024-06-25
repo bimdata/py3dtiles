@@ -45,7 +45,7 @@ class Pnts(TileContent):
     @staticmethod
     def from_features(
         feature_table_header: PntsFeatureTableHeader,
-        position_array: npt.NDArray[np.float32 | np.uint8],
+        position_array: npt.NDArray[np.float32 | np.uint16],
         color_array: npt.NDArray[np.uint8 | np.uint16] | None = None,
         normal_position: npt.NDArray[np.float32 | np.uint8] | None = None,
     ) -> Pnts:
@@ -93,19 +93,32 @@ class Pnts(TileContent):
 
     @staticmethod
     def from_points(
-        points: npt.NDArray[np.uint8], include_rgb: bool, include_classification: bool
+        points: npt.NDArray[np.uint8],
+        include_rgb: bool,
+        include_classification: bool,
+        include_intensity: bool,
     ) -> Pnts:
         """
         Create a pnts from an uint8 data array containing:
-         - points as SemanticPoint.POSITION
-         - if include_rgb, rgb as SemanticPoint.RGB
-         - if include_classification, classification as a single np.uint8 value that will put in the batch table
+
+        - points as SemanticPoint.POSITION
+        - if include_rgb, rgb as SemanticPoint.RGB
+        - if include_classification, classification as a single np.uint8 value that will be put in the batch table
+        - if include_intensity, intensity as a single np.uint8 value that will be put in the batch table
+
+        :param include_rgb: Whether the points array contains rgb values
+        :param include_classification: Whether the point array contains classification values
+        :param include_intensity: whether the point array contains intensity values
+        :param points: the points array. Contains at least 3
         """
         if len(points) == 0:
             raise ValueError("The argument points cannot be empty.")
 
         point_size = (
-            3 * 4 + (3 if include_rgb else 0) + (1 if include_classification else 0)
+            3 * 4
+            + (3 if include_rgb else 0)
+            + (1 if include_classification else 0)
+            + (1 if include_intensity else 0)
         )
 
         if len(points) % point_size != 0:
@@ -131,6 +144,18 @@ class Pnts(TileContent):
             offset = count * (3 * 4 + (3 if include_rgb else 0))
             bt.add_property_as_binary(
                 "Classification",
+                points[offset : offset + count * sdt.itemsize],
+                "UNSIGNED_BYTE",
+                "SCALAR",
+            )
+
+        if include_intensity:
+            sdt = np.dtype([("Intensity", "u1")])
+            offset = count * (
+                3 * 4 + (3 if include_rgb else 0) + (1 if include_classification else 0)
+            )
+            bt.add_property_as_binary(
+                "Intensity",
                 points[offset : offset + count * sdt.itemsize],
                 "UNSIGNED_BYTE",
                 "SCALAR",
@@ -224,6 +249,9 @@ class PntsBody(TileContentBody):
             infos["first_point_position"] = feature_position
             infos["first_point_color"] = feature_color
             infos["first_point_normal"] = feature_normal
+        infos["batch_table_header"] = self.batch_table.header.data
+        for f in self.batch_table.header.data.keys():
+            infos[f"- first point {f}"] = self.batch_table.get_binary_property(f)[0]
         return "\n".join(f"{key}: {value}" for key, value in infos.items())
 
     def to_array(self) -> npt.NDArray[np.uint8]:

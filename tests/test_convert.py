@@ -246,6 +246,47 @@ def test_convert_simple_xyz(tmp_dir: Path) -> None:
     assert box == expecting_box
 
 
+def test_convert_xyz_rgb_i_c(tmp_dir: Path) -> None:
+    convert(
+        DATA_DIRECTORY / "simple_with_irgb_and_classification.csv",
+        outfolder=tmp_dir,
+        jobs=1,
+    )
+    assert Path(tmp_dir, "tileset.json").exists()
+    assert Path(tmp_dir, "r.pnts").exists()
+
+    xyz_point_count = -1  # compensate for header line
+    with open(DATA_DIRECTORY / "simple_with_irgb_and_classification.csv") as f:
+        while line := f.readline():
+            xyz_point_count += 1 if line != "" else 0
+
+    tileset_path = tmp_dir / "tileset.json"
+    assert xyz_point_count == number_of_points_in_tileset(tileset_path)
+
+    tileset = TileSet.from_file(tmp_dir / "tileset.json")
+    tile_content = Pnts.from_file(tmp_dir / "r.pnts")
+    ft_body = tile_content.body.feature_table.body
+    # assert position
+    world_coords = tileset.root_tile.transform_coords(ft_body.position.reshape(-1, 3))
+    assert_array_equal(
+        world_coords,
+        np.array(
+            [
+                [281345.9, 369123.25, 0.0],
+                [281345.12, 369123.47, 0.0],
+                [281345.56, 369123.88, 0.0],
+            ],
+            dtype=np.float32,
+        ),
+    )
+    assert ft_body.color is not None
+    assert_array_equal(ft_body.color, [0, 0, 200, 10, 0, 0, 0, 10, 0])
+    # batch table
+    bt = tile_content.body.batch_table
+    assert_array_equal(bt.get_binary_property("Intensity"), [3, 1, 2])
+    assert_array_equal(bt.get_binary_property("Classification"), [22, 21, 22])
+
+
 def test_convert_xyz_rgb_i_c_with_srs(tmp_dir: Path) -> None:
     convert(
         DATA_DIRECTORY / "simple_with_irgb_and_classification.csv",
@@ -534,6 +575,57 @@ def test_convert_ply_with_good_classification(tmp_dir: Path) -> None:
     assert np.array_equal(tileset_labels, EXPECTED_LABELS)
     # Clean the test directory
     modified_ply_filename.unlink()
+
+
+def test_convert_ply_with_intensity(tmp_dir: Path) -> None:
+    # Valid feature name, intensity is preserved.
+    convert(
+        DATA_DIRECTORY / "simple_with_intensity.ply",
+        outfolder=tmp_dir,
+        jobs=1,
+        intensity=True,
+    )
+    assert Path(tmp_dir, "tileset.json").exists()
+    assert Path(tmp_dir, "r.pnts").exists()
+
+    tile_content = Pnts.from_file(tmp_dir / "r.pnts")
+    assert_array_equal(
+        tile_content.body.feature_table.body.position,
+        [0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1],
+    )
+    assert "Intensity" in tile_content.body.batch_table.header.data
+    assert_array_equal(
+        [80, 129, 15, 90],
+        tile_content.body.batch_table.get_binary_property("Intensity"),
+    )
+
+
+def test_convert_ply_with_classification_and_intensity(tmp_dir: Path) -> None:
+    # Valid feature name, intensity is preserved.
+    convert(
+        DATA_DIRECTORY / "simple_with_classification_and_intensity.ply",
+        outfolder=tmp_dir,
+        jobs=1,
+        intensity=True,
+    )
+    assert Path(tmp_dir, "tileset.json").exists()
+    assert Path(tmp_dir, "r.pnts").exists()
+
+    tile_content = Pnts.from_file(tmp_dir / "r.pnts")
+    assert_array_equal(
+        tile_content.body.feature_table.body.position,
+        [0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1],
+    )
+    assert "Classification" in tile_content.body.batch_table.header.data
+    assert_array_equal(
+        [1, 2, 2, 1],
+        tile_content.body.batch_table.get_binary_property("Classification"),
+    )
+    assert "Intensity" in tile_content.body.batch_table.header.data
+    assert_array_equal(
+        [80, 129, 15, 90],
+        tile_content.body.batch_table.get_binary_property("Intensity"),
+    )
 
 
 def test_convert_mix_las_xyz(tmp_dir: Path) -> None:

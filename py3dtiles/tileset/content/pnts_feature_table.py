@@ -298,7 +298,7 @@ class PntsFeatureTableHeader(FeatureTableHeader):
 
 class PntsFeatureTableBody(FeatureTableBody):
     def __init__(self) -> None:
-        self.position: npt.NDArray[np.float32 | np.uint8] = np.array(
+        self.position: npt.NDArray[np.float32 | np.uint16] = np.array(
             [], dtype=np.float32
         )
 
@@ -424,7 +424,7 @@ class PntsFeatureTable(FeatureTable[PntsFeatureTableHeader, PntsFeatureTableBody
     @staticmethod
     def from_features(
         feature_table_header: PntsFeatureTableHeader,
-        position_array: npt.NDArray[np.float32 | np.uint8],
+        position_array: npt.NDArray[np.float32 | np.uint16],
         color_array: npt.NDArray[np.uint8 | np.uint16] | None = None,
         normal_position: npt.NDArray[np.float32 | np.uint8] | None = None,
     ) -> PntsFeatureTable:
@@ -464,7 +464,7 @@ class PntsFeatureTable(FeatureTable[PntsFeatureTableHeader, PntsFeatureTableBody
     def get_feature_at(
         self, index: int
     ) -> tuple[
-        npt.NDArray[np.float32 | np.uint8],
+        npt.NDArray[np.float32 | np.uint16],
         npt.NDArray[np.uint8 | np.uint16] | None,
         npt.NDArray[np.float32 | np.uint8] | None,
     ]:
@@ -474,7 +474,9 @@ class PntsFeatureTable(FeatureTable[PntsFeatureTableHeader, PntsFeatureTableBody
 
         return position, color, normal
 
-    def get_feature_position_at(self, index: int) -> npt.NDArray[np.float32 | np.uint8]:
+    def get_feature_position_at(
+        self, index: int
+    ) -> npt.NDArray[np.float32 | np.uint16]:
         if index >= self.nb_points():
             raise IndexError(
                 f"The index {index} is out of range. The number of point is {self.nb_points()}"
