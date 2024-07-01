@@ -150,7 +150,7 @@ class TestTileContentBuilder(unittest.TestCase):
         expected_batch_table_body_len = 0
         expected_gltf_header_len = 12  # magic + version + length
         expected_gltf_chunk_len = 8  # chunk length + chunk magic (JSON/BIN)
-        expected_gltf_json_chunk_len = 852
+        expected_gltf_json_chunk_len = 1076
         expected_gltf_bin_chunk_len = 1104
         # Test feature table length
         self.assertEqual(
@@ -241,17 +241,29 @@ class TestTexturedTileBuilder(unittest.TestCase):
             ts.vertices,
             ts.triangle_indices,
             normal=ts.compute_normals(),
-            # uvs=ts.get_data(0),  # TODO: support UV data in GlTF
+            uvs=ts.get_data(0),
+            texture_uri="tests/fixtures/squaretexture.jpg",
         )
 
         # get an array
         t.to_array()
         self.assertEqual(t.header.version, 1.0)
-        # self.assertEqual(t.header.tile_byte_length, 1556)
+        self.assertEqual(t.header.tile_byte_length, 1652)
         self.assertEqual(t.header.ft_json_byte_length, 0)
         self.assertEqual(t.header.ft_bin_byte_length, 0)
         self.assertEqual(t.header.bt_json_byte_length, 0)
         self.assertEqual(t.header.bt_bin_byte_length, 0)
+
+        t_without_normals = B3dm.from_numpy_arrays(
+            ts.vertices,
+            ts.triangle_indices,
+            uvs=ts.get_data(0),
+            texture_uri="tests/fixtures/squaretexture.jpg",
+        )
+
+        # get an array
+        t_without_normals.to_array()
+        self.assertEqual(t_without_normals.header.tile_byte_length, 1412)
 
         # t.save_as("/tmp/py3dtiles_test_build_1.b3dm")
 
@@ -283,7 +295,7 @@ class TestTexturedTileBuilder(unittest.TestCase):
             ],
             dtype="uint8",
             count=triangles_accessor.count,
-        ).reshape((-1, 3))
+        ).reshape(int(triangles_accessor.count / 3), 3)
         np.testing.assert_array_equal(triangles, ts.triangle_indices)
 
         points_accessor = gltf.accessors[
@@ -297,8 +309,8 @@ class TestTexturedTileBuilder(unittest.TestCase):
                 + points_buffer_view.byteLength
             ],
             dtype="float32",
-            count=points_accessor.count,
-        ).reshape((-1, 3))
+            count=points_accessor.count * 3,
+        ).reshape(points_accessor.count, 3)
         np.testing.assert_array_equal(points, ts.vertices)
 
         normals_accessor = gltf.accessors[
@@ -312,6 +324,6 @@ class TestTexturedTileBuilder(unittest.TestCase):
                 + normals_buffer_view.byteLength
             ],
             dtype="float32",
-            count=normals_accessor.count,
-        ).reshape((-1, 3))
+            count=normals_accessor.count * 3,
+        ).reshape(normals_accessor.count, 3)
         np.testing.assert_array_equal(normals, ts.compute_normals())
