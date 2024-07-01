@@ -150,7 +150,7 @@ class TestTileContentBuilder(unittest.TestCase):
         expected_batch_table_body_len = 0
         expected_gltf_header_len = 12  # magic + version + length
         expected_gltf_chunk_len = 8  # chunk length + chunk magic (JSON/BIN)
-        expected_gltf_json_chunk_len = 1076
+        expected_gltf_json_chunk_len = 1204
         expected_gltf_bin_chunk_len = 1104
         # Test feature table length
         self.assertEqual(
@@ -248,11 +248,14 @@ class TestTexturedTileBuilder(unittest.TestCase):
         # get an array
         t.to_array()
         self.assertEqual(t.header.version, 1.0)
-        self.assertEqual(t.header.tile_byte_length, 1652)
+        self.assertEqual(t.header.tile_byte_length, 1692)
         self.assertEqual(t.header.ft_json_byte_length, 0)
         self.assertEqual(t.header.ft_bin_byte_length, 0)
         self.assertEqual(t.header.bt_json_byte_length, 0)
         self.assertEqual(t.header.bt_bin_byte_length, 0)
+        accessors = t.body.gltf.accessors
+        self.assertEqual(accessors[1].min, [0, 0, 0])
+        self.assertEqual(accessors[1].max, [10, 10, 0])
 
         t_without_normals = B3dm.from_numpy_arrays(
             ts.vertices,
@@ -263,7 +266,7 @@ class TestTexturedTileBuilder(unittest.TestCase):
 
         # get an array
         t_without_normals.to_array()
-        self.assertEqual(t_without_normals.header.tile_byte_length, 1412)
+        self.assertEqual(t_without_normals.header.tile_byte_length, 1452)
 
         # t.save_as("/tmp/py3dtiles_test_build_1.b3dm")
 

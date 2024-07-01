@@ -282,6 +282,8 @@ class B3dmBody(TileContentBody):
             bufferViews=gltf_buffer_views,
             buffers=[pygltflib.Buffer(byteLength=byte_offset)],
         )
+        gltf_accessors[position_index].min = np.min(points, axis=0).tolist()
+        gltf_accessors[position_index].max = np.max(points, axis=0).tolist()
         base_color_texture = None if uvs is None else pygltflib.TextureInfo(index=0)
         gltf.materials.append(
             pygltflib.Material(
