@@ -135,9 +135,6 @@ class BoundingVolumeBox(BoundingVolume[BoundingVolumeBoxDictType]):
         offset = transform[:, 3][0:3]
         self.translate(offset)
 
-    def is_box(self) -> bool:
-        return True
-
     def set_from_list(self, box_list: npt.ArrayLike) -> None:
         """
         Set the box from a list of coordinates closely matching the 3Dtiles spec.
@@ -240,7 +237,7 @@ class BoundingVolumeBox(BoundingVolume[BoundingVolumeBoxDictType]):
 
             bounding_volume = copy.deepcopy(child.bounding_volume)
             bounding_volume.transform(child.transform)
-            if not bounding_volume.is_box():
+            if not isinstance(bounding_volume, BoundingVolumeBox):
                 raise TilerException(
                     "All children must also have a box as bounding volume "
                     "if the parent has a bounding box"
