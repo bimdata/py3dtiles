@@ -1,13 +1,12 @@
 from pathlib import Path
 
 import numpy as np
-import pytest
 from numpy.testing import assert_array_equal
 from pytest_benchmark.fixture import BenchmarkFixture
 
 from py3dtiles.tilers.point.node import Grid, Node
 from py3dtiles.tilers.point.node.distance import is_point_far_enough
-from py3dtiles.utils import compute_spacing, node_name_to_path
+from py3dtiles.utils import node_name_to_path
 
 # test point
 xyz = np.array([0.25, 0.25, 0.25], dtype=np.float32)
@@ -19,17 +18,6 @@ intensity = np.zeros((1, 1), dtype=np.uint8)
 sample_points = np.array(
     [[x / 30, x / 30, x / 30] for x in range(30)], dtype=np.float32
 )
-
-
-@pytest.fixture
-def node() -> Node:
-    bbox = np.array([[0, 0, 0], [2, 2, 2]])
-    return Node(b"noeud", bbox, compute_spacing(bbox))
-
-
-@pytest.fixture
-def grid(node: Node) -> Grid:
-    return Grid(node)
 
 
 def test_grid_insert(grid: Grid, node: Node) -> None:

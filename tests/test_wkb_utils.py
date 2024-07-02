@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 from typing import List
 
@@ -11,84 +10,6 @@ from py3dtiles.tilers.b3dm import wkb_utils
 from py3dtiles.tilers.b3dm.wkb_utils import PolygonType
 
 DATA_DIRECTORY = Path(__file__).parent / "fixtures"
-
-
-@pytest.fixture
-def clockwise_star() -> PolygonType:
-    with open("tests/fixtures/star_clockwise.geojson") as f:
-        star_geo = json.load(f)
-        coords: PolygonType = star_geo["features"][0]["geometry"]["coordinates"]
-        # triangulate expects the coordinates to be numpy array
-        polygon = coords[0]
-        for i in range(len(polygon)):
-            polygon[i] = np.array(polygon[i], dtype=np.float32)
-        # triangulate implicitly use wkb format, which is not self-closing
-        del polygon[-1]
-        return coords
-
-
-@pytest.fixture
-def counterclockwise_star() -> PolygonType:
-    with open("tests/fixtures/star_counterclockwise.geojson") as f:
-        star_geo = json.load(f)
-        coords: PolygonType = star_geo["features"][0]["geometry"]["coordinates"]
-        # triangulate expects the coordinates to be numpy array
-        polygon = coords[0]
-        for i in range(len(polygon)):
-            polygon[i] = np.array(polygon[i], dtype=np.float32)
-        # triangulate implicitly use wkb format, which is not self-closing
-        del polygon[-1]
-        return coords
-
-
-@pytest.fixture
-def counterclockwise_zx_star() -> PolygonType:
-    with open("tests/fixtures/star_zx_counter_clockwise.geojson") as f:
-        star_geo = json.load(f)
-        coords: PolygonType = star_geo["features"][0]["geometry"]["coordinates"]
-        # triangulate expects the coordinates to be numpy array
-        polygon = coords[0]
-        for i in range(len(polygon)):
-            polygon[i] = np.array(polygon[i], dtype=np.float32)
-        # triangulate implicitly use wkb format, which is not self-closing
-        del polygon[-1]
-        return coords
-
-
-@pytest.fixture
-def big_poly() -> PolygonType:
-    with open("tests/fixtures/big_polygon_counter_clockwise.geojson") as f:
-        big_poly = json.load(f)
-        coords: PolygonType = big_poly["features"][0]["geometry"]["coordinates"]
-        # triangulate expects the coordinates to be numpy array
-        polygon = coords[0]
-        for i in range(len(polygon)):
-            polygon[i] = np.array(polygon[i], dtype=np.float32)
-        # triangulate implicitly use wkb format, which is not self-closing
-        del polygon[-1]
-        return coords
-
-
-@pytest.fixture
-def complex_polygon() -> PolygonType:
-    # tricky polygon 1:
-    # 0x---------x 4
-    #   \        |
-    #    \       |
-    #   1 x      |
-    #    /       |
-    #   /        |
-    # 2x---------x 3
-    # the first few vertices seems to indicate an inverse winding order
-    return [
-        [
-            np.array([0, 1, 0], dtype=np.float32),
-            np.array([0.5, 0.5, 0], dtype=np.float32),
-            np.array([0, 0, 0], dtype=np.float32),
-            np.array([1, 0, 0], dtype=np.float32),
-            np.array([1, 1, 0], dtype=np.float32),
-        ]
-    ]
 
 
 def test_triangulate_winding_order_simple() -> None:

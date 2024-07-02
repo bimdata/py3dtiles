@@ -1,28 +1,13 @@
 import copy
-import shutil
 from pathlib import Path
-from typing import Generator
 
 import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
-from py3dtiles.convert import convert
 from py3dtiles.exceptions import InvalidTilesetError, TilerException
 from py3dtiles.tileset import BoundingVolumeBox, Tile
 from py3dtiles.tileset.content import Pnts, PntsBody, PntsHeader
-
-DATA_DIRECTORY = Path(__file__).parent / "fixtures"
-
-
-@pytest.fixture
-def tmp_dir() -> Generator[Path, None, None]:
-    tmp_dir = Path("tmp/")
-    tmp_dir.mkdir(exist_ok=True)
-    convert(DATA_DIRECTORY / "simple.xyz", outfolder=tmp_dir, overwrite=True)
-    yield tmp_dir
-    print("cleanup")
-    shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
 class TestTileContentManagement:
@@ -36,7 +21,7 @@ class TestTileContentManagement:
         ):
             tile.get_or_fetch_content(tmp_dir)
 
-    def test_with_tile_content(self, tmp_dir: Path) -> None:
+    def test_with_tile_content(self) -> None:
         tile = Tile()
 
         pnts = Pnts(PntsHeader(), PntsBody())
@@ -45,12 +30,12 @@ class TestTileContentManagement:
         assert tile.get_or_fetch_content(None) == pnts
         assert tile.content_uri is None
 
-    def test_with_path_content(self, tmp_dir: Path) -> None:
+    def test_with_path_content(self, tmp_dir_with_content: Path) -> None:
         tile_path = Path("r.pnts")
         tile = Tile(content_uri=tile_path)
 
         assert tile.tile_content is None
-        assert isinstance(tile.get_or_fetch_content(tmp_dir), Pnts)
+        assert isinstance(tile.get_or_fetch_content(tmp_dir_with_content), Pnts)
         assert isinstance(tile.tile_content, Pnts)
 
     def test_write(self, tmp_dir: Path) -> None:

@@ -1,63 +1,15 @@
-import shutil
 from pathlib import Path
-from typing import Generator
 
-import pytest
 from numpy.testing import assert_array_almost_equal, assert_array_equal
-from pyproj import CRS
 
-from py3dtiles.convert import convert
 from py3dtiles.merger import merge, merge_from_files, merge_with_pnts_content
 from py3dtiles.tileset import BoundingVolumeBox, TileSet
 from py3dtiles.tileset.content import Pnts, read_binary_tile_content
 
-DATA_DIRECTORY = Path(__file__).parent / "fixtures"
 
-TMP_TILESET_FOLDER = Path("tmp/")
-
-
-@pytest.fixture(scope="module")
-def tileset_path_1() -> Generator[Path, None, None]:
-    tileset_folder = TMP_TILESET_FOLDER / "1"
-    tileset_folder.parent.mkdir(exist_ok=True)
-
-    convert(
-        DATA_DIRECTORY / "with_srs_3857.las",
-        crs_out=CRS.from_epsg(3950),
-        outfolder=tileset_folder,
-    )
-    yield tileset_folder / "tileset.json"
-    shutil.rmtree(TMP_TILESET_FOLDER, ignore_errors=True)
-
-
-@pytest.fixture
-def tileset_1(tileset_path_1: Path) -> TileSet:
-    tileset = TileSet.from_file(tileset_path_1)
-    tileset.root_tile.get_or_fetch_content(tileset_path_1.parent)
-
-    return tileset
-
-
-@pytest.fixture(scope="module")
-def tileset_path_2() -> Generator[Path, None, None]:
-    tileset_folder = TMP_TILESET_FOLDER / "2"
-    tileset_folder.parent.mkdir(exist_ok=True)
-
-    convert(DATA_DIRECTORY / "with_srs_3950.las", outfolder=tileset_folder)
-
-    yield tileset_folder / "tileset.json"
-    shutil.rmtree(TMP_TILESET_FOLDER, ignore_errors=True)
-
-
-@pytest.fixture
-def tileset_2(tileset_path_2: Path) -> TileSet:
-    tileset = TileSet.from_file(tileset_path_2)
-    tileset.root_tile.get_or_fetch_content(tileset_path_2.parent)
-
-    return tileset
-
-
-def test_merge_with_memory_tilesets(tileset_1: TileSet, tileset_2: TileSet) -> None:
+def test_merge_with_memory_tilesets(
+    tmp_dir: Path, tileset_1: TileSet, tileset_2: TileSet
+) -> None:
     merged_tileset = merge([tileset_1, tileset_2])
 
     assert len(merged_tileset.root_tile.get_all_children()) == 2
@@ -79,7 +31,7 @@ def test_merge_with_memory_tilesets(tileset_1: TileSet, tileset_2: TileSet) -> N
 
     # check if the bounding boxes are consistent
     for tile_child in merged_tileset.root_tile.get_all_children():
-        sub_tileset = tile_child.get_or_fetch_content(TMP_TILESET_FOLDER)
+        sub_tileset = tile_child.get_or_fetch_content(tmp_dir)
         assert isinstance(sub_tileset, TileSet)
 
         sub_root_bounding_box = sub_tileset.root_tile.bounding_volume
@@ -99,7 +51,7 @@ def test_merge_with_memory_tilesets(tileset_1: TileSet, tileset_2: TileSet) -> N
 
 
 def test_merge_with_pnts_content_with_memory_tilesets(
-    tileset_1: TileSet, tileset_2: TileSet
+    tmp_dir: Path, tileset_1: TileSet, tileset_2: TileSet
 ) -> None:
     merged_tileset = merge_with_pnts_content([tileset_1, tileset_2])
 
@@ -118,7 +70,7 @@ def test_merge_with_pnts_content_with_memory_tilesets(
 
     # check if the bounding boxes are consistent
     for tile_child in merged_tileset.root_tile.get_all_children():
-        sub_tileset = tile_child.get_or_fetch_content(TMP_TILESET_FOLDER)
+        sub_tileset = tile_child.get_or_fetch_content(tmp_dir)
         assert isinstance(sub_tileset, TileSet)
 
         sub_root_bounding_box = sub_tileset.root_tile.bounding_volume
@@ -141,11 +93,13 @@ def test_merge_with_pnts_content_with_memory_tilesets(
     assert merged_pnts.body.feature_table.nb_points() == 790
 
 
-def test_merge_with_file_tilesets(tileset_path_1: Path, tileset_path_2: Path) -> None:
+def test_merge_with_file_tilesets(
+    tmp_dir: Path, tileset_path_1: Path, tileset_path_2: Path
+) -> None:
     tileset_1 = TileSet.from_file(tileset_path_1)
     tileset_2 = TileSet.from_file(tileset_path_2)
 
-    merged_tileset_path = TMP_TILESET_FOLDER / "merged_tileset.json"
+    merged_tileset_path = tmp_dir / "merged_tileset.json"
 
     merge_from_files(
         [tileset_path_1, tileset_path_2],
@@ -177,7 +131,7 @@ def test_merge_with_file_tilesets(tileset_path_1: Path, tileset_path_2: Path) ->
 
     # check if the bounding boxes are consistent
     for tile_child in merged_tileset.root_tile.get_all_children():
-        sub_tileset = tile_child.get_or_fetch_content(TMP_TILESET_FOLDER)
+        sub_tileset = tile_child.get_or_fetch_content(tmp_dir)
         assert isinstance(sub_tileset, TileSet)
 
         sub_root_bounding_box = sub_tileset.root_tile.bounding_volume
@@ -199,12 +153,12 @@ def test_merge_with_file_tilesets(tileset_path_1: Path, tileset_path_2: Path) ->
 
 
 def test_merge_with_pnts_content_with_file_tilesets(
-    tileset_path_1: Path, tileset_path_2: Path
+    tmp_dir: Path, tileset_path_1: Path, tileset_path_2: Path
 ) -> None:
     tileset_1 = TileSet.from_file(tileset_path_1)
     tileset_2 = TileSet.from_file(tileset_path_2)
 
-    merged_tileset_path = TMP_TILESET_FOLDER / "merged_tileset.json"
+    merged_tileset_path = tmp_dir / "merged_tileset.json"
 
     merge_from_files(
         [tileset_path_1, tileset_path_2],
@@ -231,7 +185,7 @@ def test_merge_with_pnts_content_with_file_tilesets(
 
     # check if the bounding boxes are consistent
     for tile_child in merged_tileset.root_tile.get_all_children():
-        sub_tileset = tile_child.get_or_fetch_content(TMP_TILESET_FOLDER)
+        sub_tileset = tile_child.get_or_fetch_content(tmp_dir)
         assert isinstance(sub_tileset, TileSet)
 
         sub_root_bounding_box = sub_tileset.root_tile.bounding_volume

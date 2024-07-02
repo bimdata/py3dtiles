@@ -5,42 +5,13 @@ The example that is run in the test (`simple.ply`) comes from the [CGAL reposito
 """
 
 from pathlib import Path
-from typing import Any, Dict, Generator
+from typing import Any, Dict
 
 import numpy as np
 import plyfile
-from pytest import fixture, raises
+from pytest import raises
 
 from py3dtiles.reader import ply_reader
-
-DATA_DIRECTORY = Path(__file__).parent / "fixtures"
-
-
-@fixture
-def ply_filepath() -> Generator[Path, None, None]:
-    yield DATA_DIRECTORY / "simple.ply"
-
-
-@fixture
-def buggy_ply_filepath() -> Generator[Path, None, None]:
-    yield DATA_DIRECTORY / "buggy.ply"
-
-
-@fixture(params=["wrongname", "vertex"])
-def buggy_ply_data(request) -> Generator[Dict[str, Any], None, None]:  # type: ignore [no-untyped-def]
-    """This ply data does not contain any 'vertex' element!"""
-    types = [("x", np.float32, (5,)), ("y", np.float32, (5,)), ("z", np.float32, (5,))]
-    data = [(np.random.sample(5), np.random.sample(5), np.random.sample(5))]
-    if request.param == "wrongname":
-        arr = np.array(data, dtype=np.dtype(types))
-    else:
-        arr = np.array([data[0][:2]], np.dtype(types[:2]))
-    ply_item = plyfile.PlyElement.describe(data=arr, name=request.param)
-    ply_data = plyfile.PlyData(elements=[ply_item])
-    yield {
-        "data": ply_data,
-        "msg": "vertex" if request.param == "wrongname" else "x, y, z",
-    }
 
 
 def test_ply_get_metadata(ply_filepath: Path) -> None:
