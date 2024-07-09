@@ -58,12 +58,13 @@ class B3dm(TileContent):
         feature_table: B3dmFeatureTable | None = None,
         normal: npt.NDArray[np.float32] | None = None,
         uvs: npt.NDArray[np.float32] | None = None,
+        batchids: npt.NDArray[np.uint32] | None = None,
         transform: npt.NDArray[np.float32] | None = None,
         texture_uri: str | None = None,
     ) -> B3dm:
         b3dm_header = B3dmHeader()
         b3dm_body = B3dmBody.from_numpy_arrays(
-            points, triangles, normal, uvs, transform, texture_uri
+            points, triangles, normal, uvs, batchids, transform, texture_uri
         )
         if batch_table is not None:
             b3dm_body.batch_table = batch_table
@@ -202,6 +203,7 @@ class B3dmBody(TileContentBody):
         triangles: npt.NDArray[np.uint8],
         normals: npt.NDArray[np.float32] | None = None,
         uvs: npt.NDArray[np.float32] | None = None,
+        batchids: npt.NDArray[np.uint32] | None = None,
         transform: npt.NDArray[np.float32] | None = None,
         texture_uri: str | None = None,
     ) -> B3dmBody:
@@ -223,8 +225,11 @@ class B3dmBody(TileContentBody):
         byte_offset = 0
 
         triangle_arrays: list[
-            npt.NDArray[np.uint8] | npt.NDArray[np.float32] | None
-        ] = [triangles, points, normals, uvs]
+            npt.NDArray[np.uint8]
+            | npt.NDArray[np.float32]
+            | npt.NDArray[np.uint32]
+            | None
+        ] = [triangles, points, normals, uvs, batchids]
         array_idx = 0
         for array in triangle_arrays:
             if array is None:
@@ -258,6 +263,10 @@ class B3dmBody(TileContentBody):
         if uvs is not None:
             uvs_index = counter
             counter += 1
+        batchids_index = None
+        if batchids is not None:
+            batchids_index = counter
+            counter += 1
 
         gltf = pygltflib.GLTF2(
             scene=0,
@@ -271,6 +280,7 @@ class B3dmBody(TileContentBody):
                                 POSITION=position_index,
                                 NORMAL=normal_index,
                                 TEXCOORD_0=uvs_index,
+                                _BATCHID=batchids_index,
                             ),
                             indices=0,
                             material=0,
@@ -346,14 +356,14 @@ class B3dmBody(TileContentBody):
 
 def prepare_gltf_component(
     array_idx: int,
-    array: npt.NDArray[np.uint8] | npt.NDArray[np.float32],
+    array: npt.NDArray[np.uint8] | npt.NDArray[np.float32] | npt.NDArray[np.uint32],
     byte_offset: int,
     triangle_indices: bool = False,
 ) -> tuple[bytes, int, pygltflib.Accessor, pygltflib.BufferView]:
     array_blob = array.flatten().tobytes()
     additional_offset = len(array_blob)
     component_type = pygltflib.UNSIGNED_BYTE if triangle_indices else pygltflib.FLOAT
-    if triangle_indices:
+    if triangle_indices or array[0].size == 1:
         accessor_type = pygltflib.SCALAR
     else:
         accessor_type = pygltflib.VEC2 if array[0].size == 2 else pygltflib.VEC3
