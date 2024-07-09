@@ -4,9 +4,17 @@ from filecmp import cmp
 from pathlib import Path
 
 import numpy as np
+import pygltflib
 
+from py3dtiles.exceptions import InvalidB3dmError
 from py3dtiles.tilers.b3dm.wkb_utils import TriangleSoup
-from py3dtiles.tileset.content import B3dm, B3dmHeader, read_binary_tile_content
+from py3dtiles.tileset.content import (
+    B3dm,
+    B3dmHeader,
+    GltfAttribute,
+    GltfPrimitive,
+    read_binary_tile_content,
+)
 from py3dtiles.tileset.content.b3dm_feature_table import B3dmFeatureTable
 
 
@@ -303,6 +311,122 @@ class TestTexturedTileBuilder(unittest.TestCase):
         self.assertEqual(t.header.ft_bin_byte_length, 0)
         self.assertEqual(t.header.bt_json_byte_length, 0)
         self.assertEqual(t.header.bt_bin_byte_length, 0)
+
+    def test_build_multiple_parts(self) -> None:
+        with open("tests/fixtures/square.wkb", "rb") as f:
+            wkb = f.read()
+        with open("tests/fixtures/squareUV.wkb", "rb") as f:
+            wkbuv = f.read()
+        ts_0 = TriangleSoup.from_wkb_multipolygon(wkb)
+        ts_1 = TriangleSoup.from_wkb_multipolygon(wkb, [wkbuv])
+        for triangle in ts_1.triangles[0]:
+            for point in triangle:
+                point[1] += 30
+        ts_2 = TriangleSoup.from_wkb_multipolygon(wkb)
+        for triangle in ts_2.triangles[0]:
+            for point in triangle:
+                point[1] -= 30
+        ts_3 = TriangleSoup.from_wkb_multipolygon(wkb)
+        for triangle in ts_3.triangles[0]:
+            for point in triangle:
+                point[1] += 60
+        ts_4 = TriangleSoup.from_wkb_multipolygon(wkb, [wkbuv])
+        for triangle in ts_4.triangles[0]:
+            for point in triangle:
+                point[1] += 90
+        vertex_color = GltfAttribute(
+            "COLOR_0",
+            pygltflib.VEC3,
+            pygltflib.FLOAT,
+            np.array(
+                [
+                    [0, 0, 1],
+                    [1, 0, 0],
+                    [0, 1, 0],
+                    [1, 0, 0],
+                    [0, 1, 0],
+                    [0, 0, 1],
+                ],
+                dtype=np.float32,
+            ),
+        )
+        material = pygltflib.Material(
+            pbrMetallicRoughness=pygltflib.PbrMetallicRoughness(
+                baseColorFactor=[1.0, 0.0, 0.0, 0.75],
+                metallicFactor=0.5,
+                roughnessFactor=0.5,
+            )
+        )
+        ft = B3dmFeatureTable()
+        ft.set_batch_length(0)
+        primitives = [
+            GltfPrimitive(ts_0.vertices, ts_0.triangle_indices, ts_0.compute_normals()),
+            GltfPrimitive(
+                ts_1.vertices,
+                ts_1.triangle_indices,
+                ts_1.compute_normals(),
+                ts_1.get_data(0),
+                texture_uri="squaretexture.jpg",
+            ),
+            GltfPrimitive(
+                ts_2.vertices,
+                ts_2.triangle_indices,
+                ts_2.compute_normals(),
+                additional_attributes=[vertex_color],
+            ),
+            GltfPrimitive(
+                ts_3.vertices,
+                ts_3.triangle_indices,
+                ts_3.compute_normals(),
+                material=material,
+            ),
+            GltfPrimitive(
+                ts_4.vertices,
+                ts_4.triangle_indices,
+                ts_4.compute_normals(),
+                ts_4.get_data(0),
+                texture_uri="squaretexture.jpg",
+                material=material,
+            ),
+        ]
+
+        t = B3dm.from_primitives(
+            primitives,
+            feature_table=ft,
+        )
+
+        # get an array
+        t.to_array()
+        self.assertEqual(t.header.version, 1.0)
+        self.assertEqual(t.header.tile_byte_length, 5936)
+        self.assertEqual(t.header.ft_json_byte_length, 20)
+        self.assertEqual(t.header.ft_bin_byte_length, 0)
+        self.assertEqual(t.header.bt_json_byte_length, 0)
+        self.assertEqual(t.header.bt_bin_byte_length, 0)
+        accessors = t.body.gltf.accessors
+        gltf_primitives = t.body.gltf.meshes[0].primitives
+        self.assertEqual(accessors[1].min, [0, 0, 0])
+        self.assertEqual(accessors[1].max, [10, 10, 0])
+        self.assertEqual(len(accessors), 18)
+        self.assertEqual(len(gltf_primitives), 5)
+        self.assertEqual(gltf_primitives[2].attributes.COLOR_0, 10)
+        self.assertEqual(
+            t.body.gltf.materials[3].pbrMetallicRoughness.baseColorFactor,
+            [1.0, 0.0, 0.0, 0.75],
+        )
+        with self.assertRaises(
+            InvalidB3dmError
+        ):  # Assert an error is raised if a GltfPrimitive as UVs but no texture URI
+            _ = B3dm.from_primitives(
+                [
+                    GltfPrimitive(
+                        ts_1.vertices,
+                        ts_1.triangle_indices,
+                        uvs=ts_1.get_data(0),
+                        material=material,
+                    ),
+                ]
+            )
 
     def test_build_and_read_gltf_content(self) -> None:
         """See "Create a mesh, convert to bytes, convert back to mesh" section from
