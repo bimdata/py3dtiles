@@ -55,7 +55,7 @@ class B3dm(TileContent):
     @staticmethod
     def from_numpy_arrays(
         points: npt.NDArray[np.float32],
-        triangles: npt.NDArray[np.uint8],
+        triangles: npt.NDArray[np.uint8] | None = None,
         batch_table: BatchTable | None = None,
         feature_table: B3dmFeatureTable | None = None,
         normal: npt.NDArray[np.float32] | None = None,
@@ -65,14 +65,27 @@ class B3dm(TileContent):
         texture_uri: str | None = None,
         material: pygltflib.Material | None = None,
     ) -> B3dm:
+        """
+        Creates a B3DM body from numpy arrays.
+
+        :param points: array of vertex positions, must have a (n, 3) shape.
+        :param triangles: array of triangle indices, must have a (n, 3) shape.
+        :param batch_table: a batch table.
+        :param feature_table: a feature table.
+        :param normals: array of vertex normals, must have a (n, 3) shape.
+        :param uvs: array of texture coordinates, must have a (n, 2) shape.
+        :param batchids: array of batch table IDs, must have a (n) shape.
+        :param texture_uri: the URI of the texture image if the primitive is textured.
+        :param material: a glTF material. If not set, a default material is created.
+        """
         return B3dm.from_primitives(
             [
                 GltfPrimitive(
                     points,
-                    triangles,
-                    normal,
-                    uvs,
-                    batchids,
+                    triangles=triangles,
+                    normals=normal,
+                    uvs=uvs,
+                    batchids=batchids,
                     texture_uri=texture_uri,
                     material=material,
                 )

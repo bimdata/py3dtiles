@@ -18,7 +18,7 @@ class GltfPrimitive:
     def __init__(
         self,
         points: npt.NDArray[np.float32],
-        triangles: npt.NDArray[np.uint8],
+        triangles: npt.NDArray[np.uint8] | None = None,
         normals: npt.NDArray[np.float32] | None = None,
         uvs: npt.NDArray[np.float32] | None = None,
         batchids: npt.NDArray[np.uint32] | None = None,
@@ -26,11 +26,27 @@ class GltfPrimitive:
         texture_uri: str | None = None,
         material: pygltflib.Material | None = None,
     ) -> None:
+        """
+        A data structure storing all information to create a glTF mesh's primitive.
+
+        :param points: array of vertex positions, must have a (n, 3) shape.
+        :param triangles: array of triangle indices, must have a (n, 3) shape.
+        :param normals: array of vertex normals, must have a (n, 3) shape.
+        :param uvs: array of texture coordinates, must have a (n, 2) shape.
+        :param batchids: array of batch table IDs, must have a (n) shape.
+        :param additional_attributes: additional attributes to add to the primitive.
+        :param texture_uri: the URI of the texture image if the primitive is textured.
+        :param material: a glTF material. If not set, a default material is created.
+        """
         self.points: GltfAttribute = GltfAttribute(
             "POSITION", pygltflib.VEC3, pygltflib.FLOAT, points
         )
-        self.triangles: GltfAttribute = GltfAttribute(
-            "INDICE", pygltflib.SCALAR, pygltflib.UNSIGNED_BYTE, triangles
+        self.triangles: GltfAttribute | None = (
+            GltfAttribute(
+                "INDICE", pygltflib.SCALAR, pygltflib.UNSIGNED_BYTE, triangles
+            )
+            if triangles is not None
+            else None
         )
         self.normals: GltfAttribute | None = (
             GltfAttribute("NORMAL", pygltflib.VEC3, pygltflib.FLOAT, normals)
@@ -77,22 +93,26 @@ def gltf_component_from_primitive(
     """
     gltf_primitive = pygltflib.Primitive(
         attributes=pygltflib.Attributes(),
-        indices=attribute_counter,
     )
+    gltf_binary_blob = b""
+    gltf_accessors = []
+    gltf_buffer_views = []
 
-    indice_blob, indice_accessor, indice_buffer_view = prepare_gltf_component(
-        attribute_counter,
-        primitive.triangles.array,
-        byte_offset,
-        primitive.triangles.array.size,
-        primitive.triangles.accessor_type,
-        primitive.triangles.component_type,
-        pygltflib.ELEMENT_ARRAY_BUFFER,
-    )
-    gltf_binary_blob = indice_blob
-    gltf_accessors = [indice_accessor]
-    gltf_buffer_views = [indice_buffer_view]
-    attribute_counter += 1
+    if primitive.triangles is not None:
+        indice_blob, indice_accessor, indice_buffer_view = prepare_gltf_component(
+            attribute_counter,
+            primitive.triangles.array,
+            byte_offset,
+            primitive.triangles.array.size,
+            primitive.triangles.accessor_type,
+            primitive.triangles.component_type,
+            pygltflib.ELEMENT_ARRAY_BUFFER,
+        )
+        gltf_binary_blob += indice_blob
+        gltf_accessors.append(indice_accessor)
+        gltf_buffer_views.append(indice_buffer_view)
+        gltf_primitive.indices = attribute_counter
+        attribute_counter += 1
 
     attributes_array: list[GltfAttribute | None] = [
         primitive.points,
@@ -118,9 +138,12 @@ def gltf_component_from_primitive(
         gltf_buffer_views.append(buffer_view)
         setattr(gltf_primitive.attributes, attribute.name, attribute_counter)
         attribute_counter += 1
-
-    gltf_accessors[1].min = np.min(primitive.points.array, axis=0).tolist()
-    gltf_accessors[1].max = np.max(primitive.points.array, axis=0).tolist()
+    gltf_accessors[int(primitive.triangles is not None)].min = np.min(
+        primitive.points.array, axis=0
+    ).tolist()
+    gltf_accessors[int(primitive.triangles is not None)].max = np.max(
+        primitive.points.array, axis=0
+    ).tolist()
 
     return gltf_primitive, gltf_accessors, gltf_buffer_views, gltf_binary_blob
 

@@ -381,10 +381,9 @@ class TestTexturedTileBuilder(unittest.TestCase):
                 material=material,
             ),
             GltfPrimitive(
-                ts_4.vertices,
-                ts_4.triangle_indices,
-                ts_4.compute_normals(),
-                ts_4.get_data(0),
+                np.array(ts_4.triangles[0]).flatten().reshape((-1, 3)),
+                normals=ts_4.compute_normals(),
+                uvs=ts_4.get_data(0),
                 texture_uri="squaretexture.jpg",
                 material=material,
             ),
@@ -398,7 +397,7 @@ class TestTexturedTileBuilder(unittest.TestCase):
         # get an array
         t.to_array()
         self.assertEqual(t.header.version, 1.0)
-        self.assertEqual(t.header.tile_byte_length, 5936)
+        self.assertEqual(t.header.tile_byte_length, 5776)
         self.assertEqual(t.header.ft_json_byte_length, 20)
         self.assertEqual(t.header.ft_bin_byte_length, 0)
         self.assertEqual(t.header.bt_json_byte_length, 0)
@@ -407,7 +406,7 @@ class TestTexturedTileBuilder(unittest.TestCase):
         gltf_primitives = t.body.gltf.meshes[0].primitives
         self.assertEqual(accessors[1].min, [0, 0, 0])
         self.assertEqual(accessors[1].max, [10, 10, 0])
-        self.assertEqual(len(accessors), 18)
+        self.assertEqual(len(accessors), 17)
         self.assertEqual(len(gltf_primitives), 5)
         self.assertEqual(gltf_primitives[2].attributes.COLOR_0, 10)
         self.assertEqual(
