@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 import numpy as np
 import numpy.typing as npt
@@ -11,14 +11,31 @@ class GltfAttribute(NamedTuple):
     name: str
     accessor_type: pygltflib.SCALAR | pygltflib.VEC2 | pygltflib.VEC3
     component_type: pygltflib.UNSIGNED_BYTE | pygltflib.UNSIGNED_INT | pygltflib.FLOAT
-    array: npt.NDArray[np.uint8] | npt.NDArray[np.float32] | npt.NDArray[np.uint32]
+    array: npt.NDArray[np.uint8 | np.uint16 | np.uint32 | np.float32]
+
+
+def get_component_type_from_dtype(dt: np.dtype[Any]) -> Any | int:
+    if dt == np.int8:
+        return pygltflib.BYTE
+    elif dt == np.uint8:
+        return pygltflib.UNSIGNED_BYTE
+    elif dt == np.int16:
+        return pygltflib.SHORT
+    elif dt == np.uint16:
+        return pygltflib.UNSIGNED_SHORT
+    elif dt == np.uint32:
+        return pygltflib.UNSIGNED_INT
+    elif dt == np.float32:
+        return pygltflib.FLOAT
+    else:
+        raise ValueError(f"Cannot find a component type suitable for {dt}")
 
 
 class GltfPrimitive:
     def __init__(
         self,
         points: npt.NDArray[np.float32],
-        triangles: npt.NDArray[np.uint8] | None = None,
+        triangles: npt.NDArray[np.uint8 | np.uint16 | np.uint32] | None = None,
         normals: npt.NDArray[np.float32] | None = None,
         uvs: npt.NDArray[np.float32] | None = None,
         batchids: npt.NDArray[np.uint32] | None = None,
@@ -43,7 +60,10 @@ class GltfPrimitive:
         )
         self.triangles: GltfAttribute | None = (
             GltfAttribute(
-                "INDICE", pygltflib.SCALAR, pygltflib.UNSIGNED_BYTE, triangles
+                "INDICE",
+                pygltflib.SCALAR,
+                get_component_type_from_dtype(triangles.dtype),
+                triangles,
             )
             if triangles is not None
             else None
@@ -150,7 +170,7 @@ def gltf_component_from_primitive(
 
 def prepare_gltf_component(
     array_idx: int,
-    array: npt.NDArray[np.uint8] | npt.NDArray[np.float32] | npt.NDArray[np.uint32],
+    array: npt.NDArray[np.uint8 | np.uint16 | np.uint32 | np.float32],
     byte_offset: int,
     count: int,
     accessor_type: str = pygltflib.VEC3,
