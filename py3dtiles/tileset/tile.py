@@ -290,7 +290,7 @@ class Tile(RootProperty[TileDictType]):
             dict_data["children"] = [child.to_dict() for child in self.children]
 
         if self.content_uri:
-            dict_data["content"] = {"uri": str(self.content_uri)}
+            dict_data["content"] = {"uri": self.content_uri.as_posix()}
         return dict_data
 
     def _load_tile_content(self, root_uri: Path | None) -> None:
