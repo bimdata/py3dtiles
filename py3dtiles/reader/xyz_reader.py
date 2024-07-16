@@ -87,6 +87,7 @@ def run(
     portion: PortionItemType,
     transformer: Optional[Transformer],
     color_scale: Optional[float],
+    write_intensity: bool,
 ) -> Generator[
     Tuple[
         npt.NDArray[np.float32],
@@ -186,7 +187,7 @@ def run(
             else:
                 classification = np.zeros((points.shape[0], 1), dtype=np.uint8)
 
-            if feature_nb in (4, 7, 8):
+            if feature_nb in (4, 7, 8) and write_intensity:
                 intensity = np.array(points[:, 3], dtype=np.uint8).reshape(-1, 1)
             else:
                 intensity = np.zeros((points.shape[0], 1), dtype=np.uint8)

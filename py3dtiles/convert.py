@@ -17,7 +17,6 @@ from pyproj import CRS
 
 from py3dtiles.constants import EXIT_CODES
 from py3dtiles.exceptions import (
-    FormatSupportMissingException,
     Py3dtilesException,
     SrsInMissingException,
     TilerException,
@@ -559,6 +558,3 @@ def _main(args: argparse.Namespace) -> None:
             file=sys.stderr,
         )
         sys.exit(EXIT_CODES.MISSING_SRS_IN_FILE.value)
-    except FormatSupportMissingException as e:
-        print(e, file=sys.stderr)
-        sys.exit(EXIT_CODES.UNSPECIFIED_ERROR.value)
