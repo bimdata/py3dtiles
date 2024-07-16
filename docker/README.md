@@ -6,7 +6,7 @@ This documentation is intented for developers and contributors. For installation
 
 You must run the following command in the root folder of the repository:
 ```bash
-docker build . -t py3dtiles/py3dtiles:v7.0.0 -t registry.gitlab.com/py3dtiles/py3dtiles:v7.0.0 -f docker/Dockerfile
+docker build . -t py3dtiles/py3dtiles:v8.0.0 -t registry.gitlab.com/py3dtiles/py3dtiles:v8.0.0 -f docker/Dockerfile
 ```
 Then `docker push` the 2 tags. It will push on dockerhub.com and on registry.gitlab.com.
 

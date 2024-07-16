@@ -2,6 +2,70 @@
 
 All notable changes to this project will be documented in this file.
 
+## v8.0.0 (2024-07-16)
+
+### BREAKING CHANGE
+
+- The `fraction` parameter  of `convert` (and the `--fraction` cli flag) has been removed, because we didn't actually use it in the code
+- The . folder by default is now /data on docker image, please update your mounts accordingly.
+- We replaced the home-made gltf support by pygltflib. It should be compatible with the previous usage for the most part, except for direct usage of `gltf.py` (replace it with direct usage of pygltflib) and `B3dm.from_numpy_arrays`, which has been replaced by `B3dm.from_primitives`. We believe this will be vastly easier to use. Under the hood, it generates gltf primitives inside the tile.
+- the `all` section in setup.py has been removed because `pyproject.toml` doesn't support creating them from all the other sections, please use `pip install -e .[postgres,las,ply]` instead.
+- TileContent.print_info(), B3dm.print_info() and Pnts.print_info() have been removed and replaced by __str__ methods. By assuming `b3dm_tile` is a B3dm tile, one may access to string representations with print(b3dm_tile) or str(b3dm_tile).
+- `Tileset.root_uri` must now be set after the construction
+- `BoundingVolume`: the functions `is_box`, `is_region` and `is_sphere` from this class are removed, use `isinstance(BoundingVolumeBox)` (or the relevant subclass) instead.
+
+
+### Feat
+
+- the docker image is now also [pushed on dockerhub](https://hub.docker.com/r/py3dtiles/py3dtiles)
+- the home-made gltf support is replaced by pygltflib. a `gltf_utils` module has been introduced to provide a higher-level API to pygltflib
+- **b3dm**: support batchids with pygltflib
+- **b3dm**: min/max attributes in gltf accessors
+- **b3dm**: support materials & uvs with pygltflib
+- **b3dm**: from_gltf also takes a feature table
+- **pnts**: display info about batchtable when printing
+- support intensity in pointcloud conversion, only in uint8 at the moment. Intensity of las files are converted from uint16 to uint8 at the moment.
+- **tile.py**: add method to transform coords according to this tile transformation property
+- **convert.py**: accept an existing out folders if empty
+- **bounding_volume_box**: add classmethod .from_points and .from_list and document a bit
+- We now have a logo!
+- **tileset**: add mechanism to support extensions
+- **base_tiler**: create an abstract tiler. This abstract class aims at making the creation of a custom tiler easier.
+
+### Fix
+
+- **tile.py**: write content URI as posix
+- **typing**: quantized positions in pnts are uint16, not uint8
+- **export**: fix optional import of psycopg2
+- **tile.py**: make sure we reshape and flatten in column order
+- **py3dtiles/tileset/content/b3dm.py**: sync the tile info after array initialization
+- buildings.b3dm fixture is outdated
+- **BatchTable**: ignore extensions in from_array
+- **point_tiler**: set refine mode in the correct place
+- **Tile**: don't raise error if file missing
+- **docker**: move the workdir to /data in images
+- **convert.py**:
+    - don't crash on trying to remove non-existent path
+    - fix transmission of worker error messages to main thread
+- fix(b3dm.py): make node_matrix serializable
+
+### Refactor
+
+- **convert.py**: use our Tile and Tileset classes instead of dicts
+- **tileset.py**: remove root_uri from constructor parameters
+- **bounding_volume_box**: make sure transform accept only 4x4 matrices
+- make export.py independant from home-made gltf
+- print_info is replaced by __str__ properties for each tile_content
+- **convert.py**:
+    - remove unused parameter
+    - simplify Process declaration
+- move tiler point specific code outside of convert.py by using the abstract tiler
+- move pytest fixtures into tests/conftest.py
+
+### Miscellaneous
+
+- for nix users, a shell.nix has been added to the project.
+
 ## v7.0.0 (2023-12-12)
 
 ### Community change: Big news!
