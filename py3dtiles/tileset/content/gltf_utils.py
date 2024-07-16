@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -14,21 +14,23 @@ class GltfAttribute(NamedTuple):
     array: npt.NDArray[np.uint8 | np.uint16 | np.uint32 | np.float32]
 
 
-def get_component_type_from_dtype(dt: np.dtype[Any]) -> Any | int:
+def get_component_type_from_dtype(dt: np.dtype[Any]) -> int:
+    val = None
     if dt == np.int8:
-        return pygltflib.BYTE
+        val = pygltflib.BYTE
     elif dt == np.uint8:
-        return pygltflib.UNSIGNED_BYTE
+        val = pygltflib.UNSIGNED_BYTE
     elif dt == np.int16:
-        return pygltflib.SHORT
+        val = pygltflib.SHORT
     elif dt == np.uint16:
-        return pygltflib.UNSIGNED_SHORT
+        val = pygltflib.UNSIGNED_SHORT
     elif dt == np.uint32:
-        return pygltflib.UNSIGNED_INT
+        val = pygltflib.UNSIGNED_INT
     elif dt == np.float32:
-        return pygltflib.FLOAT
+        val = pygltflib.FLOAT
     else:
         raise ValueError(f"Cannot find a component type suitable for {dt}")
+    return cast(int, val)
 
 
 class GltfPrimitive:
