@@ -247,9 +247,9 @@ class B3dmBody(TileContentBody):
         counter = 0
         texture_index = 0
 
-        node_matrix = list(np.identity(4).flatten("F"))
+        node_matrix = np.identity(4).flatten("F").tolist()
         if transform is not None:
-            node_matrix = list(transform.flatten("F"))
+            node_matrix = transform.flatten("F").tolist()
 
         gltf = pygltflib.GLTF2(
             scene=0,
