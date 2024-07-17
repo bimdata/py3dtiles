@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import struct
 
 import numpy as np
@@ -10,6 +11,7 @@ from py3dtiles.exceptions import InvalidB3dmError
 
 from .b3dm_feature_table import B3dmFeatureTable
 from .batch_table import BatchTable
+from .gltf_utils import GltfPrimitive, gltf_component_from_primitive
 from .tile_content import TileContent, TileContentBody, TileContentHeader
 
 
@@ -53,7 +55,7 @@ class B3dm(TileContent):
     @staticmethod
     def from_numpy_arrays(
         points: npt.NDArray[np.float32],
-        triangles: npt.NDArray[np.uint8],
+        triangles: npt.NDArray[np.uint8] | None = None,
         batch_table: BatchTable | None = None,
         feature_table: B3dmFeatureTable | None = None,
         normal: npt.NDArray[np.float32] | None = None,
@@ -61,11 +63,47 @@ class B3dm(TileContent):
         batchids: npt.NDArray[np.uint32] | None = None,
         transform: npt.NDArray[np.float32] | None = None,
         texture_uri: str | None = None,
+        material: pygltflib.Material | None = None,
+    ) -> B3dm:
+        """
+        Creates a B3DM body from numpy arrays.
+
+        :param points: array of vertex positions, must have a (n, 3) shape.
+        :param triangles: array of triangle indices, must have a (n, 3) shape.
+        :param batch_table: a batch table.
+        :param feature_table: a feature table.
+        :param normals: array of vertex normals, must have a (n, 3) shape.
+        :param uvs: array of texture coordinates, must have a (n, 2) shape.
+        :param batchids: array of batch table IDs, must have a (n) shape.
+        :param texture_uri: the URI of the texture image if the primitive is textured.
+        :param material: a glTF material. If not set, a default material is created.
+        """
+        return B3dm.from_primitives(
+            [
+                GltfPrimitive(
+                    points,
+                    triangles=triangles,
+                    normals=normal,
+                    uvs=uvs,
+                    batchids=batchids,
+                    texture_uri=texture_uri,
+                    material=material,
+                )
+            ],
+            batch_table,
+            feature_table,
+            transform,
+        )
+
+    @staticmethod
+    def from_primitives(
+        primitives: list[GltfPrimitive],
+        batch_table: BatchTable | None = None,
+        feature_table: B3dmFeatureTable | None = None,
+        transform: npt.NDArray[np.float32] | None = None,
     ) -> B3dm:
         b3dm_header = B3dmHeader()
-        b3dm_body = B3dmBody.from_numpy_arrays(
-            points, triangles, normal, uvs, batchids, transform, texture_uri
-        )
+        b3dm_body = B3dmBody.from_primitives(primitives, transform)
         if batch_table is not None:
             b3dm_body.batch_table = batch_table
         if feature_table is not None:
@@ -198,112 +236,73 @@ class B3dmBody(TileContentBody):
         )
 
     @staticmethod
-    def from_numpy_arrays(
-        points: npt.NDArray[np.float32],
-        triangles: npt.NDArray[np.uint8],
-        normals: npt.NDArray[np.float32] | None = None,
-        uvs: npt.NDArray[np.float32] | None = None,
-        batchids: npt.NDArray[np.uint32] | None = None,
+    def from_primitives(
+        primitives: list[GltfPrimitive],
         transform: npt.NDArray[np.float32] | None = None,
-        texture_uri: str | None = None,
     ) -> B3dmBody:
-        """Build the GlTF structure that corresponds to a triangulated mesh.
-
-        The mesh is represented as numpy arrays as follows:
-
-        - a 3D-point array;
-        - a triangle array, where points are identified by their positional ID in the 3D-point
-          array.
-
-        See https://gitlab.com/dodgyville/pygltflib/ (section "Create a mesh, convert to bytes,
-        convert back to mesh").
-
-        """
         gltf_binary_blob = b""
+        gltf_primitives = []
         gltf_accessors = []
         gltf_buffer_views = []
-        byte_offset = 0
-
-        triangle_arrays: list[
-            npt.NDArray[np.uint8]
-            | npt.NDArray[np.float32]
-            | npt.NDArray[np.uint32]
-            | None
-        ] = [triangles, points, normals, uvs, batchids]
-        array_idx = 0
-        for array in triangle_arrays:
-            if array is None:
-                continue
-            (
-                array_blob,
-                additional_offset,
-                accessor,
-                buffer_view,
-            ) = prepare_gltf_component(
-                array_idx, array, byte_offset, triangle_indices=array_idx == 0
-            )
-            gltf_binary_blob += array_blob
-            byte_offset += additional_offset
-            gltf_accessors.append(accessor)
-            gltf_buffer_views.append(buffer_view)
-            array_idx += 1
+        counter = 0
+        texture_index = 0
 
         node_matrix = list(np.identity(4).flatten("F"))
         if transform is not None:
             node_matrix = list(transform.flatten("F"))
 
-        counter = 1
-        position_index = counter
-        counter += 1
-        normal_index = None
-        if normals is not None:
-            normal_index = counter
-            counter += 1
-        uvs_index = None
-        if uvs is not None:
-            uvs_index = counter
-            counter += 1
-        batchids_index = None
-        if batchids is not None:
-            batchids_index = counter
-            counter += 1
-
         gltf = pygltflib.GLTF2(
             scene=0,
             scenes=[pygltflib.Scene(nodes=[0])],
             nodes=[pygltflib.Node(mesh=0, matrix=node_matrix)],
-            meshes=[
-                pygltflib.Mesh(
-                    primitives=[
-                        pygltflib.Primitive(
-                            attributes=pygltflib.Attributes(
-                                POSITION=position_index,
-                                NORMAL=normal_index,
-                                TEXCOORD_0=uvs_index,
-                                _BATCHID=batchids_index,
-                            ),
-                            indices=0,
-                            material=0,
-                        )
-                    ]
-                )
-            ],
-            accessors=gltf_accessors,
-            bufferViews=gltf_buffer_views,
-            buffers=[pygltflib.Buffer(byteLength=byte_offset)],
+            meshes=[pygltflib.Mesh()],
         )
-        gltf_accessors[position_index].min = np.min(points, axis=0).tolist()
-        gltf_accessors[position_index].max = np.max(points, axis=0).tolist()
-        base_color_texture = None if uvs is None else pygltflib.TextureInfo(index=0)
-        gltf.materials.append(
-            pygltflib.Material(
-                pbrMetallicRoughness=pygltflib.PbrMetallicRoughness(
-                    baseColorTexture=base_color_texture
+
+        for i, primitive in enumerate(primitives):
+            (
+                gltf_primitive,
+                accessors,
+                buffer_views,
+                binary_blob,
+            ) = gltf_component_from_primitive(
+                primitive,
+                len(gltf_binary_blob),
+                counter,
+            )
+
+            material = (
+                copy.deepcopy(primitive.material)
+                if primitive.material is not None
+                else pygltflib.Material(
+                    pbrMetallicRoughness=pygltflib.PbrMetallicRoughness()
                 )
             )
-        ),
-        if uvs is not None:
-            gltf.textures.append(pygltflib.Texture(sampler=0, source=0))
+            if primitive.uvs is not None:
+                gltf.textures.append(pygltflib.Texture(sampler=0, source=texture_index))
+                material.pbrMetallicRoughness.baseColorTexture = pygltflib.TextureInfo(
+                    index=texture_index
+                )
+                if primitive.texture_uri is None:
+                    raise InvalidB3dmError(
+                        "A texture URI must be specify if the glTF primitive has UV"
+                    )
+                gltf.images.append(pygltflib.Image(uri=primitive.texture_uri))
+                texture_index += 1
+
+            gltf.materials.append(material)
+            gltf_primitive.material = i
+
+            counter += len(accessors)
+            gltf_primitives.append(gltf_primitive)
+            gltf_accessors.extend(accessors)
+            gltf_buffer_views.extend(buffer_views)
+            gltf_binary_blob += binary_blob
+
+        gltf.meshes[0].primitives = gltf_primitives
+        gltf.accessors = gltf_accessors
+        gltf.bufferViews = gltf_buffer_views
+        gltf.buffers = [pygltflib.Buffer(byteLength=len(gltf_binary_blob))]
+        if len(gltf.textures) > 0:
             gltf.samplers.append(
                 pygltflib.Sampler(
                     magFilter=pygltflib.LINEAR,
@@ -312,8 +311,7 @@ class B3dmBody(TileContentBody):
                     wrapT=pygltflib.REPEAT,
                 )
             )
-        if texture_uri is not None:
-            gltf.images.append(pygltflib.Image(uri=texture_uri))
+
         gltf.set_binary_blob(gltf_binary_blob)
         return B3dmBody.from_gltf(gltf)
 
@@ -352,35 +350,3 @@ class B3dmBody(TileContentBody):
             )
 
         return b
-
-
-def prepare_gltf_component(
-    array_idx: int,
-    array: npt.NDArray[np.uint8] | npt.NDArray[np.float32] | npt.NDArray[np.uint32],
-    byte_offset: int,
-    triangle_indices: bool = False,
-) -> tuple[bytes, int, pygltflib.Accessor, pygltflib.BufferView]:
-    array_blob = array.flatten().tobytes()
-    additional_offset = len(array_blob)
-    component_type = pygltflib.UNSIGNED_BYTE if triangle_indices else pygltflib.FLOAT
-    if triangle_indices or array[0].size == 1:
-        accessor_type = pygltflib.SCALAR
-    else:
-        accessor_type = pygltflib.VEC2 if array[0].size == 2 else pygltflib.VEC3
-    BUFFER_INDEX = 0  # Everything is stored in the same buffer for sake of simplicity
-    buffer_view_target = (
-        pygltflib.ELEMENT_ARRAY_BUFFER if triangle_indices else pygltflib.ARRAY_BUFFER
-    )
-    accessor = pygltflib.Accessor(
-        bufferView=array_idx,
-        componentType=component_type,
-        count=array.size if triangle_indices else len(array),
-        type=accessor_type,
-    )
-    buffer_view = pygltflib.BufferView(
-        buffer=BUFFER_INDEX,
-        byteOffset=byte_offset,
-        byteLength=additional_offset,
-        target=buffer_view_target,
-    )
-    return array_blob, additional_offset, accessor, buffer_view
