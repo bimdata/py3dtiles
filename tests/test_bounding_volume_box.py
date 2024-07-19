@@ -101,12 +101,6 @@ class TestBoundingVolumeBox(unittest.TestCase):
         # what if I give only one point ?
         pass
 
-    def test_is_only_box(self) -> None:
-        bounding_volume_box = BoundingVolumeBox()
-        self.assertTrue(bounding_volume_box.is_box())
-        self.assertFalse(bounding_volume_box.is_region())
-        self.assertFalse(bounding_volume_box.is_sphere())
-
     def test_get_center(self) -> None:
         bounding_volume_box = BoundingVolumeBox()
         with self.assertRaises(AttributeError):

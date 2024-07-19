@@ -42,15 +42,6 @@ class BoundingVolume(
     def from_dict(cls, bounding_volume_dict: _BoundingVolumeJsonDictT) -> Self:
         ...
 
-    def is_box(self) -> bool:
-        return False
-
-    def is_region(self) -> bool:
-        return False
-
-    def is_sphere(self) -> bool:
-        return False
-
     @abstractmethod
     def get_center(self) -> npt.NDArray[np.float64]:
         ...

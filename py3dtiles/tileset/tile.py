@@ -173,7 +173,7 @@ class Tile(RootProperty[TileDictType]):
     def sync_bounding_volume_with_children(self) -> None:
         if self.bounding_volume is None:
             raise TilerException("This Tile has no bounding volume.")
-        if not self.bounding_volume.is_box():
+        if not isinstance(self.bounding_volume, BoundingVolumeBox):
             raise NotImplementedError(
                 "Don't know yet how to sync non box bounding volume."
             )
