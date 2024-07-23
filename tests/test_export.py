@@ -1,23 +1,12 @@
 import json
-import shutil
 from pathlib import Path
-from typing import Generator
-
-from pytest import fixture
 
 from py3dtiles.export import from_directory
 
 DATA_DIRECTORY = Path(__file__).parent / "fixtures"
 
 
-@fixture()
-def tmp_dir() -> Generator[Path, None, None]:
-    yield Path("tmp/")
-    shutil.rmtree("tmp/", ignore_errors=True)
-
-
 def test_export(tmp_dir: Path) -> None:
-    tmp_dir.mkdir()
     from_directory(DATA_DIRECTORY / "building", offset=None, output_dir=tmp_dir)
 
     # basic asserts
