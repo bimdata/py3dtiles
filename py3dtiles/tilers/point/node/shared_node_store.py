@@ -11,7 +11,19 @@ from py3dtiles.utils import node_name_to_path
 
 
 class SharedNodeStore:
+    """
+    A class that implements a compressed storage for arbitrary data, that is able to limit the amount of ram it uses by temporary storing part of the storage on disk for later retrieval.
+
+    The memory limit is not automatic at the moment, but instead is done by calling `self.control_memory_usage`.
+    """
+
     def __init__(self, folder: Path) -> None:
+        """
+        Construct a SharedNodeStore.
+
+        :param folder: where to store the piece of data that go over the limit
+
+        """
         self.metadata: Dict[bytes, Optional[Tuple[float, int]]] = {}
         self.data: List[Optional[bytes]] = []
         self.folder = folder
@@ -26,6 +38,9 @@ class SharedNodeStore:
         }
 
     def control_memory_usage(self, max_size_mb: int, verbose: int) -> None:
+        """
+        Limit the memory usage of this instance.
+        """
         bytes_to_mb = 1.0 / (1024 * 1024)
         max_size_mb = max(max_size_mb, 200)
 
@@ -50,6 +65,11 @@ class SharedNodeStore:
             print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< CACHE CLEANING")
 
     def get(self, name: bytes, stat_inc: int = 1) -> bytes:
+        """
+        Get a node storage.
+
+        :param name: the name of the node
+        """
         metadata = self.metadata.get(name, None)
         data = b""
         if metadata is not None:
@@ -74,6 +94,9 @@ class SharedNodeStore:
         return data
 
     def remove(self, name: bytes) -> None:
+        """
+        Remove a node from this storage.
+        """
         meta = self.metadata.pop(name, None)
 
         node_path = node_name_to_path(self.folder, name)
@@ -97,6 +120,9 @@ class SharedNodeStore:
             node_path.unlink()
 
     def put(self, name: bytes, data: bytes) -> None:
+        """
+        Insert or change
+        """
         compressed_data = gzip.compress(data)
 
         metadata = self.metadata.get(name, None)

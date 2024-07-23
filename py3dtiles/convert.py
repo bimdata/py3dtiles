@@ -45,19 +45,7 @@ else:
 META_TILER_NAME = b"meta"
 
 
-def _worker_target(
-    worker_tilers: Dict[bytes, TilerWorker[Any]],
-    verbosity: int,
-    uri: bytes,
-) -> None:
-    return _WorkerDispatcher(
-        worker_tilers,
-        verbosity,
-        uri,
-    ).run()
-
-
-class _WorkerDispatcher:
+class _WorkerDispatcher(Process):
     """
     This class waits from jobs commands from the Zmq socket.
     """
@@ -70,6 +58,7 @@ class _WorkerDispatcher:
         verbosity: int,
         uri: bytes,
     ) -> None:
+        super().__init__()
         self.worker_tilers = worker_tilers
         self.verbosity = verbosity
         self.uri = uri
@@ -116,10 +105,9 @@ class _WorkerDispatcher:
                 self.skt.send_multipart([WorkerMessageType.IDLE.value])
             except Exception as e:
                 traceback.print_exc()
-                # usually first arg is the explaining string.
-                # let's assume it is always in our context
+                error_message = f"{e.__class__.__module__}.{e.__class__.__name__}: {e}"
                 self.skt.send_multipart(
-                    [WorkerMessageType.ERROR.value, e.args[0].encode()]
+                    [WorkerMessageType.ERROR.value, error_message.encode()]
                 )
                 # we still print it for stacktraces
 
@@ -164,10 +152,7 @@ class _ZmqManager:
             )
 
         self.processes = [
-            Process(
-                target=_worker_target,
-                args=(worker_tilers, verbosity, self.uri),
-            )
+            _WorkerDispatcher(worker_tilers, verbosity, self.uri)
             for _ in range(number_of_jobs)
         ]
         for p in self.processes:
@@ -429,7 +414,7 @@ class _Convert:
                     print("Writing 3dtiles")
 
                 tiler.write_tileset()
-                shutil.rmtree(self.working_dir / str(tiler.name))
+                shutil.rmtree(self.working_dir / str(tiler.name), ignore_errors=True)
 
                 if self.verbose >= 1:
                     print(f"Tiler {tiler.name!r} done")

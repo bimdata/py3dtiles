@@ -715,7 +715,8 @@ def test_convert_mix_input_crs(tmp_dir: Path) -> None:
 )
 def test_convert_xyz_exception_in_run(tmp_dir: Path) -> None:
     with patch("py3dtiles.reader.xyz_reader.run") as mock_run, raises(
-        Exception, match="An exception occurred in a worker: Exception in run"
+        Exception,
+        match="An exception occurred in a worker: builtins.Exception: Exception in run",
     ):
         # NOTE: this is intentionnally different from below, we are testing 2 different things
         # Here, we test that a very early fail wont block the run, and that it will terminate correctly
@@ -734,7 +735,8 @@ def test_convert_xyz_exception_in_run(tmp_dir: Path) -> None:
 )
 def test_convert_las_exception_in_run(tmp_dir: Path) -> None:
     with patch("py3dtiles.reader.las_reader.run") as mock_run, raises(
-        Exception, match="An exception occurred in a worker: Exception in run"
+        Exception,
+        match="An exception occurred in a worker: builtins.Exception: Exception in run",
     ):
 
         def side_effect(*args):  # type: ignore

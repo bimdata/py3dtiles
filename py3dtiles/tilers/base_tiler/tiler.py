@@ -49,10 +49,12 @@ class Tiler(ABC, Generic[_SharedMetadataT, _TilerWorkerT]):
         self, startup: float
     ) -> Generator[Tuple[bytes, List[bytes]], None, None]:
         """
-        Returns a generator of tasks (command type and the content).
+        Yields tasks to be sent to workers.
 
-        The order of tasks should be prioritized. If there is no more idle process,
-        the generator is stopped and will be recreated latter.
+        This methods will get called by the main convert function each time it wants new tasks to be fed to workers.
+        Implementors should each time returns the task that has the biggest priority.
+
+
         """
 
     @abstractmethod

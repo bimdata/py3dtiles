@@ -26,14 +26,13 @@ class BoundingVolumeBox(BoundingVolume[BoundingVolumeBoxDictType]):
     A box bounding volume as defined in the 3DTiles specifications i.e. an
     array of 12 numbers that define an oriented bounding box:
 
-    - The first three elements define the x, y, and z values for the
-    center of the box.
+    - The first three elements define the x, y, and z values for the center of the box.
     - The next three elements (with indices 3, 4, and 5) define the x axis
-    direction and half-length.
+      direction and half-length.
     - The next three elements (with indices 6, 7, and 8) define the y axis
-    direction and half-length.
+      direction and half-length.
     - The last three elements (indices 9, 10, and 11) define the z axis
-    direction and half-length.
+      direction and half-length.
 
     Note that, by default, a box bounding volume doesn't need to be aligned
     with the coordinate axis. Still in general, computing the box bounding
@@ -97,6 +96,7 @@ class BoundingVolumeBox(BoundingVolume[BoundingVolumeBoxDictType]):
     def translate(self, offset: npt.NDArray[np.float64]) -> None:
         """
         Translate the box center with the given offset "vector"
+
         :param offset: the 3D vector by which the box should be translated
         """
         if self._box is None:
@@ -107,6 +107,7 @@ class BoundingVolumeBox(BoundingVolume[BoundingVolumeBoxDictType]):
     def transform(self, transform: npt.NDArray[np.float64]) -> None:
         """
         Apply the provided transformation matrix (4x4) to the box
+
         :param transform: transformation matrix (4x4) to be applied
         """
         if self._box is None:

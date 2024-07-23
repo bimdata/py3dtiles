@@ -9,7 +9,7 @@ from pyproj import Transformer
 from py3dtiles.tilers.base_tiler import SharedMetadata
 
 
-@dataclass
+@dataclass(frozen=True)
 class PointSharedMetadata(SharedMetadata):
     transformer: Optional[Transformer]
     root_aabb: npt.NDArray[np.float64]
