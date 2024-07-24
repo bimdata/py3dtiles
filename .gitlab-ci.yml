@@ -349,3 +349,6 @@ pages:
   only:
     - main
     - tags
+  environment:
+    name: pages
+    url: https://py3dtiles.org
