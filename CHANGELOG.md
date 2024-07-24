@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v8.0.1 (2024-07-24)
+
+### fix
+
+- revert commit 395f294ed2cd38125ed132fdc13289e2870aa6d0 that breaks the process launching on windows
+
 ## v8.0.0 (2024-07-16)
 
 ### BREAKING CHANGE
