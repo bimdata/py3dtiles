@@ -7,7 +7,6 @@ import numpy.typing as npt
 from plyfile import PlyData, PlyElement
 from pyproj import Transformer
 
-from py3dtiles.exceptions import FormatSupportMissingException
 from py3dtiles.typing import (
     MetadataReaderType,
     OffsetScaleType,
@@ -53,6 +52,7 @@ def run(
     portion: PortionItemType,
     transformer: Optional[Transformer],
     color_scale: Optional[float],
+    write_intensity: bool,
 ) -> Generator[
     Tuple[
         npt.NDArray[np.float32],
@@ -129,14 +129,16 @@ def run(
         else:
             classification = np.zeros((coords.shape[0], 1), dtype=np.uint8)
 
-        if "intensity" in ply_vertices:
+        if "intensity" in ply_vertices and write_intensity:
             if ply_vertices["intensity"].dtype != np.uint8:
-                raise FormatSupportMissingException(
-                    "At the moment, only intensity in uint8 format is supported for ply files"
+                print(
+                    "Warning: At the moment, only intensity in uint8 format is supported for ply files"
                 )
-            intensity = np.array(
-                ply_vertices["intensity"].reshape(-1, 1), dtype=np.uint8
-            )
+                intensity = np.zeros((coords.shape[0], 1), dtype=np.uint8)
+            else:
+                intensity = np.array(
+                    ply_vertices["intensity"].reshape(-1, 1), dtype=np.uint8
+                )
         else:
             intensity = np.zeros((coords.shape[0], 1), dtype=np.uint8)
 

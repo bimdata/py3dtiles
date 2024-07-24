@@ -47,6 +47,7 @@ class PointTilerWorker(TilerWorker[PointSharedMetadata]):
             parameters["portion"],
             self.shared_metadata.transformer,
             self.shared_metadata.color_scale,
+            self.shared_metadata.write_intensity,
         )
         for coords, colors, classification, intensity in reader_gen:
             skt.send_multipart(

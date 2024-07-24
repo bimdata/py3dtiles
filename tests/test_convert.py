@@ -628,6 +628,39 @@ def test_convert_ply_with_classification_and_intensity(tmp_dir: Path) -> None:
     )
 
 
+def test_convert_ply_with_classification_and_intensity_f4(tmp_dir: Path) -> None:
+    # we don't support arbitrary precision in intensity yet, but the conversion should succeed with warnings
+    convert(
+        DATA_DIRECTORY / "simple_with_classification_and_intensity_f4.ply",
+        outfolder=tmp_dir,
+        jobs=1,
+        intensity=True,
+    )
+
+    # without intensity
+    convert(
+        DATA_DIRECTORY / "simple_with_classification_and_intensity_f4.ply",
+        outfolder=tmp_dir,
+        jobs=1,
+        intensity=False,
+        overwrite=True,
+    )
+    assert Path(tmp_dir, "tileset.json").exists()
+    assert Path(tmp_dir, "r.pnts").exists()
+
+    tile_content = Pnts.from_file(tmp_dir / "r.pnts")
+    assert_array_equal(
+        tile_content.body.feature_table.body.position,
+        [0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1],
+    )
+    assert "Classification" in tile_content.body.batch_table.header.data
+    assert_array_equal(
+        [1, 2, 2, 1],
+        tile_content.body.batch_table.get_binary_property("Classification"),
+    )
+    assert "Intensity" not in tile_content.body.batch_table.header.data
+
+
 def test_convert_mix_las_xyz(tmp_dir: Path) -> None:
     convert(
         [DATA_DIRECTORY / "simple.xyz", DATA_DIRECTORY / "with_srs_3857.las"],

@@ -42,6 +42,7 @@ def run(
     portion: PortionItemType,
     transformer: Optional[Transformer],
     color_scale: Optional[float],
+    write_intensity: bool,
 ) -> Generator[
     Tuple[
         npt.NDArray[np.float32],
