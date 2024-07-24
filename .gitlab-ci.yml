@@ -305,7 +305,7 @@ docker-build:
     - docker push $IMAGE_TAG
     # docker hub
     - docker login -u py3dtilesteam -p $DOCKER_HUB_PASSWORD
-    - docker push py3dtiles/py3dtiles:$CI_COMMIT_REF_SLUG
+    - docker push py3dtiles/py3dtiles:$CI_COMMIT_TAG
   only:
     refs:
       - tags
