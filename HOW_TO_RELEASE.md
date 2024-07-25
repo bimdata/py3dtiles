@@ -1,5 +1,6 @@
 # How to release
 
+- before doing anything, just check if the CI is still passing on main ;-)
 - make sure you've run `pip install -e .[pack]`
 - clean previous builds: `rm dist/ -rf`
 - edit the CHANGELOG.md. The best way is to start with commitizen for that:
