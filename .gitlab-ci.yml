@@ -276,6 +276,27 @@ test-cli:
       - tags
       - main
 
+sonarcloud-check:
+  stage: 🤞 test
+  needs: [test]
+  image:
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  script:
+    - sonar-scanner
+  only:
+    refs:
+      - merge_requests
+      - develop
+      - main
+    changes:
+      - "**/*.py"
+
+# -- DEPLOY JOBS -------------------------------------------------------------------------
 docker-build:
   stage: 🚀 deploy
   image: docker:24.0.7
@@ -309,28 +330,10 @@ docker-build:
   only:
     refs:
       - tags
+  environment:
+    name: docker
+    url: https://hub.docker.com/r/py3dtiles/py3dtiles
 
-sonarcloud-check:
-  stage: 🤞 test
-  needs: [test]
-  image:
-    name: sonarsource/sonar-scanner-cli:latest
-    entrypoint: [""]
-  cache:
-    key: "${CI_JOB_NAME}"
-    paths:
-      - .sonar/cache
-  script:
-    - sonar-scanner
-  only:
-    refs:
-      - merge_requests
-      - develop
-      - main
-    changes:
-      - "**/*.py"
-
-# -- DEPLOY JOBS -------------------------------------------------------------------------
 pages:
   stage: 🚀 deploy
   image: python:3.10
