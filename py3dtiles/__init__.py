@@ -11,4 +11,4 @@ If you are looking for a way to extend py3dtiles conversion capabilities, or to 
 All client applications should use the :py:mod:`py3dtiles.exceptions` module, which contains all the exceptions that py3dtiles might throw.
 
 """
-__version__ = "8.0.1"
+__version__ = "8.0.2"
