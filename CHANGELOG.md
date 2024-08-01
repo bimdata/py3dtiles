@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 Changes for this release are only about our CI pipeline.
 
-We fixed the bug with the tag name for the docker image: it was v0-8-1 in the previous release instead of v0.8.1.
+We fixed the bug with the tag name for the docker image: it was v8-0-1 in the previous release instead of v8.0.1.
 
 ## v8.0.1 (2024-07-24)
 
