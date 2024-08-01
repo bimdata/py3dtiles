@@ -1,8 +1,6 @@
 # How to release
 
 - before doing anything, just check if the CI is still passing on main ;-)
-- make sure you've run `pip install -e .[pack]`
-- clean previous builds: `rm dist/ -rf`
 - edit the CHANGELOG.md. The best way is to start with commitizen for that:
 ```bash
 cz changelog --incremental --unreleased-version v4.0.0
@@ -14,18 +12,10 @@ migration guide for instance.
 - edit the version in [sonar-project.properties](sonar-project.properties) (field `sonar.projectVersion`)
 - create a merge request with these changes
 - once it is merged, create a tagged release on gitlab.
-- switch to the newly created tag
-- wait for the execution of pages that will update the documentation
-- publish on pypi:
-```bash
-# create a package in dist/ folder
-python -m build
-# check everything is ok (replace <version> by the version you've just built)
-twine check dist/py3dtiles-<version>*
-# check your pypirc for authentication
-# upload it to pypi, eventually using --repository for selecting the right authent
-twine upload dist/py3dtiles-<version>*
-```
+- wait for the execution of the automatic deploy jobs:
+    - `pages`: will update the documentation
+    - `docker-build`: will push the docker image on docker hub and gitlab registry
+    - `publish-to-pypi`: will push the package to pypi.org
 
 What to check after the release:
 
