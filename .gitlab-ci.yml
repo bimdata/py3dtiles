@@ -400,7 +400,8 @@ publish-to-test-pypi:
   script:
     # Install dependencies
     - apt update && apt install -y jq
-    - python -m pip install -U twine id
+    - python -m pip install -e .[pack]
+    - python -m pip install -U id
 
     # Retrieve the OIDC token from GitLab CI/CD, and exchange it for a PyPI API token
     - oidc_token=$(python -m id PYPI)
@@ -410,7 +411,9 @@ publish-to-test-pypi:
 
     # Upload to PyPI authenticating via the newly-minted token
     # Add "--repository testpypi" if uploading to TestPyPI
-    - twine upload --repository testpypi -u __token__ -p "${api_token}" python_pkg/dist/*
+    - python -m build
+    - twine check dist/py3dtiles-*
+    - twine upload --repository testpypi -u __token__ -p "${api_token}" dist/*
   only:
     - tags
   environment:
