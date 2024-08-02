@@ -160,6 +160,38 @@ test:
     matrix:
       - PYTHON_VERSION: ['3.9', '3.10', '3.11', '3.12']
 
+test-docker-build:
+  stage: 🤞 test
+  image: docker:24.0.7
+  services:
+    - name: docker:24.0.7-dind
+      alias: docker
+  script:
+    - docker build . -t docker-test -f docker/Dockerfile
+    - mkdir data
+    - cp tests/fixtures/simple.ply data
+    # Sanity check: convert then check if there is the right amount of points in the tileset
+    - docker run --rm
+        --mount type=bind,source="$(pwd)"/data,target=/data/
+        --volume /etc/passwd:/etc/passwd:ro --volume /etc/group:/etc/group:ro --user $(id -u):$(id -g)
+        docker-test convert simple.ply
+    - docker run
+        --rm
+        --mount type=bind,source="$(pwd)"/data,target=/data/
+        --entrypoint=python3
+        docker-test
+        -c "from py3dtiles.tileset.utils import number_of_points_in_tileset;from pathlib import Path;exit(number_of_points_in_tileset(Path('3dtiles/tileset.json')) != 22300);"
+  only:
+    refs:
+      - merge_requests
+      - main
+    changes:
+      # did we changed the dependencies?
+      - pyproject.toml
+      # other changes *should* get covered by the rest of the CI
+      # we do want to validate docker/requirements.txt for instance
+      - "docker/**/*"
+
 windows-test:
   stage: 🤞 test
   tags:
