@@ -14,21 +14,21 @@ license = {text = "Apache-2.0"}
 classifiers=[
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 
 dynamic = ["version"]
 
-requires-python = ">=3.8,<3.12"
+requires-python = ">=3.9,<3.13"
 
 dependencies = [
     "cython",
     "earcut==1.1.5",
     "lz4",
-    "numba",
+    "numba>=0.59",
     "numpy>=1.24.0,<2.0.0",
     "psutil",
     "pyproj",

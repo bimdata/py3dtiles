@@ -88,7 +88,7 @@ typing-check:
   stage: 🐍 lint
   image:
     # this should always be the oldest python we support
-    name: python:3.8-slim
+    name: python:3.9-slim
   cache:
     - key: $CI_COMMIT_REF_NAME
       paths:
@@ -158,7 +158,7 @@ test:
       - "**/*.py"
   parallel:
     matrix:
-      - PYTHON_VERSION: ['3.8', '3.9', '3.10', '3.11']
+      - PYTHON_VERSION: ['3.9', '3.10', '3.11', '3.12']
 
 windows-test:
   stage: 🤞 test
