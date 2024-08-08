@@ -896,3 +896,24 @@ def test_convert_rgb_classif(rgb_bool: bool, classif_bool: bool, tmp_dir: Path) 
                 "Classification"
             )
             assert len(bt_prop) > 0
+
+
+def test_convert_without_threadpool(tmp_dir: Path) -> None:
+    path = DATA_DIRECTORY / "ripple.las"
+    convert(path, outfolder=tmp_dir, use_process_pool=False)
+
+    # basic asserts
+    tileset_path = tmp_dir / "tileset.json"
+    with tileset_path.open() as f:
+        tileset = json.load(f)
+
+    expecting_box = [5.0, 5.0, 0.8832, 5.0, 0, 0, 0, 5.0, 0, 0, 0, 0.8832]
+    box = [round(value, 4) for value in tileset["root"]["boundingVolume"]["box"]]
+    assert box == expecting_box
+
+    assert Path(tmp_dir, "r0.pnts").exists()
+
+    with laspy.open(path) as f:
+        las_point_count = f.header.point_count
+
+    assert las_point_count == number_of_points_in_tileset(tileset_path)

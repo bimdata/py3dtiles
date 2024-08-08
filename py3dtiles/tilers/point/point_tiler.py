@@ -462,7 +462,7 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
                 + f"(expected: {self.file_info['point_count']}, was: {self.state.points_in_pnts})"
             )
 
-    def write_tileset(self) -> None:
+    def write_tileset(self, use_process_pool: bool = True) -> None:
         # compute tile transform matrix
         transform = np.linalg.inv(self.rotation_matrix)
         transform = np.dot(transform, make_scale_matrix(1.0 / self.root_scale[0]))
@@ -542,11 +542,15 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
             self.intensity,
         )
 
-        pool_executor = concurrent.futures.ProcessPoolExecutor()
+        if use_process_pool:
+            pool_executor = concurrent.futures.ProcessPoolExecutor()
+        else:
+            pool_executor = None
         root_tile = node_from_name(b"", self.root_aabb, self.root_spacing).to_tileset(
             self.out_folder, self.root_scale, None, 0, pool_executor
         )
-        pool_executor.shutdown()
+        if pool_executor is not None:
+            pool_executor.shutdown()
 
         if root_tile is None:
             raise RuntimeError(
