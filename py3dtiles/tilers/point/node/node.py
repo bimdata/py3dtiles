@@ -506,12 +506,12 @@ class Node:
         else:
             tile.geometric_error = 0.0
 
-        if (
-            len(self.name) > 0
-            and children_tileset_parts
-            and len(json.dumps(tile.to_dict())) > 100000
-        ):
-            tile = split_tileset(tile, self.name.decode(), folder)
+        # if (
+        #     len(self.name) > 0
+        #     and children_tileset_parts
+        #     and len(json.dumps(tile.to_dict())) > 100000
+        # ):
+        #     tile = split_tileset(tile, self.name.decode(), folder)
 
         return tile
 
