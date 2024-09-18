@@ -1,0 +1,50 @@
+{
+    "asset": {
+        "version": "1.0"
+    },
+    "geometricError": 500,
+    "extensionsUsed": [
+        "Test"
+    ],
+    "extensionsRequired": [
+        "Test"
+    ],
+    "root": {
+        "boundingVolume": {
+            "box": [
+                1842737.312,
+                5175777.75,
+                194.72,
+                3.5625,
+                0,
+                0,
+                0,
+                1.75,
+                0,
+                0,
+                0,
+                0.82977294921875
+            ],
+            "extensions": {
+                "Test": {
+                    "id": "IDBB00"
+                }
+            }
+        },
+        "geometricError": 500,
+        "refine": "ADD",
+        "content": {
+            "uri": "./tile_with_extension.b3dm"
+        },
+        "extensions": {
+            "Test": {
+                "id": "IDT00"
+            }
+        }
+    },
+    "extensions": {
+        "Test": {
+            "id": "IDTS00"
+        }
+    }
+}

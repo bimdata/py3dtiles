@@ -1,42 +1,67 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from abc import abstractmethod
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 import numpy as np
 import numpy.typing as npt
 
-from py3dtiles.typing import BoundingVolumeDictType
-from .extendable import Extendable
+from py3dtiles.typing import (
+    BoundingVolumeBoxDictType,
+    BoundingVolumeRegionDictType,
+    BoundingVolumeSphereDictType,
+)
+
+from .root_property import RootProperty
 
 if TYPE_CHECKING:
-    from py3dtiles.tileset.tile import Tile
+    from typing_extensions import Self
+
+    from py3dtiles.tileset import Tile
+
+_BoundingVolumeJsonDictT = TypeVar(
+    "_BoundingVolumeJsonDictT",
+    BoundingVolumeBoxDictType,
+    BoundingVolumeRegionDictType,
+    BoundingVolumeSphereDictType,
+)
 
 
-class BoundingVolume(ABC, Extendable):
+class BoundingVolume(
+    RootProperty[_BoundingVolumeJsonDictT], Generic[_BoundingVolumeJsonDictT]
+):
     """
     Abstract class used as interface for box, region and sphere
     """
+
     def __init__(self) -> None:
         super().__init__()
 
-    def is_box(self) -> bool:
-        return False
-
-    def is_region(self) -> bool:
-        return False
-
-    def is_sphere(self) -> bool:
-        return False
+    @classmethod
+    @abstractmethod
+    def from_dict(cls, bounding_volume_dict: _BoundingVolumeJsonDictT) -> Self:
+        ...
 
     @abstractmethod
-    def to_dict(self) -> BoundingVolumeDictType: ...
+    def get_center(self) -> npt.NDArray[np.float64]:
+        ...
 
     @abstractmethod
-    def sync_with_children(self, owner: Tile) -> None: ...
+    def translate(self, offset: npt.NDArray[np.float64]) -> None:
+        ...
 
     @abstractmethod
-    def transform(self, transform: npt.NDArray[np.float64]) -> None: ...
+    def transform(self, transform: npt.NDArray[np.float64]) -> None:
+        ...
 
     @abstractmethod
-    def add(self, other: BoundingVolume) -> None: ...
+    def add(self, other: BoundingVolume[Any]) -> None:
+        ...
+
+    @abstractmethod
+    def sync_with_children(self, owner: Tile) -> None:
+        ...
+
+    @abstractmethod
+    def to_dict(self) -> _BoundingVolumeJsonDictT:
+        ...

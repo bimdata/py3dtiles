@@ -1,15 +1,27 @@
+from __future__ import annotations
+
+import argparse
 import errno
 import getpass
 import json
 import math
 import os
+import sys
+import traceback
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-import psycopg2
+import numpy.typing as npt
 
+from py3dtiles.constants import EXIT_CODES
 from py3dtiles.tilers.b3dm.wkb_utils import TriangleSoup
-from py3dtiles.tileset.batch_table import BatchTable
-from py3dtiles.tileset.content import B3dm, GlTF
+from py3dtiles.tileset.content import B3dm
+from py3dtiles.tileset.content.batch_table import BatchTable
+
+if TYPE_CHECKING:
+    # we dynamically import it below, but we need it for static analysis
+    import psycopg2
 
 
 class BoundingBox:
@@ -18,8 +30,7 @@ class BoundingBox:
         self.max = [float(i) for i in maximum]
 
     def inside(self, point):
-        return ((self.min[0] <= point[0] < self.max[0])
-                and (self.min[1] <= point[1] < self.max[1]))
+        return all(self.min[idx] <= point[idx] < self.max[idx] for idx in (0, 1))
 
     def center(self):
         return [(i + j) / 2 for (i, j) in zip(self.min, self.max)]
@@ -29,7 +40,7 @@ class BoundingBox:
         self.max = [max(i, j) for (i, j) in zip(self.max, box.max)]
 
 
-class Feature():
+class Feature:
     def __init__(self, index, box):
         self.index = index
         self.box = box
@@ -51,7 +62,8 @@ class Node:
     def compute_bbox(self):
         self.box = BoundingBox(
             [float("inf"), float("inf"), float("inf")],
-            [-float("inf"), -float("inf"), -float("inf")])
+            [-float("inf"), -float("inf"), -float("inf")],
+        )
         for c in self.children:
             c.compute_bbox()
             self.box.add(c.box)
@@ -63,30 +75,30 @@ class Node:
         tiles = {
             "asset": {"version": "1.0"},
             "geometricError": 500,  # TODO
-            "root": self.to_tileset_r(500)
+            "root": self.to_tileset_r(500),
         }
         tiles["root"]["transform"] = [round(float(e), 3) for e in transform]
         return tiles
 
     def to_tileset_r(self, error):
+        if self.box is None:
+            raise RuntimeError(
+                "The attribute box cannot be None. Use the method to_tileset."
+            )
         (c1, c2) = (self.box.min, self.box.max)
-        center = [(c1[i] + c2[i]) / 2 for i in range(0, 3)]
+        center = [(c1[i] + c2[i]) / 2 for i in range(3)]
         x_axis = [(c2[0] - c1[0]) / 2, 0, 0]
         y_axis = [0, (c2[1] - c1[1]) / 2, 0]
         z_axis = [0, 0, (c2[2] - c1[2]) / 2]
         box = [round(x, 3) for x in center + x_axis + y_axis + z_axis]
         tile = {
-            "boundingVolume": {
-                "box": box
-            },
+            "boundingVolume": {"box": box},
             "geometricError": error,  # TODO
-            "children": [n.to_tileset_r(error / 2.) for n in self.children],
-            "refine": "add"
+            "children": [n.to_tileset_r(error / 2.0) for n in self.children],
+            "refine": "add",
         }
         if len(self.features) != 0:
-            tile["content"] = {
-                "uri": f"tiles/{self.id}.b3dm"
-            }
+            tile["content"] = {"uri": f"tiles/{self.id}.b3dm"}
 
         return tile
 
@@ -98,27 +110,28 @@ class Node:
 
 
 def tile_extent(extent, size, i, j):
-    min_extent = [
-        extent.min[0] + i * size,
-        extent.min[1] + j * size]
-    max_extent = [
-        extent.min[0] + (i + 1) * size,
-        extent.min[1] + (j + 1) * size]
+    min_extent = [extent.min[0] + i * size, extent.min[1] + j * size]
+    max_extent = [extent.min[0] + (i + 1) * size, extent.min[1] + (j + 1) * size]
     return BoundingBox(min_extent, max_extent)
 
 
 # TODO: transform
-def arrays2tileset(positions, normals, bboxes, transform, ids=None):
+def arrays2tileset(
+    output_dir: Path,
+    triangle_soups: list[TriangleSoup],
+    transform: npt.NDArray[np.float32],
+    ids: list[str] = None,
+) -> None:
     print("Creating tileset...")
     max_tile_size = 2000
     features_per_tile = 20
-    indices = [i for i in range(len(positions))]
+    indices = list(range(len(triangle_soups)))
 
     # glTF is Y-up, so to get the bounding boxes in the 3D tiles
     # coordinate system, we have to apply a Y-to-Z transform to the
     # glTF bounding boxes
     z_up_bboxes = []
-    for bbox in bboxes:
+    for bbox in [ts.get_bbox() for ts in triangle_soups]:
         tmp = m = bbox[0]
         M = bbox[1]
         m = [m[0], -m[2], m[1]]
@@ -126,8 +139,8 @@ def arrays2tileset(positions, normals, bboxes, transform, ids=None):
         z_up_bboxes.append([m, M])
 
     # Compute extent
-    x_min = y_min = float('inf')
-    x_max = y_max = - float('inf')
+    x_min = y_min = float("inf")
+    x_max = y_max = -float("inf")
 
     for bbox in z_up_bboxes:
         x_min = min(x_min, bbox[0][0])
@@ -140,8 +153,8 @@ def arrays2tileset(positions, normals, bboxes, transform, ids=None):
 
     # Create quadtree
     tree = Node()
-    for i in range(0, int(math.ceil(extent_x / max_tile_size))):
-        for j in range(0, int(math.ceil(extent_y / max_tile_size))):
+    for i in range(int(math.ceil(max(1, extent_x) / max_tile_size))):
+        for j in range(int(math.ceil(max(1, extent_y) / max_tile_size))):
             tile = tile_extent(extent, max_tile_size, i, j)
 
             geoms = []
@@ -157,51 +170,65 @@ def arrays2tileset(positions, normals, bboxes, transform, ids=None):
             if len(geoms) > features_per_tile:
                 node = Node(geoms[0:features_per_tile])
                 tree.add(node)
-                divide(tile, geoms[features_per_tile:len(geoms)], i * 2,
-                       j * 2, max_tile_size / 2., features_per_tile, node)
+                divide(
+                    tile,
+                    geoms[features_per_tile : len(geoms)],
+                    i * 2,
+                    j * 2,
+                    max_tile_size / 2.0,
+                    features_per_tile,
+                    node,
+                )
             else:
                 node = Node(geoms)
                 tree.add(node)
 
     # Export b3dm & tileset
     tileset = tree.to_tileset(transform)
-    f = open("tileset.json", 'w')
-    f.write(json.dumps(tileset))
+    with open(Path(output_dir, "tileset.json"), "w") as f:
+        f.write(json.dumps(tileset))
     print("Creating tiles...")
     nodes = tree.all_nodes()
-    identity = np.identity(4).flatten('F')
     try:
-        os.makedirs("tiles")
+        os.makedirs(f"{output_dir}/tiles")
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
     for node in nodes:
         if len(node.features) != 0:
-            bin_arrays = []
+            arrays = []
             gids = []
             for feature in node.features:
                 pos = feature.index
-                bin_arrays.append({
-                    'position': positions[pos],
-                    'normal': normals[pos],
-                    'bbox': [[float(i) for i in j] for j in bboxes[pos]],
-                })
+                arrays.append(
+                    {
+                        "vertices": triangle_soups[pos].vertices,
+                        "indices": triangle_soups[pos].triangle_indices,
+                        "normal": triangle_soups[pos].compute_normals(),
+                    }
+                )
                 if ids is not None:
                     gids.append(ids[pos])
-            gltf = GlTF.from_binary_arrays(bin_arrays, identity)
             bt = None
             if ids is not None:
                 bt = BatchTable()
-                bt.add_property_from_array("id", gids)
-            b3dm = B3dm.from_glTF(gltf, bt).to_array()
-            f = open(f"tiles/{node.id}.b3dm", 'wb')
-            f.write(b3dm)
+                bt.add_property_as_json("id", gids)
+
+            b3dm = B3dm.from_numpy_arrays(
+                points=np.concatenate([arr["vertices"] for arr in arrays]),
+                triangles=np.concatenate([arr["indices"] for arr in arrays]),
+                normal=np.concatenate([arr["normal"] for arr in arrays]),
+                batch_table=bt,
+            )
+
+            b3dm.save_as(Path(output_dir, f"tiles/{node.id}.b3dm"))
 
 
-def divide(extent, geometries, x_offset, y_offset, tile_size,
-           features_per_tile, parent):
-    for i in range(0, 2):
-        for j in range(0, 2):
+def divide(
+    extent, geometries, x_offset, y_offset, tile_size, features_per_tile, parent
+):
+    for i in range(2):
+        for j in range(2):
             tile = tile_extent(extent, tile_size, i, j)
 
             geoms = []
@@ -214,23 +241,31 @@ def divide(extent, geometries, x_offset, y_offset, tile_size,
             if len(geoms) > features_per_tile:
                 node = Node(geoms[0:features_per_tile])
                 parent.add(node)
-                divide(tile, geoms[features_per_tile:len(geoms)],
-                       (x_offset + i) * 2, (y_offset + j) * 2,
-                       tile_size / 2., features_per_tile, node)
+                divide(
+                    tile,
+                    geoms[features_per_tile : len(geoms)],
+                    (x_offset + i) * 2,
+                    (y_offset + j) * 2,
+                    tile_size / 2.0,
+                    features_per_tile,
+                    node,
+                )
             else:
                 node = Node(geoms)
                 parent.add(node)
 
 
-def wkbs_to_tileset(wkbs, ids, transform):
+def wkbs_to_tileset(
+    wkbs: list[bytes],
+    ids: list[str] | None,
+    transform: npt.NDArray[np.float32],
+    output_dir: Path,
+) -> None:
     geoms = [TriangleSoup.from_wkb_multipolygon(wkb) for wkb in wkbs]
-    positions = [ts.get_position_array() for ts in geoms]
-    normals = [ts.get_normal_array() for ts in geoms]
-    bboxes = [ts.get_bbox() for ts in geoms]
-    arrays2tileset(positions, normals, bboxes, transform, ids)
+    arrays2tileset(output_dir, geoms, transform, ids)
 
 
-def build_secure_conn(db_conn_info):
+def build_secure_conn(db_conn_info: str) -> psycopg2.extensions.connection:
     """Get a psycopg2 connexion securely, e.g. without writing the password explicitely
     in the terminal
 
@@ -242,6 +277,8 @@ def build_secure_conn(db_conn_info):
     -------
     psycopg2.extensions.connection
     """
+    import psycopg2
+
     try:
         connection = psycopg2.connect(db_conn_info)
     except psycopg2.OperationalError:
@@ -250,7 +287,7 @@ def build_secure_conn(db_conn_info):
     return connection
 
 
-def from_db(db_conn_info, table_name, column_name, id_column_name):
+def from_db(db_conn_info, table_name, column_name, id_column_name, output_dir) -> None:
     connection = build_secure_conn(db_conn_info)
     cur = connection.cursor()
 
@@ -258,92 +295,118 @@ def from_db(db_conn_info, table_name, column_name, id_column_name):
     cur.execute(f"SELECT ST_3DExtent({column_name}) FROM {table_name}")
     extent = cur.fetchall()[0][0]
     extent = [m.split(" ") for m in extent[6:-1].split(",")]
-    offset = [(float(extent[1][0]) + float(extent[0][0])) / 2,
-              (float(extent[1][1]) + float(extent[0][1])) / 2,
-              (float(extent[1][2]) + float(extent[0][2])) / 2]
+    offset = [
+        (float(extent[1][0]) + float(extent[0][0])) / 2,
+        (float(extent[1][1]) + float(extent[0][1])) / 2,
+        (float(extent[1][2]) + float(extent[0][2])) / 2,
+    ]
 
     id_statement = ""
     if id_column_name is not None:
         id_statement = "," + id_column_name
-    cur.execute("SELECT ST_AsBinary(ST_RotateX(ST_Translate({0}, {1}, {2}, {3}), -pi() / 2)),"
-                "ST_Area(ST_Force2D({0})) AS weight{5} FROM {4} ORDER BY weight DESC"
-                .format(column_name, -offset[0], -offset[1], -offset[2],
-                        table_name, id_statement))
+    cur.execute(
+        "SELECT ST_AsBinary(ST_RotateX(ST_Translate({0}, {1}, {2}, {3}), -pi() / 2)),"
+        "ST_Area(ST_Force2D({0})) AS weight{5} FROM {4} ORDER BY weight DESC".format(
+            column_name, -offset[0], -offset[1], -offset[2], table_name, id_statement
+        )
+    )
     res = cur.fetchall()
     wkbs = [t[0] for t in res]
     ids = None
     if id_column_name is not None:
         ids = [t[2] for t in res]
-    transform = np.array([
-        [1, 0, 0, offset[0]],
-        [0, 1, 0, offset[1]],
-        [0, 0, 1, offset[2]],
-        [0, 0, 0, 1]], dtype=float)
-    transform = transform.flatten('F')
+    transform = np.array(
+        [
+            [1, 0, 0, offset[0]],
+            [0, 1, 0, offset[1]],
+            [0, 0, 1, offset[2]],
+            [0, 0, 0, 1],
+        ],
+        dtype=np.float32,
+    )
+    transform = transform.flatten("F")
 
-    wkbs_to_tileset(wkbs, ids, transform)
+    wkbs_to_tileset(wkbs, ids, transform, output_dir)
 
 
-def from_directory(directory, offset):
+def from_directory(directory, offset, output_dir) -> None:
     # TODO: improvement -> order wkbs by geometry size, similarly to database mode
     offset = (0, 0, 0) if offset is None else offset
     # open all wkbs from directory
     files = os.listdir(directory)
     files = [os.path.join(directory, f) for f in os.listdir(directory)]
-    files = [f for f in files if os.path.isfile(f) and os.path.splitext(f)[1] == '.wkb']
+    files = [f for f in files if os.path.isfile(f) and os.path.splitext(f)[1] == ".wkb"]
     wkbs = []
     for f in files:
-        of = open(f, 'rb')
+        of = open(f, "rb")
         wkbs.append(of.read())
         of.close()
 
-    transform = np.array([
-        [1, 0, 0, offset[0]],
-        [0, 1, 0, offset[1]],
-        [0, 0, 1, offset[2]],
-        [0, 0, 0, 1]], dtype=float)
-    transform = transform.flatten('F')
-    wkbs_to_tileset(wkbs, None, transform)
+    transform = np.array(
+        [
+            [1, 0, 0, offset[0]],
+            [0, 1, 0, offset[1]],
+            [0, 0, 1, offset[2]],
+            [0, 0, 0, 1],
+        ],
+        dtype=np.float32,
+    )
+    transform = transform.flatten("F")
+    wkbs_to_tileset(wkbs, None, transform, output_dir)
 
 
-def init_parser(subparser):
+def _init_parser(
+    subparser: argparse._SubParsersAction[Any],
+) -> argparse.ArgumentParser:
     descr = "Generate a tileset from a set of geometries"
-    parser = subparser.add_parser('export', help=descr)
+    parser: argparse.ArgumentParser = subparser.add_parser("export", help=descr)
 
     group = parser.add_mutually_exclusive_group()
 
     d_help = "Name of the directory containing the geometries"
-    group.add_argument('-d', metavar='DIRECTORY', type=str, help=d_help)
+    group.add_argument("-d", metavar="DIRECTORY", type=str, help=d_help)
 
     o_help = "Offset of the geometries (only with '-d')"
-    parser.add_argument('-o', nargs=3, metavar=('X', 'Y', 'Z'), type=float, help=o_help)
+    parser.add_argument("-o", nargs=3, metavar=("X", "Y", "Z"), type=float, help=o_help)
 
     D_help = """
     Database connexion info (e.g. 'service=py3dtiles' or \
     'dbname=py3dtiles host=localhost port=5432 user=yourname password=yourpwd')
     """
-    group.add_argument('-D', metavar='DB_CONNINFO', type=str, help=D_help)
+    group.add_argument("-D", metavar="DB_CONNINFO", type=str, help=D_help)
 
     t_help = "Table name (required if '-D' option is activated)"
-    parser.add_argument('-t', metavar='TABLE', type=str, help=t_help)
+    parser.add_argument("-t", metavar="TABLE", type=str, help=t_help)
 
     c_help = "Geometry column name (required if '-D' option is activated)"
-    parser.add_argument('-c', metavar='COLUMN', type=str, help=c_help)
+    parser.add_argument("-c", metavar="COLUMN", type=str, help=c_help)
 
     i_help = "Id column name (only with '-D')"
-    parser.add_argument('-i', metavar='IDCOLUMN', type=str, help=i_help)
+    parser.add_argument("-i", metavar="IDCOLUMN", type=str, help=i_help)
 
+    s_help = "Output directory where command results are stored"
+    parser.add_argument("-s", metavar="OUTPUT_DIR", default=".", type=str, help=s_help)
     return parser
 
 
-def main(args):
+def _main(args: argparse.Namespace) -> None:
+    output_dir = Path(args.s)
+    output_dir.mkdir(exist_ok=True, parents=True)
     if args.D is not None:
         if args.t is None or args.c is None:
-            print('Error: please define a table (-t) and column (-c)')
-            exit()
+            print("Error: please define a table (-t) and column (-c)", file=sys.stderr)
+            exit(EXIT_CODES.MISSING_ARGS.value)
 
-        from_db(args.D, args.t, args.c, args.i)
+        try:
+            from_db(args.D, args.t, args.c, args.i, output_dir)
+        except ImportError:
+            traceback.print_exc()
+            print(
+                "Cannot import psycopg2. You might have to execute `pip install py3dtiles[postgres]`. Please read the installation documentation."
+            )
+            exit(EXIT_CODES.MISSING_DEPS.value)
     elif args.d is not None:
-        from_directory(args.d, args.o)
+        from_directory(args.d, args.o, output_dir)
     else:
-        raise NameError('Error: database or directory must be set')
+        print("Error: database or directory must be set", file=sys.stderr)
+        exit(EXIT_CODES.MISSING_ARGS.value)

@@ -1,61 +1,181 @@
 from __future__ import annotations
 
 import struct
-from typing import Any
+from pathlib import Path
 
 import numpy as np
 import numpy.typing as npt
 
-from py3dtiles.tileset.batch_table import BatchTable
-from py3dtiles.tileset.feature_table import Feature, FeatureTable
-from py3dtiles.tileset.tile_content import TileContent, TileContentBody, TileContentHeader, TileContentType
+from py3dtiles.exceptions import InvalidPntsError
+
+from .batch_table import BatchTable
+from .pnts_feature_table import (
+    PntsFeatureTable,
+    PntsFeatureTableBody,
+    PntsFeatureTableHeader,
+    SemanticPoint,
+)
+from .tile_content import TileContent, TileContentBody, TileContentHeader
 
 
 class Pnts(TileContent):
+    def __init__(self, header: PntsHeader, body: PntsBody) -> None:
+        super().__init__()
+        self.header: PntsHeader = header
+        self.body: PntsBody = body
+        self.sync()
+
+    def sync(self) -> None:
+        """
+        Synchronizes headers with the Pnts body.
+        """
+        self.header.ft_json_byte_length = len(self.body.feature_table.header.to_array())
+        self.header.ft_bin_byte_length = len(self.body.feature_table.body.to_array())
+        self.header.bt_json_byte_length = len(self.body.batch_table.header.to_array())
+        self.header.bt_bin_byte_length = len(self.body.batch_table.body.to_array())
+
+        self.header.tile_byte_length = (
+            PntsHeader.BYTE_LENGTH
+            + self.header.ft_json_byte_length
+            + self.header.ft_bin_byte_length
+            + self.header.bt_json_byte_length
+            + self.header.bt_bin_byte_length
+        )
 
     @staticmethod
-    def from_features(pd_type: npt.DTypeLike, cd_type: npt.DTypeLike, features: list[Feature]) -> Pnts:
+    def from_features(
+        feature_table_header: PntsFeatureTableHeader,
+        position_array: npt.NDArray[np.float32 | np.uint16],
+        color_array: npt.NDArray[np.uint8 | np.uint16] | None = None,
+        normal_position: npt.NDArray[np.float32 | np.uint8] | None = None,
+    ) -> Pnts:
         """
         Creates a Pnts from features defined by pd_type and cd_type.
         """
+        pnts_body = PntsBody()
+        pnts_body.feature_table = PntsFeatureTable.from_features(
+            feature_table_header, position_array, color_array, normal_position
+        )
 
-        ft = FeatureTable.from_features(pd_type, cd_type, features)
+        pnts = Pnts(PntsHeader(), pnts_body)
+        pnts.sync()
 
-        tb = PntsBody()
-        tb.feature_table = ft
-
-        th = PntsHeader()
-
-        t = Pnts()
-        t.body = tb
-        t.header = th
-
-        return t
+        return pnts
 
     @staticmethod
-    def from_array(array: npt.NDArray) -> Pnts:
+    def from_array(array: npt.NDArray[np.uint8]) -> Pnts:
         """
         Creates a Pnts from an array
         """
 
         # build tile header
-        h_arr = array[0:PntsHeader.BYTE_LENGTH]
-        h = PntsHeader.from_array(h_arr)
+        h_arr = array[0 : PntsHeader.BYTE_LENGTH]
+        pnts_header = PntsHeader.from_array(h_arr)
 
-        if h.tile_byte_length != len(array):
-            raise RuntimeError("Invalid byte length in header")
+        if pnts_header.tile_byte_length != len(array):
+            raise InvalidPntsError(
+                f"Invalid byte length in header, the size of array is {len(array)}, "
+                f"the tile_byte_length for header is {pnts_header.tile_byte_length}"
+            )
 
         # build tile body
-        b_len = h.ft_json_byte_length + h.ft_bin_byte_length
-        b_arr = array[PntsHeader.BYTE_LENGTH:PntsHeader.BYTE_LENGTH + b_len]
-        b = PntsBody.from_array(h, b_arr)
+        b_len = (
+            pnts_header.ft_json_byte_length
+            + pnts_header.ft_bin_byte_length
+            + pnts_header.bt_json_byte_length
+            + pnts_header.bt_bin_byte_length
+        )
+        b_arr = array[PntsHeader.BYTE_LENGTH : PntsHeader.BYTE_LENGTH + b_len]
+        pnts_body = PntsBody.from_array(pnts_header, b_arr)
 
-        # build TileContent with header and body
-        t = Pnts()
-        t.header = h
-        t.body = b
+        # build the tile with header and body
+        return Pnts(pnts_header, pnts_body)
 
-        return t
+    @staticmethod
+    def from_points(
+        points: npt.NDArray[np.uint8],
+        include_rgb: bool,
+        include_classification: bool,
+        include_intensity: bool,
+    ) -> Pnts:
+        """
+        Create a pnts from an uint8 data array containing:
+
+        - points as SemanticPoint.POSITION
+        - if include_rgb, rgb as SemanticPoint.RGB
+        - if include_classification, classification as a single np.uint8 value that will be put in the batch table
+        - if include_intensity, intensity as a single np.uint8 value that will be put in the batch table
+
+        :param include_rgb: Whether the points array contains rgb values
+        :param include_classification: Whether the point array contains classification values
+        :param include_intensity: whether the point array contains intensity values
+        :param points: the points array. Contains at least 3
+        """
+        if len(points) == 0:
+            raise ValueError("The argument points cannot be empty.")
+
+        point_size = (
+            3 * 4
+            + (3 if include_rgb else 0)
+            + (1 if include_classification else 0)
+            + (1 if include_intensity else 0)
+        )
+
+        if len(points) % point_size != 0:
+            raise ValueError(
+                f"The length of points array is {len(points)} but the point size is {point_size}."
+                f"There is a rest of {len(points) % point_size}"
+            )
+
+        count = len(points) // point_size
+
+        ft = PntsFeatureTable()
+        ft.header = PntsFeatureTableHeader.from_semantic(
+            SemanticPoint.POSITION,
+            SemanticPoint.RGB if include_rgb else None,
+            None,
+            count,
+        )
+        ft.body = PntsFeatureTableBody.from_array(ft.header, points)
+
+        bt = BatchTable()
+        if include_classification:
+            sdt = np.dtype([("Classification", "u1")])
+            offset = count * (3 * 4 + (3 if include_rgb else 0))
+            bt.add_property_as_binary(
+                "Classification",
+                points[offset : offset + count * sdt.itemsize],
+                "UNSIGNED_BYTE",
+                "SCALAR",
+            )
+
+        if include_intensity:
+            sdt = np.dtype([("Intensity", "u1")])
+            offset = count * (
+                3 * 4 + (3 if include_rgb else 0) + (1 if include_classification else 0)
+            )
+            bt.add_property_as_binary(
+                "Intensity",
+                points[offset : offset + count * sdt.itemsize],
+                "UNSIGNED_BYTE",
+                "SCALAR",
+            )
+
+        body = PntsBody()
+        body.feature_table = ft
+        body.batch_table = bt
+
+        pnts = Pnts(PntsHeader(), body)
+        pnts.sync()
+
+        return pnts
+
+    @staticmethod
+    def from_file(tile_path: Path) -> Pnts:
+        with tile_path.open("rb") as f:
+            data = f.read()
+            arr = np.frombuffer(data, dtype=np.uint8)
+            return Pnts.from_array(arr)
 
 
 class PntsHeader(TileContentHeader):
@@ -63,7 +183,6 @@ class PntsHeader(TileContentHeader):
 
     def __init__(self) -> None:
         super().__init__()
-        self.type = TileContentType.POINT_CLOUD
         self.magic_value = b"pnts"
         self.version = 1
 
@@ -73,39 +192,22 @@ class PntsHeader(TileContentHeader):
         """
         header_arr = np.frombuffer(self.magic_value, np.uint8)
 
-        header_arr2 = np.array([self.version,
-                                self.tile_byte_length,
-                                self.ft_json_byte_length,
-                                self.ft_bin_byte_length,
-                                self.bt_json_byte_length,
-                                self.bt_bin_byte_length], dtype=np.uint32)
+        header_arr2 = np.array(
+            [
+                self.version,
+                self.tile_byte_length,
+                self.ft_json_byte_length,
+                self.ft_bin_byte_length,
+                self.bt_json_byte_length,
+                self.bt_bin_byte_length,
+            ],
+            dtype=np.uint32,
+        )
 
         return np.concatenate((header_arr, header_arr2.view(np.uint8)))
 
-    def sync(self, body: PntsBody) -> None:
-        """
-        Synchronizes headers with the Pnts body.
-        """
-
-        # extract arrays
-        feature_table_header_array = body.feature_table.header.to_array()
-        feature_table_body_array = body.feature_table.body.to_array()
-        batch_table_header_array = body.batch_table.to_array()  # for now, there is only json part in the batch table
-        batch_table_body_array: list[Any] = []  # body.batch_table.body.to_array()
-
-        # sync the tile header with feature table contents
-        self.tile_byte_length = (
-            len(feature_table_header_array) + len(feature_table_body_array)
-            + len(batch_table_header_array) + len(batch_table_body_array)
-            + PntsHeader.BYTE_LENGTH
-        )
-        self.ft_json_byte_length = len(feature_table_header_array)
-        self.ft_bin_byte_length = len(feature_table_body_array)
-        self.bt_json_byte_length = len(batch_table_header_array)
-        self.bt_bin_byte_length = len(batch_table_body_array)
-
     @staticmethod
-    def from_array(array: npt.NDArray) -> PntsHeader:
+    def from_array(array: npt.NDArray[np.uint8]) -> PntsHeader:
         """
         Create a PntsHeader from an array
         """
@@ -113,7 +215,10 @@ class PntsHeader(TileContentHeader):
         h = PntsHeader()
 
         if len(array) != PntsHeader.BYTE_LENGTH:
-            raise RuntimeError("Invalid header length")
+            raise InvalidPntsError(
+                f"Invalid header byte length, the size of array is {len(array)}, "
+                f"the header must have a size of {PntsHeader.BYTE_LENGTH}"
+            )
 
         h.version = struct.unpack("i", array[4:8].tobytes())[0]
         h.tile_byte_length = struct.unpack("i", array[8:12].tobytes())[0]
@@ -127,10 +232,29 @@ class PntsHeader(TileContentHeader):
 
 class PntsBody(TileContentBody):
     def __init__(self) -> None:
-        self.feature_table = FeatureTable()
+        self.feature_table: PntsFeatureTable = PntsFeatureTable()
         self.batch_table = BatchTable()
 
-    def to_array(self) -> npt.NDArray:
+    def __str__(self) -> str:
+        infos = {
+            "feature_table_header": self.feature_table.header.to_json(),
+            "points_length": self.feature_table.header.points_length,
+        }
+        if self.feature_table.header.points_length > 0:
+            (
+                feature_position,
+                feature_color,
+                feature_normal,
+            ) = self.feature_table.get_feature_at(0)
+            infos["first_point_position"] = feature_position
+            infos["first_point_color"] = feature_color
+            infos["first_point_normal"] = feature_normal
+        infos["batch_table_header"] = self.batch_table.header.data
+        for f in self.batch_table.header.data.keys():
+            infos[f"- first point {f}"] = self.batch_table.get_binary_property(f)[0]
+        return "\n".join(f"{key}: {value}" for key, value in infos.items())
+
+    def to_array(self) -> npt.NDArray[np.uint8]:
         """
         Returns the body as a numpy array.
         """
@@ -138,21 +262,50 @@ class PntsBody(TileContentBody):
         batch_table_array = self.batch_table.to_array()
         return np.concatenate((feature_table_array, batch_table_array))
 
+    def get_points(
+        self, transform: npt.NDArray[np.float64] | None
+    ) -> tuple[npt.NDArray[np.float32], npt.NDArray[np.uint8 | np.uint16] | None]:
+        fth = self.feature_table.header
+
+        xyz = self.feature_table.body.position.view(np.float32).reshape(
+            (fth.points_length, 3)
+        )
+        if fth.colors == SemanticPoint.RGB:
+            rgb = self.feature_table.body.color
+            if rgb is None:
+                raise InvalidPntsError(
+                    "If fth.colors is SemanticPoint.RGB, rgb cannot be None."
+                )
+            rgb = rgb.reshape((fth.points_length, 3))
+        else:
+            rgb = None
+
+        if transform is not None:
+            transform = transform.reshape((4, 4), order="F")
+            xyzw = np.hstack((xyz, np.ones((xyz.shape[0], 1), dtype=xyz.dtype)))
+            xyz = np.dot(xyzw, transform.astype(xyz.dtype))[:, :3]
+
+        return xyz, rgb
+
     @staticmethod
-    def from_array(header: PntsHeader, array: npt.NDArray) -> PntsBody:
+    def from_array(header: PntsHeader, array: npt.NDArray[np.uint8]) -> PntsBody:
         """
         Creates a PntsBody from an array and the header
         """
 
         # build feature table
         feature_table_size = header.ft_json_byte_length + header.ft_bin_byte_length
-        feature_table_array = array[0:feature_table_size]
-        feature_table = FeatureTable.from_array(header, feature_table_array)
+        feature_table_array = array[:feature_table_size]
+        feature_table = PntsFeatureTable.from_array(header, feature_table_array)
 
         # build batch table
         batch_table_size = header.bt_json_byte_length + header.bt_bin_byte_length
-        batch_table_array = array[feature_table_size:feature_table_size + batch_table_size]
-        batch_table = BatchTable.from_array(header, batch_table_array)
+        batch_table_array = array[
+            feature_table_size : feature_table_size + batch_table_size
+        ]
+        batch_table = BatchTable.from_array(
+            header, batch_table_array, feature_table.nb_points()
+        )
 
         # build tile body with feature table
         body = PntsBody()

@@ -20,7 +20,7 @@
   {% endblock %}
 
   {# CSS #}
-  <link rel="stylesheet" href="{{ pathto('_static/' + style, 1) }}" type="text/css" />
+  <link rel="stylesheet" href="{{ pathto('_static/' + styles[-1], 1) }}" type="text/css" />
   <link rel="stylesheet" href="{{ pathto('_static/pygments.css', 1) }}" type="text/css" />
   {%- for css in css_files %}
     {%- if css|attr("rel") %}
@@ -172,9 +172,15 @@
           <p class="caption"><span class="caption-text">Links:</span></p>
           <ul>
             <li class="toctree-l1">
-              <a class="reference" href="https://gitlab.com/oslandia/py3dtiles">
+              <a class="reference" href="https://gitlab.com/py3dtiles/py3dtiles">
                 <span class="fa fa-lg fa-gitlab" />
                 Gitlab Repository
+              </a>
+            </li>
+            <li class="toctree-l1">
+              <a class="reference" href="https://matrix.to/#/#py3dtiles:matrix.org">
+                <span class="fa fa-lg fa-commenting-o" />
+                Community chat room
               </a>
             </li>
           </ul>

@@ -1,19 +1,20 @@
-from pathlib import Path
 import shutil
 import unittest
+from pathlib import Path
 
-from py3dtiles.tilers.node import SharedNodeStore
+from py3dtiles.tilers.point.node import SharedNodeStore
 
 
 class TestSharedNodeStore(unittest.TestCase):
-    TMP_DIR = Path('tmp/')
-    def test_remove_oldest_nodes(self):
+    TMP_DIR = Path("tmp/")
+
+    def test_remove_oldest_nodes(self) -> None:
         shared_node_store = SharedNodeStore(TestSharedNodeStore.TMP_DIR)
 
         self.assertEqual(len(shared_node_store.data), 0)
         self.assertEqual(len(shared_node_store.metadata), 0)
 
-        shared_node_store.put(b'0', b"11111111")
+        shared_node_store.put(b"0", b"11111111")
 
         self.assertEqual(len(shared_node_store.data), 1)
         self.assertEqual(len(shared_node_store.metadata), 1)
