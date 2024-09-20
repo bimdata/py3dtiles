@@ -3,7 +3,6 @@ import pickle
 import struct
 import time
 from pathlib import PurePath
-from typing import List
 
 import zmq
 
@@ -18,7 +17,7 @@ from .point_shared_metadata import PointSharedMetadata
 
 class PointTilerWorker(TilerWorker[PointSharedMetadata]):
     def execute(
-        self, skt: zmq.Socket[bytes], command: bytes, content: List[bytes]
+        self, skt: zmq.Socket[bytes], command: bytes, content: list[bytes]
     ) -> None:
         if command == PointManagerMessage.READ_FILE.value:
             self.execute_read_file(skt, content)
@@ -29,7 +28,7 @@ class PointTilerWorker(TilerWorker[PointSharedMetadata]):
         else:
             raise NotImplementedError(f"Unknown command {command!r}")
 
-    def execute_read_file(self, skt: zmq.Socket[bytes], content: List[bytes]) -> None:
+    def execute_read_file(self, skt: zmq.Socket[bytes], content: list[bytes]) -> None:
         parameters = pickle.loads(content[0])
 
         extension = PurePath(parameters["filename"]).suffix
@@ -89,7 +88,7 @@ class PointTilerWorker(TilerWorker[PointSharedMetadata]):
             )
 
     def execute_process_jobs(
-        self, skt: zmq.Socket[bytes], content: List[bytes]
+        self, skt: zmq.Socket[bytes], content: list[bytes]
     ) -> None:
         begin = time.time()
         log_enabled = self.shared_metadata.verbosity >= 2

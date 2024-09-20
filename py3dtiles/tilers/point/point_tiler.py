@@ -2,8 +2,9 @@ import concurrent.futures
 import pickle
 import struct
 import time
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -47,7 +48,7 @@ def is_ancestor(node_name: bytes, ancestor: bytes) -> bool:
 
 
 def is_ancestor_in_list(
-    node_name: bytes, ancestors: Union[List[bytes], Dict[bytes, Any]]
+    node_name: bytes, ancestors: Union[list[bytes], dict[bytes, Any]]
 ) -> bool:
     return any(
         not ancestor or is_ancestor(node_name, ancestor) for ancestor in ancestors
@@ -57,8 +58,8 @@ def is_ancestor_in_list(
 def can_pnts_be_written(
     node_name: bytes,
     finished_node: bytes,
-    input_nodes: Union[List[bytes], Dict[bytes, Any]],
-    active_nodes: Union[List[bytes], Dict[bytes, Any]],
+    input_nodes: Union[list[bytes], dict[bytes, Any]],
+    active_nodes: Union[list[bytes], dict[bytes, Any]],
 ) -> bool:
     return (
         is_ancestor(node_name, finished_node)
@@ -70,7 +71,7 @@ def can_pnts_be_written(
 class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
     name = b"points"
 
-    file_info: Dict[str, Any]
+    file_info: dict[str, Any]
     root_aabb: npt.NDArray[np.float64]
     root_scale: npt.NDArray[np.float32]
     root_spacing: float
@@ -80,7 +81,7 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
     def __init__(
         self,
         out_folder: Path,
-        files: Union[List[Union[str, Path]], str, Path],
+        files: Union[list[Union[str, Path]], str, Path],
         crs_in: Optional[CRS],
         force_crs_in: bool,
         rgb: bool,
@@ -113,7 +114,7 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
 
     def get_tasks(
         self, startup: float
-    ) -> Generator[Tuple[bytes, List[bytes]], None, None]:
+    ) -> Generator[tuple[bytes, list[bytes]], None, None]:
         while len(self.state.pnts_to_writing) > 0:
             yield self.send_pnts_to_write()
 
@@ -161,7 +162,7 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
         self,
         crs_in: Optional[CRS],
         force_crs_in: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
 
         pointcloud_file_portions = []
         aabb = None
@@ -230,7 +231,7 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
 
     def get_rotation_matrix(
         self, crs_out: Optional[CRS], transformer: Optional[Transformer]
-    ) -> Tuple[
+    ) -> tuple[
         npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]
     ]:
         avg_min: npt.NDArray[np.float64] = self.file_info["avg_min"]
@@ -281,7 +282,7 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
 
     def get_root_aabb(
         self, original_aabb: npt.NDArray[np.float64]
-    ) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float32], float]:
+    ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float32], float]:
         base_spacing = compute_spacing(original_aabb)
         if base_spacing > 10:
             root_scale = np.array([0.01, 0.01, 0.01])
@@ -303,7 +304,7 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
         print(f"  - original aabb: {self.original_aabb}")
         print(f"  - scale: {self.root_scale}")
 
-    def send_file_to_read(self) -> Tuple[bytes, List[bytes]]:
+    def send_file_to_read(self) -> tuple[bytes, list[bytes]]:
         if self.verbosity >= 1:
             print(f"Submit next portion {self.state.point_cloud_file_parts[-1]}")
         file, portion = self.state.point_cloud_file_parts.pop()
@@ -327,7 +328,7 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
 
     def send_points_to_process(
         self, now: float
-    ) -> Generator[Tuple[bytes, List[bytes]], None, None]:
+    ) -> Generator[tuple[bytes, list[bytes]], None, None]:
         potentials = sorted(
             # a key (=task) can be in node_to_process and processing_nodes if the node isn't completely processed
             [
@@ -369,7 +370,7 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
             if job_list:
                 yield PointManagerMessage.PROCESS_JOBS.value, job_list
 
-    def send_pnts_to_write(self) -> Tuple[bytes, List[bytes]]:
+    def send_pnts_to_write(self) -> tuple[bytes, list[bytes]]:
         node_name = self.state.pnts_to_writing.pop()
         data = self.node_store.get(node_name)
         if not data:
@@ -380,7 +381,7 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
 
         return PointManagerMessage.WRITE_PNTS.value, [node_name, data]
 
-    def process_message(self, return_type: bytes, result: List[bytes]) -> bool:
+    def process_message(self, return_type: bytes, result: list[bytes]) -> bool:
         at_least_one_job_ended = False
 
         if return_type == PointWorkerMessageType.READ.value:
@@ -414,7 +415,7 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
 
         return at_least_one_job_ended
 
-    def dispatch_processed_nodes(self, content: Dict[str, bytes]) -> None:
+    def dispatch_processed_nodes(self, content: dict[str, bytes]) -> None:
         if not content["name"]:
             return
 

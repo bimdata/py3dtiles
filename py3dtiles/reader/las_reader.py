@@ -1,6 +1,7 @@
 import math
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator, List, Optional, Tuple
+from typing import Optional
 
 import laspy
 import numpy as np
@@ -19,7 +20,7 @@ def get_metadata(path: Path, fraction: int = 100) -> MetadataReaderType:
 
         _1M = min(point_count, 1_000_000)
         steps = math.ceil(point_count / _1M)
-        portions: List[PortionItemType] = [
+        portions: list[PortionItemType] = [
             (i * _1M, min(point_count, (i + 1) * _1M)) for i in range(steps)
         ]
         for p in portions:
@@ -44,7 +45,7 @@ def run(
     color_scale: Optional[float],
     write_intensity: bool,
 ) -> Generator[
-    Tuple[
+    tuple[
         npt.NDArray[np.float32],
         npt.NDArray[np.uint8],
         npt.NDArray[np.uint8],

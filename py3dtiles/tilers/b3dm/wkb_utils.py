@@ -2,18 +2,17 @@ from __future__ import annotations
 
 import math
 import struct
-from typing import List
 
 import numpy as np
 import numpy.typing as npt
 from earcut.earcut import earcut
 
 CoordinateType = npt.NDArray[np.float32]
-LineType = List[CoordinateType]
-PolygonType = List[LineType]
-MultiPolygonsType = List[PolygonType]
+LineType = list[CoordinateType]
+PolygonType = list[LineType]
+MultiPolygonsType = list[PolygonType]
 
-PolygonAsTriangleType = List[npt.NDArray[np.float32]]  # the array shape is 3, 3
+PolygonAsTriangleType = list[npt.NDArray[np.float32]]  # the array shape is 3, 3
 
 
 class TriangleSoup:

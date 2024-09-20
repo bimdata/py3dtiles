@@ -1,16 +1,6 @@
 from __future__ import annotations
 
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    List,
-    Literal,
-    Optional,
-    Tuple,
-    TypedDict,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Literal, Optional, TypedDict, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -21,12 +11,12 @@ if TYPE_CHECKING:
 
 # Tileset types
 
-ExtensionDictType = Dict[str, Any]
-ExtraDictType = Dict[str, Any]
+ExtensionDictType = dict[str, Any]
+ExtraDictType = dict[str, Any]
 GeometricErrorType = float
-PropertyType = Dict[str, Any]
+PropertyType = dict[str, Any]
 RefineType = Literal["ADD", "REPLACE"]
-TransformDictType = List[float]
+TransformDictType = list[float]
 
 
 class RootPropertyDictType(TypedDict):
@@ -89,16 +79,16 @@ class TilesetDictType(RootPropertyDictType):
 
 # Tile content types
 
-BatchTableHeaderDataType = Dict[str, Union[List[Any], Dict[str, Any]]]
+BatchTableHeaderDataType = dict[str, Union[list[Any], dict[str, Any]]]
 
-FeatureTableHeaderDataType = Dict[
+FeatureTableHeaderDataType = dict[
     str,
     Union[
         int,  # points_length
-        Dict[str, int],  # byte offsets
-        Tuple[float, float, float],  # rtc
-        List[float],  # quantized_volume_offset and quantized_volume_scale
-        Tuple[int, int, int, int],  # constant_rgba
+        dict[str, int],  # byte offsets
+        tuple[float, float, float],  # rtc
+        list[float],  # quantized_volume_offset and quantized_volume_scale
+        tuple[int, int, int, int],  # constant_rgba
     ],
 ]
 
@@ -111,8 +101,8 @@ class HierarchyClassDictType(TypedDict):
 
 # Tiler types
 
-PortionItemType = Tuple[int, ...]
-PortionsType = List[Tuple[str, PortionItemType]]
+PortionItemType = tuple[int, ...]
+PortionsType = list[tuple[str, PortionItemType]]
 
 
 class MetadataReaderType(TypedDict):
@@ -123,7 +113,7 @@ class MetadataReaderType(TypedDict):
     avg_min: npt.NDArray[np.float64]
 
 
-OffsetScaleType = Tuple[
+OffsetScaleType = tuple[
     npt.NDArray[np.float64],
     npt.NDArray[np.float64],
     Optional[npt.NDArray[np.float64]],

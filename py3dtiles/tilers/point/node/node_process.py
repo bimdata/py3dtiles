@@ -1,6 +1,7 @@
 import pickle
 import time
-from typing import Generator, List, Optional, TextIO, Tuple
+from collections.abc import Generator
+from typing import Optional, TextIO
 
 from py3dtiles.tilers.point.node.node import Node
 from py3dtiles.tilers.point.node.node_catalog import NodeCatalog
@@ -12,7 +13,7 @@ class NodeProcess:
         node_catalog: NodeCatalog,
         scale: float,
         name: bytes,
-        tasks: List[bytes],
+        tasks: list[bytes],
         begin: float,
         log_file: Optional[TextIO],
     ):
@@ -30,7 +31,7 @@ class NodeProcess:
         max_depth: int = 1,
         force_forward: bool = False,
         depth: int = 0,
-    ) -> Generator[Tuple[bytes, bytes, int], None, None]:
+    ) -> Generator[tuple[bytes, bytes, int], None, None]:
         if depth >= max_depth:
             threshold = 0 if force_forward else 10_000
             if node.get_pending_points_count() > threshold:
@@ -81,7 +82,7 @@ class NodeProcess:
             halt_at_depth = 1
         return halt_at_depth
 
-    def run(self) -> Generator[Tuple[bytes, bytes, int], None, None]:
+    def run(self) -> Generator[tuple[bytes, bytes, int], None, None]:
         log_enabled = self.log_file is not None
 
         if log_enabled:

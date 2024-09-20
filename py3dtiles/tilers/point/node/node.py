@@ -3,9 +3,10 @@ from __future__ import annotations
 import copy
 import json
 import pickle
+from collections.abc import Generator, Iterator
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Generator, Iterator, TypedDict
+from typing import TYPE_CHECKING, Any, TypedDict
 
 import numpy as np
 import numpy.typing as npt

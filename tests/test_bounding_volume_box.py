@@ -1,6 +1,5 @@
 import math
 import unittest
-from typing import List
 
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
@@ -42,7 +41,7 @@ class TestBoundingVolumeBox(unittest.TestCase):
         bounding_volume_box = BoundingVolumeBox()
 
         # Empty list
-        bounding_volume_list: List[float] = []
+        bounding_volume_list: list[float] = []
         with self.assertRaises(ValueError):
             bounding_volume_box.set_from_list(bounding_volume_list)
         self.assertIs(bounding_volume_box._box, None)

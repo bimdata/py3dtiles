@@ -1,7 +1,8 @@
 import csv
 import math
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator, List, Optional, Tuple
+from typing import Optional
 
 import numpy as np
 import numpy.typing as npt
@@ -63,7 +64,7 @@ def get_metadata(path: Path, fraction: int = 100) -> MetadataReaderType:
                 "the size of seek_values should be equal to steps,"
                 f"currently steps = {steps} and len(seek_values) = {len(seek_values)}"
             )
-        portions: List[PortionItemType] = [
+        portions: list[PortionItemType] = [
             (i * _1M, min(count, (i + 1) * _1M), seek_values[i]) for i in range(steps)
         ]
 
@@ -89,7 +90,7 @@ def run(
     color_scale: Optional[float],
     write_intensity: bool,
 ) -> Generator[
-    Tuple[
+    tuple[
         npt.NDArray[np.float32],
         npt.NDArray[np.uint8],
         npt.NDArray[np.uint8],
@@ -147,7 +148,7 @@ def run(
                 if not line:
                     points = np.resize(points, (j, feature_nb))
                     break
-                line_features: List[Optional[float]] = [
+                line_features: list[Optional[float]] = [
                     float(s) for s in line.split(dialect.delimiter)[:feature_nb]
                 ]
                 if len(line_features) == 3:

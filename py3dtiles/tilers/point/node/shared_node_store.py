@@ -2,7 +2,7 @@ import gc
 import time
 from pathlib import Path
 from sys import getsizeof
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 import lz4.frame as gzip
 
@@ -24,8 +24,8 @@ class SharedNodeStore:
         :param folder: where to store the piece of data that go over the limit
 
         """
-        self.metadata: Dict[bytes, Optional[Tuple[float, int]]] = {}
-        self.data: List[Optional[bytes]] = []
+        self.metadata: dict[bytes, Optional[tuple[float, int]]] = {}
+        self.data: list[Optional[bytes]] = []
         self.folder = folder
         self.stats = {
             "hit": 0,
@@ -139,7 +139,7 @@ class SharedNodeStore:
         )
         self.memory_size["container"] = getsizeof(self.data) + getsizeof(self.metadata)
 
-    def remove_oldest_nodes(self, percent: float = 100) -> Tuple[int, int]:
+    def remove_oldest_nodes(self, percent: float = 100) -> tuple[int, int]:
         count = _remove_all(self)
 
         self.memory_size["content"] = 0
@@ -155,7 +155,7 @@ class SharedNodeStore:
         )
 
 
-def _remove_all(store: SharedNodeStore) -> Tuple[int, int]:
+def _remove_all(store: SharedNodeStore) -> tuple[int, int]:
     # delete the entries
     count = len(store.metadata)
     bytes_written = 0

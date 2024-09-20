@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import List
 
 import numpy as np
 import numpy.typing as npt
@@ -134,7 +133,7 @@ def test_big_poly_winding_order(big_poly: PolygonType) -> None:
     ["square.wkb", pytest.param("square_ewkb.wkb", marks=pytest.mark.xfail)],
 )
 def test_parse_wkb(wkb_filename: str) -> None:
-    expected_geom: List[List[List[npt.NDArray[np.float32]]]] = [
+    expected_geom: list[list[list[npt.NDArray[np.float32]]]] = [
         [
             [
                 np.array([0.0, 0.0, 0.0], dtype=np.float32),
@@ -145,7 +144,7 @@ def test_parse_wkb(wkb_filename: str) -> None:
         ]
     ]
     with open(DATA_DIRECTORY / wkb_filename, "rb") as fobj:
-        geom: List[List[List[npt.NDArray[np.float32]]]] = wkb_utils.parse(fobj.read())
+        geom: list[list[list[npt.NDArray[np.float32]]]] = wkb_utils.parse(fobj.read())
         assert len(geom) == 1 and len(geom[0]) == 1
         # The following assertion fails for square_ewkb.wkb, due to parsing problem with the
         # Extended WKB version: we do not get a 3D-geom...

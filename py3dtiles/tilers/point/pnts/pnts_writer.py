@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import pickle
+from collections.abc import Generator
 from pathlib import Path
-from typing import TYPE_CHECKING, Generator
+from typing import TYPE_CHECKING
 
 import lz4.frame as gzip
 import numpy as np
