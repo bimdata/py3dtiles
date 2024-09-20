@@ -77,6 +77,7 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
     root_spacing: float
     node_store: SharedNodeStore
     state: PointState
+    transformer: Optional[Transformer]
 
     def __init__(
         self,
@@ -84,6 +85,7 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
         files: Union[list[Union[str, Path]], str, Path],
         crs_in: Optional[CRS],
         force_crs_in: bool,
+        pyproj_always_xy: bool,
         rgb: bool,
         classification: bool,
         intensity: bool,
@@ -104,6 +106,7 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
 
         self.crs_in = crs_in
         self.force_crs_in = force_crs_in
+        self.pyproj_always_xy = pyproj_always_xy
 
         self.cache_size = cache_size
 
@@ -130,12 +133,14 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
         number_of_jobs: int,
     ) -> None:
         self.file_info = self.get_file_info(self.crs_in, self.force_crs_in)
-        transformer = self.get_transformer(crs_out)
+        self.transformer = self.get_transformer(
+            crs_out, always_xy=self.pyproj_always_xy
+        )
         (
             self.rotation_matrix,
             self.original_aabb,
             self.avg_min,
-        ) = self.get_rotation_matrix(crs_out, transformer)
+        ) = self.get_rotation_matrix(crs_out, self.transformer)
 
         self.root_aabb, self.root_scale, self.root_spacing = self.get_root_aabb(
             self.original_aabb
@@ -146,7 +151,7 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
         self.state = PointState(self.file_info["portions"], max(1, number_of_jobs // 2))
 
         self.shared_metadata = PointSharedMetadata(
-            transformer,
+            self.transformer,
             self.root_aabb,
             self.root_spacing,
             self.root_scale,
@@ -216,14 +221,18 @@ class PointTiler(Tiler[PointSharedMetadata, PointTilerWorker]):
             "avg_min": avg_min,
         }
 
-    def get_transformer(self, crs_out: Optional[CRS]) -> Optional[Transformer]:
+    def get_transformer(
+        self, crs_out: Optional[CRS], always_xy: bool = False
+    ) -> Optional[Transformer]:
         if crs_out:
             if self.file_info["crs_in"] is None:
                 raise SrsInMissingException(
                     "None file has a input srs specified. Should be provided."
                 )
 
-            transformer = Transformer.from_crs(self.file_info["crs_in"], crs_out)
+            transformer = Transformer.from_crs(
+                self.file_info["crs_in"], crs_out, always_xy=always_xy
+            )
         else:
             transformer = None
 
