@@ -246,6 +246,7 @@ def convert(
     classification: bool = True,
     intensity: bool = True,
     color_scale: Optional[float] = None,
+    use_process_pool: bool = True,
     verbose: int = False,
 ) -> None:
     """
@@ -283,6 +284,7 @@ def convert(
         classification=classification,
         intensity=intensity,
         color_scale=color_scale,
+        use_process_pool=use_process_pool,
         verbose=verbose,
     )
     return converter.convert()
@@ -304,6 +306,7 @@ class _Convert:
         classification: bool = True,
         intensity: bool = True,
         color_scale: Optional[float] = None,
+        use_process_pool: bool = True,
         verbose: int = False,
     ) -> None:
         """
@@ -348,6 +351,7 @@ class _Convert:
 
         self.verbose = verbose
         self.benchmark = benchmark
+        self.use_process_pool = use_process_pool
 
         self.working_dir = self.out_folder / "tmp"
         self.working_dir.mkdir(parents=True)
@@ -426,7 +430,7 @@ class _Convert:
                 if self.verbose >= 1:
                     print("Writing 3dtiles")
 
-                tiler.write_tileset()
+                tiler.write_tileset(use_process_pool=self.use_process_pool)
                 shutil.rmtree(self.working_dir / str(tiler.name), ignore_errors=True)
 
                 if self.verbose >= 1:
@@ -544,6 +548,11 @@ def _init_parser(
         help="Force the input srs even if the srs in the input files are different. CAUTION, use only if you know what you are doing.",
         action="store_true",
     )
+    parser.add_argument(
+        "--disable-processpool",
+        help="Disables using a process pool when writing 3D tiles. Useful for running in environments lacking shared memory.",
+        action="store_true",
+    )
 
     return parser
 
@@ -564,6 +573,7 @@ def _main(args: argparse.Namespace) -> None:
             classification=args.classification,
             intensity=args.intensity,
             color_scale=args.color_scale,
+            use_process_pool=not args.disable_processpool,
             verbose=args.verbose,
         )
     except SrsInMissingException:
