@@ -336,9 +336,9 @@ docker-build:
     - name: docker:24.0.7-dind
       alias: docker
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
   script:
-    - docker build . -t $IMAGE_TAG -t py3dtiles/py3dtiles:$CI_COMMIT_REF_SLUG -f docker/Dockerfile
+    - docker build . -t $IMAGE_TAG -t py3dtiles/py3dtiles:$CI_COMMIT_TAG -f docker/Dockerfile
     - mkdir data
     - cp tests/fixtures/simple.ply data
     # Sanity check: convert then check if there is the right amount of points in the tileset
@@ -389,31 +389,33 @@ pages:
     url: https://py3dtiles.org
 
 # see https://docs.pypi.org/trusted-publishers/
-publish-to-test-pypi:
+publish-to-pypi:
   stage: 🚀 deploy
   image: python:3.10
   id_tokens:
     PYPI_ID_TOKEN:
       # Use "pypi" if uploading to PyPI directly
       # We'll do it later when we'll have validated it works correctly
-      aud: testpypi
+      aud: pypi
   script:
     # Install dependencies
     - apt update && apt install -y jq
-    - python -m pip install -U twine id
+    - python -m pip install -e .[pack]
+    - python -m pip install -U id
 
     # Retrieve the OIDC token from GitLab CI/CD, and exchange it for a PyPI API token
     - oidc_token=$(python -m id PYPI)
     # Replace "https://pypi.org/*" with "https://test.pypi.org/*" if uploading to TestPyPI
-    - resp=$(curl -X POST https://test.pypi.org/_/oidc/mint-token -d "{\"token\":\"${oidc_token}\"}")
+    - resp=$(curl -X POST https://pypi.org/_/oidc/mint-token -d "{\"token\":\"${oidc_token}\"}")
     - api_token=$(jq --raw-output '.token' <<< "${resp}")
 
     # Upload to PyPI authenticating via the newly-minted token
     # Add "--repository testpypi" if uploading to TestPyPI
-    - twine upload --repository testpypi -u __token__ -p "${api_token}" python_pkg/dist/*
+    - python -m build
+    - twine check dist/py3dtiles-*
+    - twine upload -u __token__ -p "${api_token}" dist/*
   only:
     - tags
   environment:
-    name: test-release
-    url: https://test.pypi.org/project/py3dtiles/
-  allow_failure: true
+    name: release
+    url: https://pypi.org/project/py3dtiles/
