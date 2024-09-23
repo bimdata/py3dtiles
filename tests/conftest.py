@@ -1,8 +1,9 @@
 import copy
 import json
 import shutil
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Dict, Generator
+from typing import Any
 
 import numpy as np
 import plyfile
@@ -85,7 +86,7 @@ def buggy_ply_filepath() -> Generator[Path, None, None]:
 
 
 @fixture(params=["wrongname", "vertex"])
-def buggy_ply_data(request) -> Generator[Dict[str, Any], None, None]:  # type: ignore [no-untyped-def]
+def buggy_ply_data(request) -> Generator[dict[str, Any], None, None]:  # type: ignore [no-untyped-def]
     """This ply data does not contain any 'vertex' element!"""
     types = [("x", np.float32, (5,)), ("y", np.float32, (5,)), ("z", np.float32, (5,))]
     data = [(np.random.sample(5), np.random.sample(5), np.random.sample(5))]

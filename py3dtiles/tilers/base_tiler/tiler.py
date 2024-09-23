@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Generator, Generic, List, Optional, Tuple, TypeVar
+from typing import Any, Generic, Optional, TypeVar
 
 from pyproj import CRS
 
@@ -47,7 +48,7 @@ class Tiler(ABC, Generic[_SharedMetadataT, _TilerWorkerT]):
     @abstractmethod
     def get_tasks(
         self, startup: float
-    ) -> Generator[Tuple[bytes, List[bytes]], None, None]:
+    ) -> Generator[tuple[bytes, list[bytes]], None, None]:
         """
         Yields tasks to be sent to workers.
 
@@ -58,7 +59,7 @@ class Tiler(ABC, Generic[_SharedMetadataT, _TilerWorkerT]):
         """
 
     @abstractmethod
-    def process_message(self, return_type: bytes, content: List[bytes]) -> bool:
+    def process_message(self, return_type: bytes, content: list[bytes]) -> bool:
         """
         Updates the state of the tiler in function of the return type and the returned data
         """

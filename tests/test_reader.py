@@ -5,7 +5,7 @@ The example that is run in the test (`simple.ply`) comes from the [CGAL reposito
 """
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 import plyfile
@@ -37,7 +37,7 @@ def test_ply_get_metadata(ply_filepath: Path) -> None:
 
 
 def test_ply_get_metadata_buggy(
-    buggy_ply_data: Dict[str, Any], buggy_ply_filepath: Path
+    buggy_ply_data: dict[str, Any], buggy_ply_filepath: Path
 ) -> None:
     buggy_ply_data["data"].write(buggy_ply_filepath)
     with raises(KeyError, match=buggy_ply_data["msg"]):

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Generator
 from pathlib import Path
-from typing import TYPE_CHECKING, Generator, Literal
+from typing import TYPE_CHECKING, Literal
 
 from py3dtiles.typing import AssetDictType, GeometricErrorType, TilesetDictType
 

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Generic, List, TypeVar
+from typing import Generic, TypeVar
 
 import zmq
 
@@ -15,7 +15,7 @@ class TilerWorker(ABC, Generic[_SharedMetadataT]):
 
     @abstractmethod
     def execute(
-        self, skt: zmq.Socket[bytes], command: bytes, content: List[bytes]
+        self, skt: zmq.Socket[bytes], command: bytes, content: list[bytes]
     ) -> None:
         """
         Executes a command sent by the tiler. The method returns directly the response with the skt variable.

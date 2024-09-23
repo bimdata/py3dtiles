@@ -1,5 +1,3 @@
-from typing import Dict, List, Tuple
-
 from py3dtiles.typing import PortionsType
 
 
@@ -24,19 +22,19 @@ class PointState:
         # so for each entry, it is a list of tasks
         # a task is a tuple (list of points, point_count)
         # points is a dictionary {xyz: list of coordinates, color: the associated color}
-        self.node_to_process: Dict[bytes, Tuple[List[bytes], int]] = {}
+        self.node_to_process: dict[bytes, tuple[list[bytes], int]] = {}
         # when a node is sent to a process, the item moves to processing_nodes
         # the structure is different. The key remains the node name. But the value is : (len(tasks), point_count, now)
         # these values is for logging
-        self.processing_nodes: Dict[bytes, Tuple[int, int, float]] = {}
+        self.processing_nodes: dict[bytes, tuple[int, int, float]] = {}
         # when processing is finished, move the tile name in processed_nodes
         # since the content is at this stage, stored in the node_store,
         # just keep the name of the node.
         # This list will be filled until the writing could be started.
-        self.waiting_writing_nodes: List[bytes] = []
+        self.waiting_writing_nodes: list[bytes] = []
         # when the node is writing, its name is moved from waiting_writing_nodes to pnts_to_writing
         # the data to write are stored in a node object.
-        self.pnts_to_writing: List[bytes] = []
+        self.pnts_to_writing: list[bytes] = []
 
     def is_reading_finish(self) -> bool:
         return not self.point_cloud_file_parts and self.number_of_reading_jobs == 0

@@ -9,7 +9,7 @@ import traceback
 from multiprocessing import Process, cpu_count
 from pathlib import Path
 from time import sleep
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Optional, Union
 
 import psutil
 import zmq
@@ -45,7 +45,7 @@ META_TILER_NAME = b"meta"
 
 
 def _worker_target(
-    worker_tilers: Dict[bytes, TilerWorker[Any]],
+    worker_tilers: dict[bytes, TilerWorker[Any]],
     verbosity: int,
     uri: bytes,
 ) -> None:
@@ -65,7 +65,7 @@ class _WorkerDispatcher:
 
     def __init__(
         self,
-        worker_tilers: Dict[bytes, TilerWorker[Any]],
+        worker_tilers: dict[bytes, TilerWorker[Any]],
         verbosity: int,
         uri: bytes,
     ) -> None:
@@ -141,7 +141,7 @@ class _ZmqManager:
     def __init__(
         self,
         number_of_jobs: int,
-        worker_tilers: Dict[bytes, TilerWorker[Any]],
+        worker_tilers: dict[bytes, TilerWorker[Any]],
         verbosity: int,
     ) -> None:
         """
@@ -172,8 +172,8 @@ class _ZmqManager:
             p.start()
 
         self.activities = [p.pid for p in self.processes]
-        self.clients: Set[bytes] = set()
-        self.idle_clients: Set[bytes] = set()
+        self.clients: set[bytes] = set()
+        self.idle_clients: set[bytes] = set()
 
         self.killing_processes = False
         self.number_processes_killed = 0
@@ -182,20 +182,20 @@ class _ZmqManager:
     def all_clients_registered(self) -> bool:
         return len(self.clients) == self.number_of_jobs
 
-    def send_to_process(self, message: List[bytes]) -> None:
+    def send_to_process(self, message: list[bytes]) -> None:
         if not self.idle_clients:
             raise ValueError("idle_clients is empty")
         self.socket.send_multipart(
             [self.idle_clients.pop(), pickle.dumps(time.time())] + message
         )
 
-    def send_to_all_processes(self, message: List[bytes]) -> None:
+    def send_to_all_processes(self, message: list[bytes]) -> None:
         if len(self.clients) == 0:
             raise ValueError("No registered clients")
         for client in self.clients:
             self.socket.send_multipart([client, pickle.dumps(time.time())] + message)
 
-    def send_to_all_idle_processes(self, message: List[bytes]) -> None:
+    def send_to_all_idle_processes(self, message: list[bytes]) -> None:
         if not self.idle_clients:
             raise ValueError("idle_clients is empty")
         for client in self.idle_clients:
@@ -233,7 +233,7 @@ class _ZmqManager:
 
 
 def convert(
-    files: Union[List[Union[str, Path]], str, Path],
+    files: Union[list[Union[str, Path]], str, Path],
     outfolder: Union[str, Path] = "./3dtiles",
     overwrite: bool = False,
     jobs: int = CPU_COUNT,
@@ -291,7 +291,7 @@ def convert(
 class _Convert:
     def __init__(
         self,
-        files: Union[List[Union[str, Path]], str, Path],
+        files: Union[list[Union[str, Path]], str, Path],
         outfolder: Union[str, Path] = "./3dtiles",
         overwrite: bool = False,
         jobs: int = CPU_COUNT,
@@ -352,7 +352,7 @@ class _Convert:
         self.working_dir = self.out_folder / "tmp"
         self.working_dir.mkdir(parents=True)
 
-        worker_tilers: Dict[bytes, TilerWorker[Any]] = {}
+        worker_tilers: dict[bytes, TilerWorker[Any]] = {}
         for tiler in self.tilers:
             if tiler.name in worker_tilers:
                 raise TilerException("There are tilers with the same attribute name.")

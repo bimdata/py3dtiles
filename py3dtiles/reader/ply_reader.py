@@ -1,6 +1,7 @@
 import math
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator, Optional, Tuple
+from typing import Optional
 
 import numpy as np
 import numpy.typing as npt
@@ -54,7 +55,7 @@ def run(
     color_scale: Optional[float],
     write_intensity: bool,
 ) -> Generator[
-    Tuple[
+    tuple[
         npt.NDArray[np.float32],
         npt.NDArray[np.uint8],
         npt.NDArray[np.uint8],

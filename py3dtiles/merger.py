@@ -1,7 +1,7 @@
 import argparse
 import copy
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TypeVar
+from typing import Any, Optional, TypeVar
 
 import numpy as np
 import numpy.typing as npt
@@ -21,7 +21,7 @@ _T = TypeVar("_T", bound=npt.NBitBase)
 
 
 def merge(
-    tilesets: List[TileSet], tileset_paths: Optional[Dict[TileSet, Path]] = None
+    tilesets: list[TileSet], tileset_paths: Optional[dict[TileSet, Path]] = None
 ) -> TileSet:
     """
     Create a tileset that include all input tilesets. The tilesets don't need to be written.
@@ -65,7 +65,7 @@ def merge(
 
 def quadtree_split(
     aabb: "npt.NDArray[np.floating[_T]]",
-) -> List["npt.NDArray[np.floating[_T]]"]:
+) -> list["npt.NDArray[np.floating[_T]]"]:
     return [
         split_aabb(aabb, 0, True),
         split_aabb(aabb, 2, True),
@@ -82,10 +82,10 @@ def is_point_inside(
 
 def build_tileset_quadtree(
     aabb: npt.NDArray[np.float64],
-    tilesets: List[TileSet],
-    bounding_box_centers: List[npt.NDArray[np.float64]],
+    tilesets: list[TileSet],
+    bounding_box_centers: list[npt.NDArray[np.float64]],
     inv_base_transform: npt.NDArray[np.float64],
-    tileset_paths: Optional[Dict[TileSet, Path]] = None,
+    tileset_paths: Optional[dict[TileSet, Path]] = None,
 ) -> Optional[Tile]:
     insides = [
         (tileset, center)
@@ -225,7 +225,7 @@ def build_tileset_quadtree(
 
 
 def merge_with_pnts_content(
-    tilesets: List[TileSet], tileset_paths: Optional[Dict[TileSet, Path]] = None
+    tilesets: list[TileSet], tileset_paths: Optional[dict[TileSet, Path]] = None
 ) -> TileSet:
     global_bounding_volume = BoundingVolumeBox()
     bounding_box_centers = []
@@ -267,7 +267,7 @@ def merge_with_pnts_content(
 
 
 def merge_from_files(
-    tileset_paths: List[Path],
+    tileset_paths: list[Path],
     output_tileset_path: Path,
     overwrite: bool = True,
     force_universal_merger: bool = False,

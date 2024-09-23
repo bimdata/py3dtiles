@@ -34,9 +34,9 @@ What to check after the release:
 - the pypi page
 - py3dtiles.org and the new tag documentation
 
-## Case: a python version is newly supported or dropped
+# How to support or drop a new python version
 
-Update the following files:
+In both case, update the following files:
 - [pyproject.toml](pyproject.toml)
   - modify `requires-python`
   - add or remove the python version in `classifiers` list
@@ -45,16 +45,20 @@ Update the following files:
   - if the python version in the Dockerfile is changed, regenerate [requirements.txt](requirements.txt). Be careful not to add unnecessary packages
 - [sonar-project.properties](sonar-project.properties)
   - edit the `sonar.python.version` variable
-- [.pre-commit-config.yaml](.pre-commit-config.yaml)
-  - only in case of a python version that is no longer supported
-  - change the `args` value for the hook `pyupgrade`
-  - change the `args` value for the hook `black`
-- [.gitlab-ci.yml](.gitlab-ci.yml)
-  - in case of a new python version support
-    - change the python docker image version of the jobs
-    - add the new version in the python version matrix for the `test` job
-  - in case of a python version that is no longer supported
+
+For dropped python version:
+
+- [.pre-commit-config.yaml](.pre-commit-config.yaml): increase the python version in the `args` value for the hook `pyupgrade` and the hook `black`
+- [.gitlab-ci.yml](.gitlab-ci.yml):
     - remove the old version in the python version matrix for the `test` job
     - change the python version for the mypy job
 
-For the commit message, don't use `chore`, else the breaking change won't be displayed by commitizen...
+For newly supported python version:
+
+- [.gitlab-ci.yml](.gitlab-ci.yml)
+  - change the python docker image version of the jobs
+  - add the new version in the python version matrix for the `test` job
+
+Then run `pre-commit run --all-files`, so that pyupgrade can do its thing.
+
+For the commit message, use `feat`, don't use `chore` because the breaking change won't be displayed by commitizen in this case.
