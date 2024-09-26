@@ -51,7 +51,7 @@ version = {attr = "py3dtiles.__version__"}
 
 [project.optional-dependencies]
 postgres = ["psycopg2-binary"]
-las = ["laspy>=2.0,<3.0"]
+las = ["laspy>=2.5,<3.0"]
 ply = ["plyfile"]
 
 dev = [
