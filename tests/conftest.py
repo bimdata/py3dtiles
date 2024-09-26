@@ -1,7 +1,7 @@
 import copy
 import json
 import shutil
-from collections.abc import Generator
+from collections.abc import Generator, Iterator
 from pathlib import Path
 from typing import Any
 
@@ -83,6 +83,20 @@ def ply_filepath() -> Generator[Path, None, None]:
 @fixture
 def buggy_ply_filepath() -> Generator[Path, None, None]:
     yield DATA_DIRECTORY / "buggy.ply"
+
+
+@fixture
+def northing_easting_ordering_2326_xyz() -> Iterator[Path]:
+    # "correct" ordering, the one mandated by the definition
+    # NOTE: this is the victoria peak in Hong Kong
+    yield DATA_DIRECTORY / "northing_easting_ordering_2326.xyz"
+
+
+@fixture
+def easting_northing_ordering_2326_xyz() -> Iterator[Path]:
+    # traditional gis ordering: easting northing
+    # NOTE: this is the victoria peak in Hong Kong
+    yield DATA_DIRECTORY / "easting_northing_ordering_2326.xyz"
 
 
 @fixture(params=["wrongname", "vertex"])

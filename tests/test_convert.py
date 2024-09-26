@@ -917,3 +917,40 @@ def test_convert_without_threadpool(tmp_dir: Path) -> None:
         las_point_count = f.header.point_count
 
     assert las_point_count == number_of_points_in_tileset(tileset_path)
+
+
+def test_convert_crs_definition_ordering(
+    tmp_dir: Path, northing_easting_ordering_2326_xyz: Path
+) -> None:
+    convert(
+        northing_easting_ordering_2326_xyz,
+        outfolder=tmp_dir,
+        crs_in=CRS(2326),
+        crs_out=CRS(3857),
+    )
+    tileset_path = tmp_dir / "tileset.json"
+    assert number_of_points_in_tileset(tileset_path) == 2
+    tileset = TileSet.from_file(tileset_path)
+    # we assert on the offset of transform, it's the easiest really
+    assert_array_almost_equal(
+        tileset.root_tile.transform[:-1, 3], [12706441.9, 2544660, 530], decimal=0
+    )
+
+
+def test_convert_crs_traditional_ordering(
+    tmp_dir: Path, easting_northing_ordering_2326_xyz: Path
+) -> None:
+    convert(
+        easting_northing_ordering_2326_xyz,
+        outfolder=tmp_dir,
+        crs_in=CRS(2326),
+        crs_out=CRS(3857),
+        pyproj_always_xy=True,
+    )
+    tileset_path = tmp_dir / "tileset.json"
+    assert number_of_points_in_tileset(tileset_path) == 2
+    tileset = TileSet.from_file(tileset_path)
+    # we assert on the offset of transform, it's the easiest really
+    assert_array_almost_equal(
+        tileset.root_tile.transform[:-1, 3], [12706441.9, 2544660, 530], decimal=0
+    )

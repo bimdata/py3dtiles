@@ -241,6 +241,7 @@ def convert(
     crs_out: Optional[CRS] = None,
     crs_in: Optional[CRS] = None,
     force_crs_in: bool = False,
+    pyproj_always_xy: bool = False,
     benchmark: Optional[str] = None,
     rgb: bool = True,
     classification: bool = True,
@@ -260,6 +261,7 @@ def convert(
     :param crs_out: CRS to convert the output with
     :param crs_in: Set a default input CRS
     :param force_crs_in: Force every input CRS to be `crs_in`, even if not null
+    :param pyproj_always_xy: When converting from a CRS to another, pass the `always_xy` flag to pyproj. This is useful if your data is in a CRS whose definition specifies an axis order other than easting/northing, but your data still have the easting component in the first field (often named X or longitude). See https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6 for more information.
     :param benchmark: Print summary at the end of the process
     :param rgb: Export rgb attributes.
     :param classification: Export classification attribute.
@@ -279,6 +281,7 @@ def convert(
         crs_out=crs_out,
         crs_in=crs_in,
         force_crs_in=force_crs_in,
+        pyproj_always_xy=pyproj_always_xy,
         benchmark=benchmark,
         rgb=rgb,
         classification=classification,
@@ -301,6 +304,7 @@ class _Convert:
         crs_out: Optional[CRS] = None,
         crs_in: Optional[CRS] = None,
         force_crs_in: bool = False,
+        pyproj_always_xy: bool = False,
         benchmark: Optional[str] = None,
         rgb: bool = True,
         classification: bool = True,
@@ -318,6 +322,7 @@ class _Convert:
         :param crs_out: CRS to convert the output with
         :param crs_in: Set a default input CRS
         :param force_crs_in: Force every input CRS to be `crs_in`, even if not null
+        :param pyproj_always_xy: When converting from a CRS to another, pass the `always_xy` flag to pyproj. This is useful if your data is in a CRS whose definition specifies an axis order other than easting/northing, but your data still have the easting component in the first field (often named X or longitude). See https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6 for more information.
         :param benchmark: Print summary at the end of the process
         :param rgb: Export rgb attributes.
         :param classification: Export classification attribute.
@@ -338,6 +343,7 @@ class _Convert:
                 files,
                 crs_in,
                 force_crs_in,
+                pyproj_always_xy,
                 rgb,
                 classification,
                 intensity,
@@ -553,6 +559,11 @@ def _init_parser(
         help="Disables using a process pool when writing 3D tiles. Useful for running in environments lacking shared memory.",
         action="store_true",
     )
+    parser.add_argument(
+        "--pyproj-always-xy",
+        help="When converting from a CRS to another, pass the `always_xy` flag to pyproj. This is useful if your data is in a CRS whose definition specifies an axis order other than easting/northing, but your data still have the easting component in the first field (often named X or longitude). See https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6 for more information. ",
+        action="store_true",
+    )
 
     return parser
 
@@ -568,6 +579,7 @@ def _main(args: argparse.Namespace) -> None:
             crs_out=str_to_CRS(args.srs_out),
             crs_in=str_to_CRS(args.srs_in),
             force_crs_in=args.force_srs_in,
+            pyproj_always_xy=args.pyproj_always_xy,
             benchmark=args.benchmark,
             rgb=not args.no_rgb,
             classification=args.classification,
