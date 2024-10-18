@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## v9.0.0 (2024-10-10)
+
+### BREAKING CHANGES
+
+The support for python3.8 is dropped.
+
+### Feat
+
+- **convert.py**: add the possibility to use pyproj's always_xy parameter from py3dtiles. This is useful if your CRS defines its axis as northing - easting (in this order), but your data uses easting - northing ordering.
+- Added flag for disabling usage of processpool. Useful in some cloud contexts.
+- support python3.12
+
+### Fix
+
+- **dependencies**: bump laspy to >= 2.5 to avoid https://github.com/laspy/laspy/pull/273
+
 ## v8.0.2 (2024-08-01)
 
 Changes for this release are only about our CI pipeline.
